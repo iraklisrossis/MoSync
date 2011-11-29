@@ -109,15 +109,15 @@ public:
     }
     
     string stringJSON(){
-        string json("{\n\t\"name\": ");
-        json += mName + ",\n\t\"properties\": [";
+        string json("\n\t\t");
+        json += mName + ":{\n\t\t\t\"properties\": [";
 
   
         for(size_t i = 0; i < mProperties.size() - 1; i++){
             json += mProperties[i] + ", ";
         }
         json += mProperties.back();
-        json += "]\n}";
+        json += "]\n\t\t}";
         
         return json;
     }
@@ -211,12 +211,12 @@ int main() {
         }
         
         ofstream widgetSchemaFile("Output/widgetSchema.json");
-        widgetSchemaFile << "{\n\t\"widgets\":[" << endl;
+        widgetSchemaFile << "{\n\t\"widgets\":{" << endl;
         for(size_t i = 0; i < widgets.size() - 1; i++){
             widgetSchemaFile << widgets[i]->stringJSON() << ',' << endl;
         }
         widgetSchemaFile << widgets.back()->stringJSON() << endl;
-        widgetSchemaFile << "]\n}";
+        widgetSchemaFile << "\t}\n}";
         
         
         

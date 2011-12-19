@@ -44,7 +44,7 @@ sh "/Developer/usr/bin/xcodebuild -target MoSyncLib -configuration Release -sdk 
 
 # build directory structure
 FileUtils.rm_rf(["template"])
-FileUtils.mkpath(["template/libs", "template/Classes", "template/Classes/helpers"])
+FileUtils.mkpath(["template/libs", "template/Classes", "template/Classes/helpers", "template/MoSyncExtensionBuilder", "template/MoSyncExtensionBuilder/MoSyncExtensionBuilder.xcodeproj"])
 
 # concatenate libraries (removed this don't know how good it works)
 #sh "lipo build/Debug-iphoneos/libMoSyncLib.a build/Debug-iphonesimulator/libMoSyncLib.a -create -output template/libs/debug/libMoSyncLib.a"
@@ -76,6 +76,8 @@ FileUtils.cp "../../../../tools/idl2/Output/syscall_static_cpp.h", "template/Cla
 # copy template files
 FileUtils.cp "library_project/__PROJECT_NAME__.plist", "template/project.plisttemplate"
 FileUtils.cp "library_project/__PROJECT_NAME__.xcodeproj/project.pbxproj", "template/project.pbxprojtemplate"
+FileUtils.cp "library_project/MoSyncExtensionBuilder/buildExtensionLib.sh", "template/MoSyncExtensionBuilder/buildExtensionLib.sh"
+FileUtils.cp "library_project/MoSyncExtensionBuilder/MoSyncExtensionBuilder.xcodeproj/project.pbxproj", "template/MoSyncExtensionBuilder/MoSyncExtensionBuilder.xcodeproj/project.pbxproj"
 
 # make template test directory
 if (createTest == true)

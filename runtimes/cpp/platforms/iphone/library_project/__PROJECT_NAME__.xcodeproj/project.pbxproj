@@ -34,7 +34,18 @@
 		85F25B0C11AD728A00EB47EE /* rebuild.build.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85F25B0B11AD728A00EB47EE /* rebuild.build.cpp */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		0B0D626B149F8A1800A2A606 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0B0D625F149F878800A2A606 /* MoSyncExtensionBuilder.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 0B0D6259149F878800A2A606;
+			remoteInfo = MoSyncExtensionBuilder;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		0B0D625F149F878800A2A606 /* MoSyncExtensionBuilder.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MoSyncExtensionBuilder.xcodeproj; path = MoSyncExtensionBuilder/MoSyncExtensionBuilder.xcodeproj; sourceTree = "<group>"; };
 		0B10E94914065AE600B6DA6B /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1D3623240D0F684500981E51 /* MoSyncAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MoSyncAppDelegate.h; sourceTree = "<group>"; };
@@ -110,6 +121,13 @@
 			path = Classes;
 			sourceTree = "<group>";
 		};
+		0B0D6260149F878800A2A606 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -121,6 +139,7 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
+				0B0D625F149F878800A2A606 /* MoSyncExtensionBuilder.xcodeproj */,
 				080E96DDFE201D6D7F000001 /* Classes */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
@@ -198,6 +217,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				0B0D626C149F8A1800A2A606 /* PBXTargetDependency */,
 			);
 			name = __PROJECT_NAME__;
 			productName = "__PROJECT_NAME_\U0010_";
@@ -224,6 +244,12 @@
 			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* CustomTemplate */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 0B0D6260149F878800A2A606 /* Products */;
+					ProjectRef = 0B0D625F149F878800A2A606 /* MoSyncExtensionBuilder.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				85F2555511AC155D00EB47EE /* __PROJECT_NAME__ */,
@@ -258,6 +284,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		0B0D626C149F8A1800A2A606 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = MoSyncExtensionBuilder;
+			targetProxy = 0B0D626B149F8A1800A2A606 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		85F2558511AC155D00EB47EE /* Debug */ = {

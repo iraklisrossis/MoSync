@@ -1,3 +1,2 @@
 #!/bin/sh
-ls | grep ".a" | xargs -I FILE ar -x FILE
-ld *.o -arch i386 -r -o ../ExtensionSystemTest/extensions.o
+ld *.a -arch i386 -ios_version_min 4.2 -r -ObjC -o ../extensions.a

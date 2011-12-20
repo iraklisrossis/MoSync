@@ -1162,16 +1162,16 @@ namespace Base {
 
 	SYSCALL(MAExtensionModule, maExtensionModuleLoad(const char* name, int hash))
 	{
-		return MA_EXTENSION_MODULE_UNAVAILABLE;
+        return extensionModuleLoad(name, hash);
 	}
 
 	SYSCALL(MAExtensionFunction, maExtensionFunctionLoad(MAHandle module, int index))
 	{
-		return MA_EXTENSION_FUNCTION_UNAVAILABLE;
+		return extensionFunctionLoad(module, index);
 	}
 
-	SYSCALL(int, maExtensionFunctionInvoke(int, int, int, int)) {
-		BIG_PHAT_ERROR(ERR_FUNCTION_UNIMPLEMENTED);
+	SYSCALL(int, maExtensionFunctionInvoke(int funcId, int a, int b, int c)) {
+        return extensionFunctionInvoke(funcId, a, b, c);
 	}
 
 	SYSCALL(int, maFrameBufferGetInfo(MAFrameBufferInfo *info)) {

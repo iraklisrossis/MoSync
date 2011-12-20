@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0B0D62CB14A0B1DE00A2A606 /* MoSyncExtension.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85407552149F9E62001B14C0 /* MoSyncExtension.mm */; };
+		0B0D62CD14A0B1E400A2A606 /* MoSync.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85407550149F9E62001B14C0 /* MoSync.mm */; };
 		0B10E8D214064DDB00B6DA6B /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0B10E8D114064DDB00B6DA6B /* MessageUI.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		0B436B8A143089BD00E69AB2 /* OptionsDialogView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0B436B89143089BD00E69AB2 /* OptionsDialogView.mm */; };
 		0B436B8B143089BD00E69AB2 /* OptionsDialogView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0B436B88143089BD00E69AB2 /* OptionsDialogView.h */; };
@@ -1471,6 +1473,8 @@
 				41BD2ED614768C63005ADEB9 /* AudioInstance.mm in Sources */,
 				418047B8147E8B6A0048FB95 /* Reachability.m in Sources */,
 				43B16FEC147BF9FC00B6BB8A /* NSStringExpanded.mm in Sources */,
+				0B0D62CB14A0B1DE00A2A606 /* MoSyncExtension.mm in Sources */,
+				0B0D62CD14A0B1E400A2A606 /* MoSync.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

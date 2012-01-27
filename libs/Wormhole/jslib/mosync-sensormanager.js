@@ -17,12 +17,6 @@ MA 02110-1301, USA.
 */
 
 /**
- Sensor Manager
- =======
- Sensor Manager is the blah blah
-*/
-
-/**
  * @file mosync-sensormanager.js
  * @author Iraklis
  *
@@ -32,6 +26,15 @@ MA 02110-1301, USA.
 /**
  * Returns an object that manages device sensor enumeration
  * @param type (optional) The type of sensor to look for. Null for every sensor
+ /code
+	var sensorReq = navigator.findSensors();
+
+	sensorReq.addEventListener('onsuccess', function() {
+		for(var count = 0; count < this.result.length; count++) {
+			window.console.log("Discovered: " + this.result[count].name);
+		}
+	});
+/endcode
  */
 navigator.findSensors = function(type)
 {
@@ -39,9 +42,21 @@ navigator.findSensors = function(type)
 };
 
 /**
- * This object handles sensor enumeration
- * @param type (optional) The type of sensor to look for. Null for every sensor
- * @event onsuccess Called when enumeration is finished, with a list of the device sensors
+SensorRequest
+==============
+The SensorRequest object handles the device sensor enumeration
+_Constructor_
+@param type (optional) The sensor type. If specified, only that kind of sensor will be queried.
+It can be one of the following:
+	+"Accelerometer"
+	+"MagneticField"
+	+"Orientation"
+	+"Gyroscope"
+	+"Proximity"
+
+@field result 	A Sensor array with the sensors that were discovered in the system.
+				It should be read only after the 'onsuccess' event has fired.
+@field readyState A string describing the state of the request. Can be either "processing" or "done"
  */
 function SensorRequest(type)
 {
@@ -68,9 +83,18 @@ function SensorRequest(type)
 	};
 
 	this.events = {
+			/**
+				@event onsuccess Called when enumeration has finished
+				@param result A Sensor array with the sensors that were discovered in the system.
+			*/
 			"onsuccess": [],
 	};
-	this.addEventListener = function(event, listener, captureMethod)
+	/**
+		Registers a callback to an event
+		@param event The name of the event
+		@param listener The callback function
+	*/
+	this.addEventListener = function(event, listener)
 	{
 		if(self.events[event] != undefined)
 		{
@@ -78,6 +102,11 @@ function SensorRequest(type)
 		}
 	};
 
+	/**
+		Unregisters a callback from an event
+		@param event The name of the event
+		@param listener The callback function
+	*/
 	this.removeEventListener = function(event, listener)
 	{
 		if(self.events[event] != undefined)
@@ -98,14 +127,44 @@ function SensorRequest(type)
 		"SensorManager",
 		"findSensors",
 		{"type":"" + type});
+	/**
+		Sensor
+		=======
+		@field name The name of the sensor
+	*/
 }
 
 /**
  * This object represents a connection to a sensor
+ _Constructor_
  * @param options (Object or string) The sensor to connect to
- * @event onsensordata Called when there is new data from the sensor
+ *
  * @event onerror Called when there is an error
  * @event onstatuschange Called when the status of the connection has changed
+/code
+//Initialization of W3C Accelerometer sensor
+var accelerometer = new SensorConnection("Accelerometer");
+
+accelerometer.addEventListener("onsensordata", updateAccelerometer);
+
+function updateAccelerometer(sensorData){
+	window.console.log("X:" + sensorData.data.x);
+	window.console.log("Y:" + sensorData.data.y);
+	window.console.log("Z:" + sensorData.data.z);
+}
+
+function toggleAccelerometer()
+{
+	if(accelerometer.status == "open")
+	{
+		accelerometer.startWatch({interval:1000});
+	}
+	else
+	{
+		accelerometer.endWatch();
+	}
+}
+/endcode
  */
 function SensorConnection(options)
 {
@@ -124,6 +183,11 @@ function SensorConnection(options)
 		this.type = options.type;
 	}
 
+	/**
+		Starts the periodic sampling of the sensor
+		@param watchOptions Struct containing the sampling options
+		@param watchOptions.interval the sampling period in milliseconds
+	*/
 	this.startWatch = function(watchOptions)
 	{
 		if(self.status != "open")
@@ -146,6 +210,9 @@ function SensorConnection(options)
 			{"type":"" + self.type, "interval":"" + watchOptions.interval});
 	};
 
+	/**
+		Stops the sampling process
+	*/
 	this.endWatch = function()
 	{
 		if(self.status != "watching")
@@ -163,6 +230,9 @@ function SensorConnection(options)
 			{"type":"" + self.type});
 	};
 
+	/**
+		Initiates a single sampling of the sensor data
+	*/
 	this.read = function()
 	{
 		if(self.status != "open")
@@ -187,11 +257,32 @@ function SensorConnection(options)
 	};
 
 	this.events = {
+		/**
+		 @event onsensordata Called when there is new data from the sensor
+		 @param sensorData Struct containing sampling information from the sensor
+		 @param sensorData.data A (x,y,z) vector with the sensor reading
+		 @param sensorData.timestamp Time of sampling
+		 @param sensorData.reason "read" or "watch"
+		*/
 		"onsensordata": [],
+		/**
+		 @event onerror Called when there is an error
+		 @param sensorError Struct containing the error information
+		 @param sensorError.message A string describing the error
+		 @param sensorError.code The error code
+		*/
 		"onerror": [],
+		/**
+		 @event onstatuschange Called when the status of the sensor changes
+		 @param status The new status
+		*/
 		"onstatuschange":[]
 	};
-
+	/**
+		Registers a callback to an event
+		@param event The name of the event
+		@param listener The callback function
+	*/
 	this.addEventListener = function(event, listener, captureMethod)
 	{
 		if(self.events[event] != undefined)
@@ -200,6 +291,11 @@ function SensorConnection(options)
 		}
 	};
 
+	/**
+		Unregisters a callback from an event
+		@param event The name of the event
+		@param listener The callback function
+	*/
 	this.removeEventListener = function(event, listener)
 	{
 		if(self.events[event] != undefined)

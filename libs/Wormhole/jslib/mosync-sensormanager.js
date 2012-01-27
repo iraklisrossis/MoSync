@@ -17,13 +17,6 @@ MA 02110-1301, USA.
 */
 
 /**
- * @file mosync-sensormanager.js
- * @author Iraklis
- *
- * Implementation of W3C sensor API.
- */
-
-/**
  * Returns an object that manages device sensor enumeration
  * @param type (optional) The type of sensor to look for. Null for every sensor
  /code
@@ -82,11 +75,11 @@ function SensorRequest(type)
 		}
 	};
 
+	/**
+		@event onsuccess Called when enumeration has finished
+		@param result A Sensor array with the sensors that were discovered in the system.
+	*/
 	this.events = {
-			/**
-				@event onsuccess Called when enumeration has finished
-				@param result A Sensor array with the sensors that were discovered in the system.
-			*/
 			"onsuccess": [],
 	};
 	/**
@@ -127,11 +120,6 @@ function SensorRequest(type)
 		"SensorManager",
 		"findSensors",
 		{"type":"" + type});
-	/**
-		Sensor
-		=======
-		@field name The name of the sensor
-	*/
 }
 
 /**
@@ -255,29 +243,28 @@ function SensorConnection(options)
 			"startSensor",
 			{"type":"" + self.type, "interval":-1});
 	};
-
+	/**
+	 onsensordata Called when there is new data from the sensor
+	 @param sensorData Struct containing sampling information from the sensor
+	 @param sensorData.data A (x,y,z) vector with the sensor reading
+	 @param sensorData.timestamp Time of sampling
+	 @param sensorData.reason "read" or "watch"
+	 @endparam
+	 onerror Called when there is an error
+	 @param sensorError Struct containing the error information
+	 @param sensorError.message A string describing the error
+	 @param sensorError.code The error code
+	 @endparam
+	 @event onstatuschange Called when the status of the sensor changes
+	 @param status The new status
+	 @endparam
+	*/
 	this.events = {
-		/**
-		 @event onsensordata Called when there is new data from the sensor
-		 @param sensorData Struct containing sampling information from the sensor
-		 @param sensorData.data A (x,y,z) vector with the sensor reading
-		 @param sensorData.timestamp Time of sampling
-		 @param sensorData.reason "read" or "watch"
-		*/
 		"onsensordata": [],
-		/**
-		 @event onerror Called when there is an error
-		 @param sensorError Struct containing the error information
-		 @param sensorError.message A string describing the error
-		 @param sensorError.code The error code
-		*/
 		"onerror": [],
-		/**
-		 @event onstatuschange Called when the status of the sensor changes
-		 @param status The new status
-		*/
 		"onstatuschange":[]
 	};
+
 	/**
 		Registers a callback to an event
 		@param event The name of the event

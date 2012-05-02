@@ -21,6 +21,7 @@
 #include <helpers/cpp_defs.h>
 #include <helpers/CPP_IX_WIDGET.h>
 #include <base/Syscall.h>
+#include <Foundation/NSURLCache.h>
 
 
 @implementation WebViewWidget
@@ -81,6 +82,7 @@
 		  }
 
             NSURLRequest *requestObj = [NSURLRequest requestWithURL:url];
+            [[NSURLCache sharedURLCache] removeCachedResponseForRequest:requestObj];
             NSString *absoluteURL = [url absoluteString];
 
 			//Hook by-pass system. Each url is saved in a dictionary with it's
@@ -139,9 +141,23 @@
     } else if ([key isEqualToString:@MAW_WEB_VIEW_BASE_URL]) {
 		[baseUrl release];
 		baseUrl = [value retain];
-	}
-	else {
-		return [super setPropertyWithKey:key toValue:value];
+
+    } else if([key isEqualToString:@"cache"]) {
+        UIWebView* webView = (UIWebView*)view;
+        if([value isEqualToString:@"clearall"])
+        {
+            NSLog(@"clearing cache");
+
+            [[NSURLCache sharedURLCache] removeAllCachedResponses];
+
+            NSURLCache *sharedCache = [[[NSURLCache alloc] initWithMemoryCapacity:0 diskCapacity:0 diskPath:@"nsurlcache"] autorelease];
+            [NSURLCache setSharedURLCache:sharedCache];
+
+            [[NSURLCache sharedURLCache] removeAllCachedResponses];
+        }
+    }
+    else {
+        return [super setPropertyWithKey:key toValue:value];
 	}
 	return MAW_RES_OK;
 }

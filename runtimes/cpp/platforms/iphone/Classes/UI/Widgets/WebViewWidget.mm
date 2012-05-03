@@ -82,7 +82,6 @@
 		  }
 
             NSURLRequest *requestObj = [NSURLRequest requestWithURL:url];
-            [[NSURLCache sharedURLCache] removeCachedResponseForRequest:requestObj];
             NSString *absoluteURL = [url absoluteString];
 
 			//Hook by-pass system. Each url is saved in a dictionary with it's
@@ -143,17 +142,17 @@
 		baseUrl = [value retain];
 
     } else if([key isEqualToString:@"cache"]) {
-        UIWebView* webView = (UIWebView*)view;
         if([value isEqualToString:@"clearall"])
         {
-            NSLog(@"clearing cache");
-
+            // Clear the cache the normal way
             [[NSURLCache sharedURLCache] removeAllCachedResponses];
 
-            NSURLCache *sharedCache = [[[NSURLCache alloc] initWithMemoryCapacity:0 diskCapacity:0 diskPath:@"nsurlcache"] autorelease];
-            [NSURLCache setSharedURLCache:sharedCache];
-
-            [[NSURLCache sharedURLCache] removeAllCachedResponses];
+            //And now we need to be very, VEEERY specific with iOS 5...
+            //However, this might still require the user to load a different page first in his MoSync code
+            NSString *cachesDir = [[[NSSearchPathForDirectoriesInDomains(NSApplicationDirectory, NSUserDomainMask, YES) lastObject] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"Library/Caches"];
+            if ([[NSFileManager defaultManager] fileExistsAtPath:cachesDir]) {
+                [[NSFileManager defaultManager] removeItemAtPath:cachesDir error:nil];
+            }
         }
     }
     else {

@@ -30,6 +30,7 @@ import android.util.Log;
 import com.mosync.internal.android.MoSyncThread;
 import com.mosync.internal.generated.IX_WIDGET;
 import com.mosync.nativeui.util.HandleTable;
+import com.mosync.nativeui.util.properties.InvalidPropertyValueException;
 import com.mosync.nativeui.util.properties.PropertyConversionException;
 
 import static com.mosync.internal.generated.MAAPI_consts.EVENT_TYPE_LOCAL_NOTIFICATION;
@@ -39,8 +40,8 @@ import static com.mosync.internal.generated.MAAPI_consts.MA_NOTIFICATION_RES_INV
 import static com.mosync.internal.generated.MAAPI_consts.MA_NOTIFICATION_RES_INVALID_PROPERTY_VALUE;
 import static com.mosync.internal.generated.MAAPI_consts.MA_NOTIFICATION_RES_OK;
 import static com.mosync.internal.generated.MAAPI_consts.MA_NOTIFICATION_RES_ERROR;
-//import static com.mosync.internal.generated.MAAPI_consts.MA_NOTIFICATION_RES_ALREADY_SCHEDULED;
-//import static com.mosync.internal.generated.MAAPI_consts.MA_NOTIFICATION_RES_CANNOT_UNSCHEDULE;
+import static com.mosync.internal.generated.MAAPI_consts.MA_NOTIFICATION_RES_ALREADY_SCHEDULED;
+import static com.mosync.internal.generated.MAAPI_consts.MA_NOTIFICATION_RES_CANNOT_UNSCHEDULE;
 
 /**
  * The Notifications Manager that holds all the local notifications that
@@ -131,20 +132,21 @@ public class LocalNotificationsManager
 		LocalNotificationObject notification = m_NotificationTable.get(handle);
 		if (  null != notification )
 		{
+			if ( notification.getScheduled() )
+			{
+				Log.e("@@MoSync", "maNotificationLocalSetProperty cannot be called after scheduling the notification.");
+				return MA_NOTIFICATION_RES_ALREADY_SCHEDULED;
+			}
+
 			try{
-//				if ( notification.getScheduled() )
-//				{
-//					Log.e("@@MoSync", "maNotificationLocalSetProperty cannot be called after scheduling the notification.");
-//					return MA_NOTIFICATION_RES_ALREADY_SCHEDULED;
-//				}
-				 if ( property.equals(MA_NOTIFICATION_LOCAL_FLASH_LIGHTS)
-						 &&
-					  mMoSyncThread.getActivity().getApplicationContext().getPackageManager().
-						 hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH) )
-					 return MA_NOTIFICATION_RES_ERROR;
 				return notification.setProperty(property, value);
 			}catch (PropertyConversionException pce){
-				Log.e("@@MoSync", "maNotificationLocalSetProperty: Error while converting property value " + value + ":" + pce.getMessage());
+				Log.e("@@MoSync",
+						"maNotificationLocalSetProperty: Error while converting property value " + value + ":" + pce.getMessage( ) );
+				return MA_NOTIFICATION_RES_INVALID_PROPERTY_VALUE;
+			}catch (InvalidPropertyValueException ipve){
+				Log.e("@@MoSync",
+						"maNotificationLocalSetProperty: Error while setting property: " + ipve.getMessage( ) );
 				return MA_NOTIFICATION_RES_INVALID_PROPERTY_VALUE;
 			}
 		}
@@ -217,11 +219,11 @@ public class LocalNotificationsManager
 		}
 		else
 		{
-//			if ( notification.getScheduled() )
-//			{
-//				Log.e("@@MoSync","maNotificationLocalSchedule was already called.");
-//				return MA_NOTIFICATION_RES_ALREADY_SCHEDULED;
-//			}
+			if ( notification.getScheduled() )
+			{
+				Log.e("@@MoSync","maNotificationLocalSchedule was already called.");
+				return MA_NOTIFICATION_RES_ALREADY_SCHEDULED;
+			}
 			notification.setScheduled(true);
 
 		    TimerTask timerTask = new TimerTask()
@@ -264,11 +266,11 @@ public class LocalNotificationsManager
 		}
 		else
 		{
-//			if ( !notification.getScheduled() )
-//			{
-//				Log.e("@@MoSync","maNotificationLocalUnschedule: failed because notification was not scheduled.");
-//				return MA_NOTIFICATION_RES_CANNOT_UNSCHEDULE;
-//			}
+			if ( !notification.getScheduled() )
+			{
+				Log.e("@@MoSync","maNotificationLocalUnschedule: failed because notification was not scheduled.");
+				return MA_NOTIFICATION_RES_CANNOT_UNSCHEDULE;
+			}
 			notification.setScheduled(false);
 
 			// Remove the service notification if it is pending.
@@ -312,20 +314,33 @@ public class LocalNotificationsManager
 	/**
 	 * The notification manager is notified when the application has
 	 * come in foreground again. In this case, the local notifications
-	 * will not be triggered.
+	 * will not be shown.
 	 */
 	public static void focusGained()
 	{
-		// ToDo see if this is truly needed.
+//		Log.e("@MoSync","LocalNotificationsManager - focusGained");
+
+		mFocusState = true;
 	}
 
 	/**
 	 * The notification manager is notified when the application has
-	 * gone to background. Only now the local notifications can be triggered.
+	 * gone to background. Only now the local notifications can be shown.
 	 */
 	public static void focusLost()
 	{
-		// ToDo see if this is truly needed.
+//		Log.e("@MoSync","LocalNotificationsManager - focusLost");
+
+		mFocusState = false;
+	}
+
+	/**
+	 * Get the MoSync application's foreground state.
+	 * @return true if the app is in foreground, false otherwise.
+	 */
+	public static Boolean getFocusState()
+	{
+		return mFocusState;
 	}
 	/************************ Class members ************************/
 	/**
@@ -351,4 +366,11 @@ public class LocalNotificationsManager
 	 */
 	private Hashtable<Integer,TimerTask> m_TimerTasks =
 		new Hashtable<Integer,TimerTask>();
+
+	/**
+	 * The MoSync application's focus state.
+	 * If true the app is in foreground.
+	 * If false the app is in background.
+	 */
+	private static Boolean mFocusState = true;
 }

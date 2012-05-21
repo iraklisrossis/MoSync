@@ -1,35 +1,38 @@
-/* Copyright (C) 2011 Mobile Sorcery AB
+/*
+ Copyright (C) 2012 MoSync AB
 
- This program is free software; you can redistribute it and/or modify it under
- the terms of the GNU General Public License, version 2, as published by
- the Free Software Foundation.
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License,
+ version 2, as published by the Free Software Foundation.
 
  This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- for more details.
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
 
  You should have received a copy of the GNU General Public License
- along with this program; see the file COPYING.  If not, write to the Free
- Software Foundation, 59 Temple Place - Suite 330, Boston, MA
- 02111-1307, USA.
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ MA 02110-1301, USA.
  */
 
 #import "AudioInstance.h"
 #import "AudioData.h"
-#include <helpers/CPP_IX_AUDIO.h>
+//#include <helpers/CPP_IX_AUDIO.h>
+#include "Platform.h"
 
-@implementation AudioInstance
+@implementation AudioInstanceStatic
 
 /**
  * Init function.
  */
--(id) initWithAudioData:(AudioData*)audioData error:(int*)errorCode
+-(id) initWithAudioData:(AudioData*)audioData andHandle:(int)handle error:(int*)errorCode
 {
 	mAudioData = audioData;
+	mHandle = handle;
 
 	NSData* data = [mAudioData getData];
-	NSError* error;
+	NSError* error = nil;
 
 	if(errorCode)
 		*errorCode = MA_AUDIO_ERR_OK;
@@ -42,28 +45,96 @@
 
 		if(filename)
 		{
-			NSURL *fileURL = [[NSURL alloc] initFileURLWithPath:filename];
-			mAudioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:fileURL error:&error];
-			[fileURL release];
+			NSURL* url = nil;
+			if([filename hasPrefix:@"/"] || [filename hasPrefix:@"file://"])
+			{
+				url = [[NSURL alloc] initFileURLWithPath:filename];
+			} else {
+				url = [[NSURL alloc] initWithString:filename];
+			}
+
+			mAudioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:url error:&error];
+
+			mAudioPlayer.delegate = self;
+
+			if(error != nil)
+			{
+				*errorCode = MA_AUDIO_ERR_INVALID_INSTANCE;
+			}
+
+			[url release];
 		} else {
 			if(errorCode)
 				*errorCode = MA_AUDIO_ERR_INVALID_DATA;
 		}
 	}
 
-	[mAudioPlayer prepareToPlay];
+	mPrepared = NO;
+	mIsPreparing = NO;
 
 	return [super init];
 }
 
--(void) play
+-(BOOL) play
 {
-	[mAudioPlayer play];
+	mPrepared = true; // play implicitly calls prepareToPlay if it isn't already prepared
+	return [mAudioPlayer play];
 }
+
+-(BOOL) isPrepared
+{
+	return mPrepared;
+}
+
+-(BOOL) isPreparing
+{
+	return mIsPreparing;
+}
+
+-(void) prepareThread
+{
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	BOOL res = [mAudioPlayer prepareToPlay];
+
+	mIsPreparing = false;
+
+	MAEvent event;
+	event.type = EVENT_TYPE_AUDIO_PREPARED;
+	if(res == NO)
+		event.audioInstance = MA_AUDIO_ERR_PREPARE_FAILED;
+	else
+		event.audioInstance = mHandle;
+	Base::gEventQueue.put(event);
+
+	[pool release];
+}
+
+-(BOOL) prepare:(BOOL)async
+{
+	if(async == NO)
+	{
+		mPrepared = true;
+		return [mAudioPlayer prepareToPlay];
+	} else {
+		mIsPreparing = true;
+		[NSThread detachNewThreadSelector:@selector(prepareThread) toTarget:self withObject:nil];
+	}
+
+	return true;
+}
+
+
+-(void) pause
+{
+	[mAudioPlayer pause];
+}
+
 
 -(void) stop
 {
+	mPrepared = false;
 	[mAudioPlayer stop];
+	[mAudioPlayer setCurrentTime:0.0];
 }
 
 -(void) setPosition:(int)millis
@@ -99,6 +170,21 @@
 	[super dealloc];
 	if(mAudioPlayer)
 		[mAudioPlayer release];
+}
+
+- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag
+{
+	MAEvent event;
+	event.type = EVENT_TYPE_AUDIO_COMPLETED;
+
+	if(flag == YES)
+	{
+		event.audioInstance = mHandle;
+	} else {
+		event.audioInstance = MA_AUDIO_ERR_GENERIC;
+	}
+
+	Base::gEventQueue.put(event);
 }
 
 @end

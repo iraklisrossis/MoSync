@@ -47,7 +47,7 @@ namespace MoSync
             /**
              * The constructor
              */
-            public StackScreen()
+            public StackScreen() : base()
             {
                 mStack = new System.Collections.Generic.Stack<IScreen>();
             }
@@ -57,10 +57,19 @@ namespace MoSync
              */
             public override void AddChild(IWidget child)
             {
-                MoSync.Util.RunActionOnMainThreadSync(() =>
-                    {
-                        mPage.Content = (child as NativeUI.WidgetBaseWindowsPhone).View;
-                    });
+                if (child is Screen)
+                {
+                    MoSync.Util.RunActionOnMainThreadSync(() =>
+                        {
+                            if (mPage.Children.Count > 0)
+                            {
+                                mPage.Children.RemoveAt(mPage.Children.Count - 1);
+                            }
+                            mPage.Children.Add((child as Screen).View);
+                            Grid.SetColumn(mPage.Children[mPage.Children.Count - 1] as Grid, 0);
+                            Grid.SetRow(mPage.Children[mPage.Children.Count - 1] as Grid, 0);
+                        });
+                }
                 /**
                  * Manualy add the child to the children array
                  */
@@ -87,6 +96,52 @@ namespace MoSync
              */
             public void Pop()
             {
+                postPopEvent();
+
+                /**
+                 * If the stack is not empty show the top element of the stack
+                 */
+                if (0 < mStack.Count)
+                {
+                    MoSync.Util.RunActionOnMainThreadSync(() =>
+					{
+                        if (mPage.Children.Count > 0)
+                        {
+                            mPage.Children.RemoveAt(mPage.Children.Count - 1);
+                        }
+                        mPage.Children.Add((mStack.Peek() as Screen).View);
+                        Grid.SetColumn(mPage.Children[mPage.Children.Count - 1] as Grid, 0);
+                        Grid.SetRow(mPage.Children[mPage.Children.Count - 1] as Grid, 0);
+					});
+                }
+            }
+
+            /**
+             * The pop from back call implementation
+             */
+            public void PopFromBackButtonPressed()
+            {
+                postPopEvent();
+                /**
+                 * If the stack is not empty show the top element of the stack
+                 */
+                if (0 < mStack.Count)
+                {
+                    if (mPage.Children.Count > 0)
+                    {
+                        mPage.Children.RemoveAt(mPage.Children.Count - 1);
+                    }
+                    mPage.Children.Add((mStack.Peek() as Screen).View);
+                    Grid.SetColumn(mPage.Children[mPage.Children.Count - 1] as Grid, 0);
+                    Grid.SetRow(mPage.Children[mPage.Children.Count - 1] as Grid, 0);
+                }
+            }
+
+            /**
+             * Pops the screen form the stack and posts the custom event
+             */
+            private void postPopEvent()
+            {
                 /**
                  * If the stack has more than one item pop it and post the MAW_EVENT_STACK_SCREEN_POPPED event
                  */
@@ -106,21 +161,11 @@ namespace MoSync
                     eventData.WriteInt32(MAWidgetEventData_widgetHandle, mHandle);
                     eventData.WriteInt32(MAWidgetEventData_fromHandle, (mStack.Pop() as Screen).GetHandle());
                     eventData.WriteInt32(MAWidgetEventData_toHandle, (mStack.Peek() as Screen).GetHandle());
+
                     /**
                      * posting a CustomEvent
                      */
                     mRuntime.PostCustomEvent(MoSync.Constants.EVENT_TYPE_WIDGET, eventData);
-                }
-
-                /**
-                 * If the stack is not empty show the top element of the stack
-                 */
-                if (0 < mStack.Count)
-                {
-					MoSync.Util.RunActionOnMainThreadSync(() =>
-					{
-						(View as Microsoft.Phone.Controls.PhoneApplicationPage).Content = (mStack.Peek() as NativeUI.WidgetBaseWindowsPhone).View;
-					});
                 }
             }
 
@@ -132,7 +177,7 @@ namespace MoSync
             {
                 set
                 {
-                    Boolean.TryParse(value, out mBackButtonEnabled);
+                    if (!Boolean.TryParse(value, out mBackButtonEnabled)) throw new InvalidPropertyValueException();
                 }
             }
 

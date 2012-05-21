@@ -221,6 +221,8 @@ namespace Base
 	*/
 	int _maScreenStateEventsOnOff(int eventsOn, JNIEnv* jNIEnv, jobject jThis);
 
+	int _maWakeLock(int flag, JNIEnv* jNIEnv, jobject jThis);
+
 	int _maTextBox(const wchar* title, const wchar* inText, int outText,
 					int maxSize, int constraints, int memStart,
 					JNIEnv* jNIEnv, jobject jThis);
@@ -257,6 +259,10 @@ namespace Base
 	int _maWidgetGetProperty(int memStart, int widget, const char *property,
 								int memBuffer, int memBufferSize,
 								JNIEnv* jNIEnv, jobject jThis);
+
+	int _maWidgetScreenAddOptionsMenuItem(int widget, const char* title,
+											int iconHandle, int iconPredefined,
+											JNIEnv* jNIEnv, jobject jThis);
 
 	int _maWidgetScreenShow(int screenWidget, JNIEnv* jNIEnv, jobject jThis);
 	int _maWidgetStackScreenPush(int stackScreenWidget, int newScreen, JNIEnv* jNIEnv, jobject jThis);
@@ -759,7 +765,7 @@ namespace Base
 
 	int _maCameraFormatNumber(JNIEnv* jNIEnv, jobject jThis);
 
-	int _maCameraFormat(int index, int width, int height, JNIEnv* jNIEnv, jobject jThis);
+	int _maCameraFormat(int index, int sizeInfoBuffer, JNIEnv* jNIEnv, jobject jThis);
 
 	int _maCameraSetProperty(const char *property, const char* value,
 							JNIEnv* jNIEnv, jobject jThis);
@@ -884,11 +890,29 @@ namespace Base
 
 	int _maNotificationPushSetMessageTitle(const char* text, JNIEnv* jNIEnv, jobject jThis);
 
+	int _maNotificationPushSetDisplayFlag(int flag, JNIEnv* jNIEnv, jobject jThis);
+
 	int _maSyscallPanicsEnable(JNIEnv* jNIEnv, jobject jThis);
 
 	int _maSyscallPanicsDisable(JNIEnv* jNIEnv, jobject jThis);
 
 	int _maGetCellInfo(MAHandle mem, int memStart, JNIEnv* jNIEnv, jobject jThis);
+
+	// ********** Capture API  **********
+
+	int _maCaptureSetProperty(const char* property, const char* value, JNIEnv* jNIEnv, jobject jThis);
+
+	int _maCaptureGetProperty(int memStart, const char* property, int memBuffer, int bufSize, JNIEnv* jNIEnv, jobject jThis);
+
+	int _maCaptureAction(int action, JNIEnv* jNIEnv, jobject jThis);
+
+	int _maCaptureWriteImage(MAHandle handle, const char* fullPathBuffer, int fullPathBufSize, JNIEnv* jNIEnv, jobject jThis);
+
+	int _maCaptureGetImagePath(int memStart, MAHandle handle, int buffer, int bufferSize, JNIEnv* jNIEnv, jobject jThis);
+
+	int _maCaptureGetVideoPath(int memStart, MAHandle handle, int buffer, int bufferSize, JNIEnv* jNIEnv, jobject jThis);
+
+	int _maCaptureDestroyData(MAHandle handle, JNIEnv* jNIEnv, jobject jThis);
 
 	// ********** Database API **********
 
@@ -1018,6 +1042,103 @@ namespace Base
 		MAHandle cursorHandle,
 		int columnIndex,
 		int doubleValueAddress,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+
+	// AUDIO API
+
+	//MAAudioData maAudioDataCreateFromResource(in MAString mime, in MAHandle data, in int offset, in int length, in int flags);
+	int _maAudioDataCreateFromResource(
+		const char* mime,
+		int data,
+		int offset,
+		int length,
+		int flags,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//MAAudioData maAudioDataCreateFromURL(in MAString mime, in MAString url, in int flags);
+	int _maAudioDataCreateFromURL(
+		const char* mime,
+		const char* url,
+		int flags,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//int maAudioDataDestroy(in MAAudioData audioData);
+	int _maAudioDataDestroy(
+		int audioData,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//MAAudioInstance maAudioInstanceCreate(in MAAudioData audioData);
+	int _maAudioInstanceCreate(
+		int audioData,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//int maAudioInstanceDestroy(in MAAudioInstance audioInstance);
+	int _maAudioInstanceDestroy(
+		int audioInstance,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//int maAudioGetLength(in MAAudioInstance audio);
+	int _maAudioGetLength(
+		int audio,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//int maAudioSetNumberOfLoops(in MAAudioInstance audio, in int loops);
+	int _maAudioSetNumberOfLoops(
+		int audio,
+		int loops,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//int maAudioPrepare(in MAAudioInstance audio, in int async);
+	int _maAudioPrepare(
+		int audio,
+		int async,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//int maAudioPlay(in MAAudioInstance audio);
+	int _maAudioPlay(
+		int audio,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//int maAudioSetPosition(in MAAudioInstance audio, in int milliseconds);
+	int _maAudioSetPosition(
+		int audio,
+		int milliseconds,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//int maAudioGetPosition(in MAAudioInstance audio);
+	int _maAudioGetPosition(
+		int audio,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//int maAudioSetVolume(in MAAudioInstance audio, in float volume);
+	int _maAudioSetVolume(
+		int audio,
+		float volume,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//int maAudioPause(in MAAudioInstance audio);
+	int _maAudioPause(
+		int audio,
+		JNIEnv* jNIEnv,
+		jobject jThis);
+
+	//int maAudioStop(in MAAudioInstance audio);
+	int _maAudioStop(
+		int audio,
 		JNIEnv* jNIEnv,
 		jobject jThis);
 }

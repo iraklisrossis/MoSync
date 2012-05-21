@@ -1,18 +1,19 @@
-/* Copyright (C) 2009 Mobile Sorcery AB
+/*
+Copyright (C) 2009 MoSync AB
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License, version 2, as published by
-the Free Software Foundation.
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License,
+version 2, as published by the Free Software Foundation.
 
 This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program; see the file COPYING.  If not, write to the Free
-Software Foundation, 59 Temple Place - Suite 330, Boston, MA
-02111-1307, USA.
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+MA 02110-1301, USA.
 */
 
 /** \file maapi.h
@@ -400,6 +401,7 @@ interface MAAPI {
 
 	/**
 	* Returns the screen size.
+	* Returns the screen size.
 	*/
 	MAExtent maGetScrSize();
 
@@ -547,6 +549,25 @@ interface MAAPI {
 	MAHandle maCreatePlaceholder();
 
 	/**
+	* Releases a handle returned by maCreatePlaceholder().
+	* If the handle refers to an object, such as an image or a data object,
+	* that object is destroyed, as if maDestroyObject() had been called.
+	*
+	* The released handle may be reused by the system
+	* and returned by future calls to maCreatePlaceholder(),
+	* or by other system functions that allocate resources dynamically.
+	*
+	* This function is preferred to maDestroyObject(), unless you need
+	* to reuse the handle.
+	*
+	* Attempting to destroy a handle that has already been released,
+	* or was not returned by maCreatePlaceholder(), will cause a MoSync Panic.
+	*
+	* @param handle The handle to be released.
+	*/
+	void maDestroyPlaceholder(in MAHandle handle);
+
+	/**
 	* Destroys an object of any type. The handle becomes a placeholder.
 	*/
 	void maDestroyObject(in MAHandle handle);
@@ -555,6 +576,7 @@ interface MAAPI {
 	* Returns the size, in bytes, of a data object.
 	*/
 	int maGetDataSize(in MAHandle data);
+
 	/**
 	* Reads \a size bytes from a data object, starting at \a offset,
 	* into memory pointed to by \a dst.
@@ -562,6 +584,7 @@ interface MAAPI {
 	* it is not supported and will result in a MoSync Panic.
 	*/
 	void maReadData(in MAHandle data, out MAAddress dst, in int offset, in int size);
+
 	/**
 	* Writes \a size bytes to a data object, starting at \a offset,
 	* from memory pointed to by \a src.
@@ -578,6 +601,7 @@ interface MAAPI {
 		int srcOffset;
 		int size;
 	}
+
 	/**
 	* Copies \a size bytes from data object \a src to \a dst, at the specified offsets.
 	*/
@@ -995,6 +1019,24 @@ interface MAAPI {
 	*/
 	int maLoadResources(in MAHandle data);
 
+	constset int MA_RESOURCE_ {
+		OPEN = 0x1;
+		CLOSE = 0x2;
+	}
+	/**
+	* Loads a specific resource in the given placeholder.
+	* \param handle The handle of the resource that needs to be loaded
+	* \param placeholder The placeholder where to load the resource from handle.
+	* \param flag One of the MA_RESOURCE_OPEN, MA_RESOURCE_CLOSE,
+	* MA_RESOURCE_OPEN|MA_RESOURCE_CLOSE to control the resource binary.
+	*/
+	int maLoadResource(in MAHandle handle, in MAHandle placeholder, in int flag);
+
+	/*
+	* Returns the number of available resources.
+	*/
+	int maCountResources();
+
 	/**
 	* Loads a new program from the a data object, closes the running program, and starts the new one.
 	* The format of the data object is a MoSync program file concatenated with a resource file.
@@ -1257,6 +1299,19 @@ interface MAAPI {
 		/// or \< 0 on error.
 		AUDIOBUFFER_FILL = 18;
 #endif
+		/**
+		* \brief Event which is triggered when an audio has been asychronous prepared
+		* The MAEvent::audioInstance contains the prepared MAAudioInstance,
+		* or <0 if a problem happened while preparing.
+		*/
+		AUDIO_PREPARED = 19;
+
+		/**
+		* \brief Event which is triggered when a streaming audio has finished playing
+		* The MAEvent::audioInstance contains the MAAudioInstance which finished
+		*/
+		AUDIO_COMPLETED = 20;
+
 		/** \brief The size of the screen has changed.
 		* Use maGetScrSize() to get the new size.
 		*
@@ -1406,8 +1461,8 @@ interface MAAPI {
 
 		/**
 		* \brief Send when the application receives an unregistration result.
-		* The application unregistered from Apple Push Service, or Google C2DM Service,
-		* and will not receive anymore push messages.
+		* The application unregistered from Google C2DM Service, and will not
+		* receive anymore push messages.
 		* Platform: Android only.
 		*/
 		PUSH_NOTIFICATION_UNREGISTRATION = 45;
@@ -1416,6 +1471,12 @@ interface MAAPI {
 		* \brief Send when the application receives a push notification.
 		*/
 		PUSH_NOTIFICATION = 46;
+
+		/**
+		* \brief Send before the Native Image Picker is dismissed.
+		* This event will contain a MACaptureEventData struct.
+		*/
+		CAPTURE = 47;
 		}
 
 	/**
@@ -1464,6 +1525,17 @@ interface MAAPI {
 		/// this variable will contain the error code.
 		/// One of the \link #MA_ADS_ERROR_INTERNAL MA_ADS_ERROR \endlink constants.
 		int bannerErrorCode;
+	}
+
+	/**
+	* \brief An event send by the Native Image Picker(Capture API).
+	*/
+	struct MACaptureEventData {
+		/// One of the \link #MA_CAPTURE_EVENT_TYPE_IMAGE MA_CAPTURE_EVENT_TYPE \endlink constants.
+		int type;
+		/// Handle to a video/image data object.
+		/// This value is set only if the event type is MA_CAPTURE_EVENT_TYPE_IMAGE or MA_CAPTURE_EVENT_TYPE_VIDEO.
+		MAHandle handle;
 	}
 
 	/**
@@ -1585,9 +1657,23 @@ interface MAAPI {
 			MAHandle pushNotificationHandle;
 
 			/**
+			* Store the result for a capture action.
+			* Valid only if the event type is \link #EVENT_TYPE_CAPTURE CAPTURE \endlink.
+			*/
+			MACaptureEventData captureData;
+
+			/**
 			* Used by custom events. See invididual event descriptions.
 			*/
 			void* data;
+
+			/**
+			* Contains the prepared audio instance.
+			* Valid only if the event type is \link #EVENT_TYPE_AUDIO_PREPARED AUDIO_PREPARED \endlink
+			* or \link #EVENT_TYPE_AUDIO_COMPLETED AUDIO_COMPLETED \endlink.
+			*/
+			MAAudioInstance audioInstance;
+
 		}
 	}
 
@@ -1829,6 +1915,7 @@ interface MAAPI {
 		UBIN = 5;
 		SKIP = 6;
 		LABEL = 9;
+		NIL = 10; // Placeholder that is not used.
 		FLUX = 127;
 	}
 
@@ -2688,6 +2775,9 @@ interface MAAPI {
 		/**
 		* Values for the status field in the #EVENT_TYPE_SMS event.
 		* This event is sent on Android and iOS.
+		* Note: On iOS platforms the MA_SMS_RESULT_DELIVERED message corresponds
+		* To the SMS being successfully queued by the system. There is no way to
+		* know if it was actually delivered.
 		*/
 		constset int MA_SMS_RESULT_ {
 			/// The SMS was sent.
@@ -4094,7 +4184,7 @@ group WidgetAPI "Widget API" {
 			* @brief The type of button that was clicked when a #MAW_EVENT_CLICKED event is receieved for a searchbar.
 			* The type of searchbar button clicked:
 			* - 0 means 'search'
-			* - 1 means 'cancel'
+			* - 1 means 'cancel' (not implemented on Windows Phone platform, because the search bar doesn't contain any buttons)
 			*/
 			int searchBarButton;
 
@@ -4129,6 +4219,7 @@ group WidgetAPI "Widget API" {
 				* One of:
 				*  #MAW_CONSTANT_SOFT
 				*  #MAW_CONSTANT_HARD
+				*  #MAW_CONSTANT_MESSAGE
 				*/
 				int hookType;
 
@@ -4136,9 +4227,9 @@ group WidgetAPI "Widget API" {
 				* @brief The handle to url data. This is string data,
 				* there is NO null terminating character. The encoding
 				* of the data is determined by the application.
-				* The data MUST be deallocated with maDestroyObject after
-				* it hs been used. Each event allocates a new data object
-				* for the url data.
+				* The data object MUST be deallocated with maDestroyPlaceholder
+				* after it has been used, since each event allocates a new data
+				* object for the url data (which could end up consuming all memory).
 				*/
 				MAHandle urlData;
 			} webViewHookInfo;
@@ -4205,9 +4296,38 @@ group WidgetAPI "Widget API" {
 			int videoViewState;
 
 			/**
-			* Send by the OptionDialog view when a #MAW_EVENT_OPTION_DIALOG_BUTTON_CLICKED event is received.
+			* Send by the OptionDialog view when a #EVENT_TYPE_OPTIONS_BOX_BUTTON_CLICKED event is received.
 			*/
 			int optionDialogButtonIndex;
+
+			struct {
+					/**
+					* The rating bar new value, when a #MAW_EVENT_RATING_BAR_VALUE_CHANGED event is received.
+					*/
+					float value;
+
+					/**
+					* The author that issued the event: the user, or programatically, when a
+					* #MAW_EVENT_RATING_BAR_VALUE_CHANGED event is received.
+					*/
+					int fromUser;
+			} ratingBarValueInfo;
+
+			/**
+			* The selected radio button from a radio group, when a #MAW_EVENT_RADIO_GROUP_ITEM_SELECTED event
+			* is received.
+			*/
+			int radioGroupItemHandle;
+
+			/**
+			* The new state of a radio button, when a #MAW_EVENT_RADIO_BUTTON_STATE_CHANGED event is received.
+			*/
+			int radioButtonState;
+
+			/**
+			*  The selected menu item handle, when a #MAW_EVENT_OPTIONS_MENU_ITEM_SELECTED event is received.
+			*/
+			int optionsMenuItem;
 		}
 	}
 
@@ -4343,7 +4463,7 @@ group WidgetAPI "Widget API" {
 		*
 		* NOTE: When you get this message you have ownership
 		* of the url data handle and you have the responsibility to
-		* deallocate it using maDestroyObject.
+		* deallocate it using maDestroyPlaceholder.
 		*
 		* To get this event, you need to register a hook pattern, using
 		* maWidgetSetProperty with the properties #MAW_WEB_VIEW_SOFT_HOOK
@@ -4358,6 +4478,42 @@ group WidgetAPI "Widget API" {
 		*/
 		DIALOG_DISMISSED = 22;
 
+		/**
+		* Send by current screen just before it begins rotating.
+		*/
+		SCREEN_ORIENTATION_WILL_CHANGE = 23;
+
+		/**
+		* Send by current screen after it finishes rotating.
+		* Sent only from the Windows Phone 7.1 platform.
+		*/
+		SCREEN_ORIENTATION_DID_CHANGE = 24;
+
+		/**
+		* @brief Send when the value in a Rating Bar.
+		*/
+		RATING_BAR_VALUE_CHANGED = 25;
+
+		/**
+		* @brief Send when one of the radio buttons in a radio group is selected.
+		*/
+		RADIO_GROUP_ITEM_SELECTED = 26;
+
+		/**
+		* @brief Send when  the radio button state is changed.
+		*/
+		RADIO_BUTTON_STATE_CHANGED = 27;
+
+		/**
+		* @brief Send when the Options Menu is being closed (either by the user canceling
+		* the menu with the back/menu button, or when an item is selected).
+		*/
+		OPTIONS_MENU_CLOSED = 28;
+
+		/**
+		* @brief Send when an item in your options menu is selected.
+		*/
+		OPTIONS_MENU_ITEM_SELECTED = 29;
 	}
 
 	} // end of WidgetEventTypes
@@ -4419,6 +4575,15 @@ group WidgetAPI "Widget API" {
 		* #MAW_EVENT_WEB_VIEW_HOOK_INVOKED.
 		*/
 		HARD = 6;
+
+		/**
+		* @brief The hook type is a message sendt from JavaScript.
+		* Used in #MAW_EVENT_WEB_VIEW_HOOK_INVOKED.
+		* This type of hook does not use any hook pattern, it is
+		* always sent from the browser, using a platform specific
+		* method (which is abstracted away in the libraries).
+		*/
+		MESSAGE = 7;
 
 		/**
 		* @brief The popover arrow should point up. Used in
@@ -4511,7 +4676,7 @@ group WidgetAPI "Widget API" {
     * NOTE: there is a slightly different behaviour depending on the platform:
     *  - on iOS the source is loaded into memory when
     *  MAW_VIDEO_VIEW_STATE_PLAYING is received.
-    *   - on Android the source is loaded into memory when
+    *   - on Android and WindowsPhone the source is loaded into memory when
     *  MAW_VIDEO_VIEW_STATE_SOURCE_READY is received.
 	*/
 	group VideoViewEvent "Video view event" {
@@ -4540,11 +4705,13 @@ group WidgetAPI "Widget API" {
 		* @brief The source is ready to be played.
 		* NOTE: On Android this event is received after loading url/path.
 		*       On iOS this event is received after PLAYING event is received.
+		*		On WindowsPhone this event is received after media loding has finished
 		*/
 		SOURCE_READY = 5;
 
 		/**
 		* @brief Playback is temporarily interruped(maybe there's no data in the buffer).
+		* NOTE: On WindowsPhone 7 this occurs when an error is encountered.
 		*/
 		INTERRUPTED = 6;
 
@@ -4711,7 +4878,7 @@ group WidgetAPI "Widget API" {
 		VERTICAL_LAYOUT = "VerticalLayout";
 
 		/**
-		 * @brief A relative layout is a layout that layouts widgets relative to its coordinate system.
+		 * @brief A relative layout is a layout that layouts widgets relative to its coordinate system. See \ref WidgetRelativeLayoutProperties "Relative layout properties" for the properties available.
 		 */
 		RELATIVE_LAYOUT = "RelativeLayout";
 
@@ -4817,6 +4984,7 @@ group WidgetAPI "Widget API" {
 		* A Dialog gets visible only after calling maWidgetModalDialogShow().
 		* On Android it is a modal alert dialog.
 		* On iPad it is a PopoverController, and on iPhone it is a modal view.
+		* On Windows Phone, it's a Popup having inside a StackPanel which contains all the controls added to the dialog view.
 		* When a Dialog widget is created it is empty, it has no content. Any type of widget can be added inside it via #maWidgetAddChild syscalls.
 		* To show a Dialog call #maWidgetModalDialogShow(), to dismiss it call: #maWidgetModalDialogHide(), and to delete it call #maWidgetDestroy.
 		* See \ref WidgetModalDialogProperties "Modal Dialog properties" for the properties available.
@@ -4826,12 +4994,89 @@ group WidgetAPI "Widget API" {
 		/**
 		* @brief A panorama control is a Windows Phone 7 specific control
 		* Available only on Windows Phone 7
-		* Seen \ref WidgetPanoramaViewProperties "Panorama View properties" for the properties available
+		* See \ref WidgetPanoramaViewProperties "Panorama View properties" for the properties available
 		*/
 		PANORAMA_VIEW = "PanoramaView";
+
+		/**
+		* @brief A radio button available only on Android. A radio button can only have a #RADIO_GROUP parent.
+		* Checking one radio button that belongs to a radio group unchecks any previously checked radio button within the same group.
+		* Initially, all of the radio buttons are unchecked.
+		* While it is not possible to uncheck a particular radio button, the radio group can be cleared to remove the checked state.
+		* See \ref WidgetRadioButtonProperties "Radio Button properties" for the properties available.
+		*/
+		RADIO_BUTTON = "RadioButton";
+
+		/**
+		* \brief A radio group is available only on Android.
+		* This class is used to create a multiple-exclusion scope for a set of the \link #MAW_RADIO_BUTTON RADIO_BUTTONS \endlink .
+		* See \ref WidgetRadioGroupProperties "Radio Group properties" for the properties available.
+		*/
+		RADIO_GROUP = "RadioGroup";
+
+		/**
+		* @brief A RatingBar is an extension of Slider and ProgressBar that shows a rating in stars.
+		* The user can touch/drag or use arrow keys to set the rating when using the default size RatingBar.
+		* When using a RatingBar that supports user interaction, placing widgets to the left or right of the
+		* RatingBar is discouraged.
+		* See \ref WidgetRatingBarProperties "Rating Bar properties" for the properties available.
+		*/
+		RATING_BAR = "RatingBar";
+
 	}
 	} // end of WidgetTypes
 
+	/**
+	* The available constants for the Android predefined drawables used in OptionsMenu.
+	* The drawables can be set via #maWidgetScreenAddOptionsMenuItem syscall.
+	* The icons can be found here: http://androiddrawables.com/menu.html .
+	*/
+	group OptionsMenuIconConstants "Options menu icon constants" {
+	constset int MAW_OPTIONS_MENU_ICON_CONSTANT_ {
+		ADD = 17301555 ;
+		AGENDA = 17301556 ;
+		ALWAYS_LANDSCAPE_PORTRAIT = 17301557 ;
+		CALL = 17301558 ;
+		CAMERA = 17301559 ;
+		CLOSE_CLEAR_CANCEL = 17301560 ;
+		COMPASS = 17301561;
+		CROP = 17301562 ;
+		DAY =  17301563 ;
+		DELETE = 17301564 ;
+		DIRECTIONS = 17301565 ;
+		EDIT = 17301566 ;
+		GALLERY = 17301567 ;
+		HELP = 17301568 ;
+		INFO_DETAILS = 17301569 ;
+		MANAGE = 17301570 ;
+		MAPMODE = 17301571 ;
+		MONTH = 17301572 ;
+		MORE = 17301573 ;
+		MY_CALENDAR = 17301574 ;
+		MYLOCATION = 17301575 ;
+		MYPLACES = 17301576 ;
+		PREFERENCES = 17301577 ;
+		RECENT_HISTORY = 17301578 ;
+		REPORT_IMAGE = 17301579 ;
+		REVERT = 17301580 ;
+		ROTATE = 17301581 ;
+		SAVE = 17301582 ;
+		SEARCH = 17301583 ;
+		SEND = 17301584 ;
+		SET_AS = 17301585 ;
+		SHARE = 17301586 ;
+		SLIDESHOW = 17301587 ;
+		SORT_ALPHABETICALLY = 17301660 ;
+		SORT_BY_SIZE = 17301661 ;
+		TODAY = 17301588 ;
+		UPLOAD = 17301589 ;
+		UPLOAD_YOU_TUBE = 17301590 ;
+		VIEW = 17301591 ;
+		WEEK = 17301592 ;
+		ZOOM = 17301593 ;
+
+	}
+	} // end of OptionsMenuIconConstants
 
 	/**
 	* All widgets have a set of properties that can be set. In order to set them, use maWidgetSetProperty(). These properties may change
@@ -4903,10 +5148,11 @@ group WidgetAPI "Widget API" {
 
 		/**
 		* @brief Sets the transparency of the widget background.
+		* On Android this property is available for the moment only on Layouts and ImageWidget widgets.
 		*
-		* @validvalue A floay between 0.0 and 1.0, where 0.0 is fully transparent and 1.0 is opaque.
+		* @validvalue A float between 0.0 and 1.0, where 0.0 is fully transparent and 1.0 is opaque.
 		*
-		* @setonly
+		* @setandget
 		*
 		* @par Example
 		* \code
@@ -5000,7 +5246,7 @@ group WidgetAPI "Widget API" {
 		/**
 		* @brief Sets an icon for a screen. The icon is used by a tab screen to display an icon on the tab indicator.
 		*
-		* @validvalue MoSync handle to an uncompressed image resource. The size of the image should be small enough to fit in a tab indicatior.
+		* @validvalue MoSync handle to an uncompressed image resource. The size of the image should be small enough to fit in a tab indicator.
 		*
 		* @setonly
 		*
@@ -5010,6 +5256,21 @@ group WidgetAPI "Widget API" {
 		* \endcode
 		*/
 		ICON = "icon";
+
+		/**
+		* @brief Remove the options menu from this screen.
+		* The options menu can be added by calling #maWidgetScreenAddOptionsMenuItem for each item.
+		*
+		* @validvalue No value needed.
+		*
+		* @setonly
+		*
+		* @par Example
+		* \code
+		*	maWidgetSetProperty(screenHandle, MAW_SCREEN_REMOVE_OPTIONS_MENU, "");
+		* \endcode
+		*/
+		REMOVE_OPTIONS_MENU = "removeoptionsmenu";
 	}
 	} // end of WidgetScreenProperties
 
@@ -5086,7 +5347,7 @@ group WidgetAPI "Widget API" {
 		* 	char currentScreenBuffer[BUFFER_SIZE];
 		* 	int result = maWidgetGetProperty(
 		* 		panoramaViewHandle,
-		* 		MAW_WEB_VIEW_CURRENT_SCREEN,
+		* 		MAW_PANORAMA_VIEW_CURRENT_SCREEN,
 		* 		currentScreenBuffer,
 		*		BUFFER_SIZE);
 		* 	if (result > 0)
@@ -5103,6 +5364,7 @@ group WidgetAPI "Widget API" {
 		 * @validvalue MoSync handle to an uncompressed image resource. The size of the image should be large enough to fill the space used by the panorama
 		 *
 		 * @setonly
+		 *
 		 * @par Example
 		 * \code
 		 *	maWidgetSetProperty(panoramaViewHandle, MAW_PANORAMA_VIEW_BACKGROUND_IMAGE, toString(R_MY_IMG));
@@ -5221,7 +5483,8 @@ group WidgetAPI "Widget API" {
 		/**
 		* @brief Sets the font size in points of the label's text.
 		*
-		* @validvalue A float that specifies the number of points.
+		* @validvalue A float that specifies the number of pixels on Android
+		* and WP7, and number of points on iOS.
 		*
 		* @setonly
 		*
@@ -5345,7 +5608,8 @@ group WidgetAPI "Widget API" {
 		/**
 		* @brief Sets the font size in points of the button's text.
 		*
-		* @validvalue A float that specifies the number of points.
+		* @validvalue A float that specifies the number of pixels on Android
+		* and WP7, and number of points on iOS.
 		*
 		* @setonly
 		*
@@ -5454,7 +5718,8 @@ group WidgetAPI "Widget API" {
 		/**
 		* @brief Sets the font size in points of the button's text.
 		*
-		* @validvalue A float that specifies the number of points.
+		* @validvalue A float that specifies the number of pixels on Android
+		* and WP7, and number of points on iOS.
 		*
 		* @setonly
 		*
@@ -5602,15 +5867,19 @@ group WidgetAPI "Widget API" {
 			/**
 			* This flag is a hint to the implementation that during text editing,
 			* the initial letter of each word should be capitalized.
+			* Not available on Windows Phone 7.1.
 			*/
 			INITIAL_CAPS_WORD = 2;
 			/**
 			* This flag is a hint to the implementation that during text editing,
 			* the initial letter of each sentence should be capitalized.
+			* Input flag not available on Windows Phone 7.1 but the edit box
+			* type 'ANY' does this by default.
 			*/
 			INITIAL_CAPS_SENTENCE = 3;
 			/**
 			* Capitalize all characters automatically.
+			* Not available on Windows Phone 7.1.
 			*/
 			INITIAL_CAPS_ALL_CHARACTERS = 4;
 	    }
@@ -5689,6 +5958,7 @@ group WidgetAPI "Widget API" {
 
 		/**
 		* @brief Specifies what editing mode the edit box should have.
+		* Those flags are mutual exclusive, so the previous value is always ignored.
 		*
 		* @validvalue One of the values #MAW_EDIT_BOX_TYPE_ANY, #MAW_EDIT_BOX_TYPE_EMAILADDR,
 		* #MAW_EDIT_BOX_TYPE_NUMERIC, #MAW_EDIT_BOX_TYPE_PHONENUMBER, #MAW_EDIT_BOX_TYPE_URL,
@@ -5705,6 +5975,7 @@ group WidgetAPI "Widget API" {
 
 		/**
 		* @brief Specifies the editing flags applied to the edit box.
+		* Those flags are mutual exclusive, so the previous value is always ignored.
 		*
 		* @validvalue One of the values #MAW_EDIT_BOX_FLAG_PASSWORD,
 		* #MAW_EDIT_BOX_FLAG_SENSITIVE, #MAW_EDIT_BOX_FLAG_INITIAL_CAPS_ALL_CHARACTERS,
@@ -5728,10 +5999,92 @@ group WidgetAPI "Widget API" {
 		*
 		* @par Example
 		* \code
-		*	maWidgetSetProperty(labelHandle, MAW_EDIT_BOX_FONT_COLOR, "0xff0000");
+		*	maWidgetSetProperty(editBoxHandle, MAW_EDIT_BOX_FONT_COLOR, "0xff0000");
 		* \endcode
 		*/
 		FONT_COLOR = "fontColor";
+
+		/**
+		* @brief Set the number of lines.
+		* Makes the edit box exactly this many lines tall. Note that setting this value
+		* overrides any other (minimum / maximum) number of lines or height setting.
+		* A single line edit box will set this value to 1.
+		* This property will automatically set MAW_EDIT_BOX_TYPE_ANY input mode, so that
+		* the edit box will become multiline.
+		* Available on Android only.
+		*
+		* @validvalue A positive integer.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*	maWidgetSetProperty(editBoxHandle, MAW_EDIT_BOX_LINES_NUMBER, "2");
+		* \endcode
+		*/
+		LINES_NUMBER = "linesNumber";
+
+		/**
+		* @brief Makes the edit box at most this many lines tall.
+		* Setting this value overrides any other (maximum) height setting.
+		* Available on Android only.
+		*
+		* @validvalue A positive integer.
+		*
+		* @setonly
+		*
+		* @par Example
+		* \code
+		*	maWidgetSetProperty(editBoxHandle, MAW_EDIT_BOX_MAX_LINES, "2");
+		* \endcode
+		*/
+		MAX_LINES = "maxLines";
+
+		/**
+		* @brief Makes the edit box at least this many lines tall.
+		* Setting this value overrides any other (minimum) height setting.
+		* Available on Android only.
+		*
+		* @validvalue A positive integer.
+		*
+		* @setonly
+		*
+		* @par Example
+		* \code
+		*	maWidgetSetProperty(editBoxHandle, MAW_EDIT_BOX_MIN_LINES, "1");
+		* \endcode
+		*/
+		MIN_LINES = "minLines";
+
+		/**
+		* @brief Sets or gets the maximum input lenght of the edit box.
+		* Setting this value enables multiline input mode by default.
+		* Available on Android, iOS and Windows Phone.
+		*
+		* @validvalue A positive integer.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*	maWidgetSetProperty(editBoxHandle, MAW_EDIT_BOX_MAX_LENGTH, "10");
+		* \endcode
+		*/
+		MAX_LENGTH = "maxLength";
+
+		/**
+		* @brief Sets the font color of the placeholder text when an edit box is empty.
+		*
+		* @validvalue A hexadecimal value 0xRRGGBB, where R, G and B are the red, green and blue components respectively.
+		*
+		* @setonly
+		*
+		* @par Example
+		* \code
+		*	maWidgetSetProperty(editBoxHandle, MAW_EDIT_BOX_PLACEHOLDER_FONT_COLOR, "0xff0000");
+		* \endcode
+		*/
+		PLACEHOLDER_FONT_COLOR = "placeholderFontColor";
 	}
 	} // end of WidgetEditBoxProperties
 
@@ -5797,7 +6150,8 @@ group WidgetAPI "Widget API" {
 		/**
 		* @brief Sets the font size in points of the text part.
 		*
-		* @validvalue A float that specifies the number of points.
+		* @validvalue A float that specifies the number of pixels on Android
+		* and WP7, and number of points on iOS.
 		*
 		* @setonly
 		*
@@ -5962,6 +6316,24 @@ group WidgetAPI "Widget API" {
 	}
 	} // end of WidgetHorizontalLayoutProperties
 
+	group WidgetRelativeLayoutProperties "Relative layout properties" {
+	constset MAString MAW_RELATIVE_LAYOUT_{
+		/**
+		* @brief Sets the isScrollable boolean
+		*
+		* @validvalue "true" or "false", for "true" the layout will become scrollable otherwise it will become unscrollable
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*	maWidgetSetProperty(verticalLayoutHandle, MAW_RELATIVE_LAYOUT_SCROLLABLE, "true");
+		* \endcode
+		*/
+		SCROLLABLE = "scrollable";
+	}
+	}
+
 	/**
 	* The available widget properties for a #MAW_VERTICAL_LAYOUT. See \ref WidgetProperties "Widget properties" for more properties.
 	*/
@@ -6051,6 +6423,20 @@ group WidgetAPI "Widget API" {
 		* \endcode
 		*/
 		PADDING_BOTTOM = "paddingBottom";
+
+		/**
+		* @brief Sets the isScrollable boolean
+		*
+		* @validvalue "true" or "false", for "true" the layout will become scrollable otherwise it will become unscrollable
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*	maWidgetSetProperty(verticalLayoutHandle, MAW_VERTICAL_LAYOUT_SCROLLABLE, "true");
+		* \endcode
+		*/
+		SCROLLABLE = "scrollable";
 	}
 	} // end of WidgetVerticalLayoutProperties
 
@@ -6212,8 +6598,8 @@ group WidgetAPI "Widget API" {
 		*
 		* Note that when receiving event #MAW_EVENT_WEB_VIEW_HOOK_INVOKED
 		* you MUST deallocate the urlData handle of the event by calling
-		* maDestroyObject on the handle. Destory the handle when you are done
-		* reading the url data, to avoid that memory will get used up.
+		* maDestroyPlaceholder on the handle. Destory the handle when you are
+		* done reading the url data, to avoid that memory will get used up.
 		*
 		* The pattern is a url pattern specified using regular expression
 		* syntax, according to the ICU regular expression standard, using
@@ -6272,8 +6658,8 @@ group WidgetAPI "Widget API" {
 		*
 		* Note that when receiving event #MAW_EVENT_WEB_VIEW_HOOK_INVOKED
 		* you MUST deallocate the urlData handle of the event by calling
-		* maDestroyObject on the handle. Destory the handle when you are done
-		* reading the url data, to avoid that memory will get used up.
+		* maDestroyPlaceholder on the handle. Destory the handle when you are
+		* done reading the url data, to avoid that memory will get used up.
 		*
 		* The pattern is a url pattern specified using regular expression
 		* syntax, according to the ICU regular expression standard, using
@@ -6542,7 +6928,8 @@ group WidgetAPI "Widget API" {
 	group WidgetDatePickerProperties "Date Picker properties" {
 	constset MAString MAW_DATE_PICKER_ {
 		/**
-		* @brief Sets or gets  maximal date supported by this DatePicker in milliseconds since January 1, 1970 00:00:00.
+		* @deprecated use MAX_DATE_YEAR, MAX_DATE_MONTH and MAX_DATE_DAY instead
+		* @brief Sets or gets  maximal date supported by this DatePicker in seconds since January 1, 1970 00:00:00.
 		* NOTE: On Android the default maximal date is 12/31/2100.
 		* NOTE: The property can be set on iOS only.
 		* @validvalue A long int that specifies the upper range of this date picker.
@@ -6551,27 +6938,117 @@ group WidgetAPI "Widget API" {
 		*
 		* @par Example
 		* \code
-        *   maWidgetSetProperty(datePickerHandle, MAW_DATE_PICKER_MAX_DATE, "101220100000");
+        *   maWidgetSetProperty(datePickerHandle, MAW_DATE_PICKER_MAX_DATE, "1291939200");
 		*   // Now the maximum date is  the 10th of December 2010.
 		* \endcode
 		*/
 		MAX_DATE = "maxDate";
 
 		/**
-		* @brief Sets or gets  minimal date supported by this DatePicker in milliseconds since January 1, 1970 00:00:00
+		* @brief Sets or gets the year of the maximal date supported by this DatePicker.
+		* Note: On Android the default maximal date year is 2100.
+		* Note: On Windows Phone 7 and iOS the default maximal date year is 9999.
+		* @validvalue An int that specifies the value of the year of the maximal date
+		* for this date picker.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(datePickerHandle, MAW_DATE_PICKER_MAX_DATE_YEAR, "2999");
+		* \endcode
+		*/
+		MAX_DATE_YEAR = "maxdateyear";
+
+		/**
+		* @brief Sets or gets the month of the maximal date supported by this DatePicker.
+		* @validvalue An int that specifies the value of the month of the maximal date for
+		* this date picker. The value must be a number between 1 and 12.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(datePickerHandle, MAW_DATE_PICKER_MAX_DATE_MONTH, "12");
+		* \endcode
+		*/
+		MAX_DATE_MONTH = "maxdatemonth";
+
+		/**
+		* @brief Sets or gets the day of the maximal date supported by this DatePicker.
+		* @validvalue An int that specifies the value of the day of the maximal date for
+		* this date picker. This number must be a valid day of the month specified with
+		* the MAX_DATE_MONTH property.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(datePickerHandle, MAW_DATE_PICKER_MAX_DATE_DAY, "31");
+		* \endcode
+		*/
+		MAX_DATE_DAY = "maxdateday";
+
+		/**
+		* @deprecated use MIN_DATE_YEAR, MIN_DATE_MONTH and MIN_DATE_DAY instead
+		* @brief Sets or gets  minimal date supported by this DatePicker in seconds since January 1, 1970 00:00:00
 		* Note: On Android the default minimal date is 01/01/1900.
-		* NOTE: The property can be set on iOS only.
 		* @validvalue A long int that specifies the minimal supported date.
 		*
 		* @setandget
 		*
 		* @par Example
 		* \code
-        *   maWidgetSetProperty(datePickerHandle, MAW_DATE_PICKER_MIN_DATE, "0101200000");
+        *   maWidgetSetProperty(datePickerHandle, MAW_DATE_PICKER_MIN_DATE, "946684800");
 		*   // Now the minimum date is the 1st of January 2000.
 		* \endcode
 		*/
 		MIN_DATE = "minDate";
+
+		/**
+		* @brief Sets or gets the year of the minimal date supported by this DatePicker.
+		* Note: On Android the default minimal date year  is 1900.
+		* Note: On Windows Phone 7 and iOS the default minimal date year is 1.
+		* @validvalue An int that specifies the value of the year of the minimal date
+		* for this date picker.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(datePickerHandle, MAW_DATE_PICKER_MIN_DATE_YEAR, "1830");
+		* \endcode
+		*/
+		MIN_DATE_YEAR = "mindateyear";
+
+		/**
+		* @brief Sets or gets the month of the minimal date supported by this DatePicker.
+		* @validvalue An int that specifies the value of the month of the minimal date for
+		* this date picker. The value must be a number between 1 and 12.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(datePickerHandle, MAW_DATE_PICKER_MIN_DATE_MONTH, "1");
+		* \endcode
+		*/
+		MIN_DATE_MONTH = "mindatemonth";
+
+		/**
+		* @brief Sets or gets the day of the minimal date supported by this DatePicker.
+		* @validvalue An int that specifies the value of the day of the minimal date for
+		* this date picker. This number must be a valid day of the month specified with
+		* the MIN_DATE_MONTH property.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(datePickerHandle, MAW_DATE_PICKER_MIN_DATE_DAY, "1");
+		* \endcode
+		*/
+		MIN_DATE_DAY = "mindateday";
 
 		/**
 		* @brief Sets or gets the currently displayed year.
@@ -6728,7 +7205,7 @@ group WidgetAPI "Widget API" {
 	constset MAString MAW_VIDEO_VIEW_ {
 		/**
 		* @brief Sets the video path.
-		* Note: available only for Android.
+		* Note: available on Android and Windows Phone.
 		* @validvalue Any valid path.
 		*
 		* @setonly
@@ -6790,7 +7267,7 @@ group WidgetAPI "Widget API" {
 		*
 		* NOTE: On Android this value can be retrieved after MAW_VIDEO_VIEW_STATE_SOURCE_READY is received.
 		*       On iOS this value can be retrieved after MAW_VIDEO_STATE_PLAYING is received.
-		* @validvalue An int.
+		* @validvalue An integer representing the total media duration in milliseconds.
 		*
 		* @getonly
 		*
@@ -6822,7 +7299,7 @@ group WidgetAPI "Widget API" {
 		/**
 		* @brief Gets the current position in the video file.
 		*
-		* @validvalue An int.
+		* @validvalue An integer representing the current media position in seconds.
 		*
 		* @getonly
 		*
@@ -6834,6 +7311,23 @@ group WidgetAPI "Widget API" {
 		* \endcode
 		*/
 		CURRENT_POSITION = "currentPosition";
+
+		/**
+		* @brief Show/hide video control.
+		* Default value is "true"(video control is shown).
+		* Platform: iOS.
+		*
+		* @validvalue "true" show the video control, "false" hide the video control.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*   char buf[BUFFER_SIZE];
+        *   maWidgetGetProperty(videoViewHandle, MAW_VIDEO_VIEW_CONTROL, buf, BUFFER_SIZE);
+		* \endcode
+		*/
+		CONTROL = "control";
 	}
 	} // end of WidgetVideoViewProperties
 
@@ -6905,7 +7399,8 @@ group WidgetAPI "Widget API" {
 		/**
 		* @brief Sets the font size in points of the title.
 		*
-		* @validvalue A float that specifies the number of points.
+		* @validvalue A float that specifies the number of pixels on Android
+		* and WP7, and number of points on iOS.
 		*
 		* @setonly
 		*
@@ -6993,6 +7488,177 @@ group WidgetAPI "Widget API" {
 
 	}
 	} // end of WidgetmodalDialogProperties
+
+	/**
+	* The available widget properties for a #MAW_RADIO_BUTTON. See \ref WidgetProperties "Widget properties" for more properties.
+	*/
+	group WidgetRadioButtonProperties "Radio Button properties" {
+	constset MAString MAW_RADIO_BUTTON_ {
+		/**
+		* @brief Get the checked state of the radio button.
+		*
+		* @validvalue A boolean string 'true' or 'false'.
+		*
+		* @getonly
+		*
+		* @par Example
+		* \code
+		* 	char state[BUFFER_SIZE];
+		*   maWidgetGetProperty(radioButtonHandle, MAW_RADIO_BUTTON_CHECKED, state, BUFFER_SIZE);
+		* \endcode
+		*/
+		CHECKED = "checked";
+
+		/**
+		* @brief Change the checked state of the view to the inverse of its current state.
+		* If the radio button is already checked, this method will not toggle the radio button.
+		*
+		* @validvalue No neccessary value needed.
+		*
+		* @setonly
+		*
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(radioButtonHandle, MAW_RADIO_BUTTON_TOGGLE, "");
+		* \endcode
+		*/
+		TOGGLE = "toggle";
+
+		/**
+		* @brief Set or get the text to display.
+		*
+		* @validvalue A null-terminated string.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(radioButtonHandle, MAW_RADIO_BUTTON_TEXT, "Option A");
+		* \endcode
+		*/
+		TEXT = "text";
+
+		/**
+		* @brief Specifies the text color of the radio button.
+		*
+		* @validvalue A hexadecimal value 0xRRGGBB, where R, G and B are the red, green and blue components respectively.
+		*
+		* @setonly
+		*
+		* @par Example
+		* \code
+		*	maWidgetSetProperty(widgetHandle, MAW_RADIO_BUTTON_TEXT_COLOR, "0xff0000"); // Red
+		* \endcode
+		*/
+		TEXT_COLOR = "textcolor";
+	}
+	} // end of WidgetRadioButtonProperties
+
+	/**
+	* The available widget properties for a #MAW_RADIO_GROUP. See \ref WidgetProperties "Widget properties" for more properties.
+	*/
+	group WidgetRadioGroupProperties "Radio Button properties" {
+	constset MAString MAW_RADIO_GROUP_ {
+		/**
+		* @brief Add the radio buttons grouped in this widget.
+		* This is the only widget type that accepts Radio Buttons as children.
+		*
+		* @validvalue An int specifying the radio button handle.
+		*
+		* @setonly
+		*
+		* @par Example
+		* \code
+		*   // Attach two radio buttons to this group.
+		*   maWidgetSetProperty(radioGroupHandle, MAW_RADIO_GROUP_ADD_VIEW, "3");
+		*   maWidgetSetProperty(radioGroupHandle, MAW_RADIO_GROUP_ADD_VIEW, "4");
+		* \endcode
+		*/
+		ADD_VIEW = "addview";
+
+		/**
+		* @brief Clear the selection.
+		* When the selection is cleared, no radio button in this group is selected and
+		* #MAW_RADIO_GROUP_SELECTED returns -1.
+		*
+		* @validvalue No neccessary value needed.
+		*
+		* @setonly
+		*
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(radioGroupHandle, MAW_RADIO_GROUP_CLEAR_CHECK, "");
+		* \endcode
+		*/
+		CLEAR_CHECK = "clearcheck";
+
+		/**
+		* @brief Set or get the selected radio button in this group.
+		* Upon empty selection, get property returns -1.
+		* Setting -1 as the selection identifier clears the selection; such an operation
+		* is equivalent to invoking #MAW_RADIO_GROUP_CLEAR_CHECK.
+		*
+		* @validvalue A valid radio button handle.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*   char buttonHandle[BUF_SIZE];
+		*   maWidgetGetProperty(radioGroupHandle, MAW_RADIO_GROUP_SELECTED, buttonHandle, BUF_SIZE);
+		* \endcode
+		*/
+		SELECTED = "selected";
+	}
+	} // end of WidgetRadioGroupProperties
+
+	/**
+	* The available widget properties for a #MAW_RATING_BAR. See \ref WidgetProperties "Widget properties" for more properties.
+	*/
+	group WidgetRatingBarProperties "Rating Bar properties" {
+	constset MAString MAW_RATING_BAR_ {
+		/**
+		* @brief Set or get the number of stars to show.
+		* Usually, the default stars number is 5.
+		* @validvalue An int that specifies the number of stars to show.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(ratingBarHandle, MAW_RATING_BAR_NUM_STAR, "4");
+		* \endcode
+		*/
+		NUM_STAR = "numstar";
+
+		/*
+		* @brief Set or get the current rating (number of stars filled).
+		*
+		* @validvalue A float that specifies the number of stars filled.
+		*
+		* @setandget
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(ratingBarHandle, MAW_RATING_BAR_RATING, "3.0");
+		* \endcode
+		*/
+		RATING = "rating";
+
+		/**
+		* @brief Set or get the step size (granularity) of this rating bar.
+		* By default the granularity is 0.5.
+		* @validvalue A float that specifies the step size.
+		*
+		* @setandget
+		*
+		* @par Example
+		* \code
+		*   maWidgetSetProperty(ratingBarHandle, MAW_RATING_BAR_GRANULARITY, "1.0");
+		* \endcode
+		*/
+		GRANULARITY = "granularity";
+	}
+	} // end of WidgetRatingBarProperties
 	} // end of WidgetProperties
 
 	typedef int MAWidgetHandle;
@@ -7181,6 +7847,28 @@ group WidgetAPI "Widget API" {
 	* - #MAW_RES_ERROR otherwise.
 	*/
 	int maWidgetGetProperty(in MAWidgetHandle widget, in MAString property, out MAString value range("bufSize"), in int bufSize);
+
+	/**
+	* Add an item to the Options Menu associated to a screen.
+	* Available on Android only.
+	* The options menu is where you should include actions and other options that are relevant to the current activity
+	* context, such as "Search," "Compose email," or "Settings".
+	* When opened, the first visible portion is the icon menu, which holds up to six menu items.
+	* If your menu includes more than six items, Android places the sixth item and the rest into the overflow menu,
+	* which the user can open by selecting More. Those items do not display icons.
+	* \param widget Handle to the screen widget.
+	* \param title The title associated for the new item. Can be left null.
+	* \iconHandle MoSync handle to an uncompressed image resource, or :
+	* a predefined Android icon, one of the \link #MAW_OPTIONS_MENU_ICON_CONSTANT \endlink constants.
+	* Can be left null.
+	* \iconPredefined Specifies if the icon is a project resource, or one of the predefined Android icons.
+	* By default it's value is 0.
+	*
+	* \returns The the item index on success, or any of the following result codes:
+	* - #MAW_RES_INVALID_HANDLE if the screen handle was invalid.
+	* - #MAW_RES_ERROR otherwise.
+	*/
+	int maWidgetScreenAddOptionsMenuItem(in MAWidgetHandle widget, in MAString title, in int iconHandle, in int iconPredefined);
 
 	} // end of group WidgetAPIFunctions
 
@@ -7668,7 +8356,7 @@ group CameraFunctions "Camera Functions" {
 
 		/**
 		 * Set the screen orientation.
-		 * Currently implemented only on Android.
+		 * Currently implemented only on Android and Windows Phone.
 		 * @param orientation One of the \link #SCREEN_ORIENTATION_LANDSCAPE
 		 * #SCREEN_ORIENTATION_PORTRAIT #SCREEN_ORIENTATION_DYNAMIC \endlink
 		 * constants.
@@ -7694,6 +8382,59 @@ group CameraFunctions "Camera Functions" {
 		int maScreenSetFullscreen(in int fullscreen);
 
 		/**
+		* Set supported screen orientations.
+		* Currently implemented on iOS and WindowsPhone 7.1.
+		* @param orientations A bitmask consisting of flags describing the supported screen orientations.
+		* The bitmask can be created using \link #MA_SCREEN_ORIENTATION_ MA_SCREEN_ORIENTATION \endlink
+		* values.
+		* @return One of the next constants:
+		* - #MA_SCREEN_ORIENTATION_RES_OK
+		* - #MA_SCREEN_ORIENTATION_RES_NOT_SUPPORTED
+		* - #MA_SCREEN_ORIENTATION_RES_INVALID_VALUE
+		*/
+		int maScreenSetSupportedOrientations(in int orientations);
+
+		/**
+		* Get supported screen orientations.
+		* Currently implemented on iOS and WindowsPhone 7.1.
+		* @return A bitmask consisting of flags describing the supported screen orientations.
+		* The bitmask is created using \link #MA_SCREEN_ORIENTATION_ MA_SCREEN_ORIENTATION \endlink
+		* values.
+		*/
+		int maScreenGetSupportedOrientations();
+
+		/**
+		* Get current screen orientation.
+		* Currently implemented on iOS and WindowsPhone 7.1.
+		* @return One of the \link #MA_SCREEN_ORIENTATION_ MA_SCREEN_ORIENTATION \endlink constants.
+		*/
+		int maScreenGetCurrentOrientation();
+
+		constset int MA_SCREEN_ORIENTATION_ {
+			/// The device is in portrait mode, with the device held upright and the home button on
+			/// the bottom.
+			PORTRAIT = 0x000001;
+			/// The device is in portrait mode but upside down, with the device held upright and the
+			/// home button at the top.
+			PORTRAIT_UPSIDE_DOWN = 0x000002;
+			/// The device is in landscape mode, with the device held upright and the home button on
+			/// the left side.
+			LANDSCAPE_LEFT = 0x000004;
+			/// The device is in landscape mode, with the device held upright and the home button on
+			/// the right side.
+			LANDSCAPE_RIGHT = 0x000008;
+		}
+
+		constset int MA_SCREEN_ORIENTATION_RES_ {
+			///
+			OK = 0;
+			///
+			NOT_SUPPORTED = -1;
+			///
+			INVALID_VALUE = -2;
+		}
+
+		/**
 		 * Turn on sending of screen state events. Off by default.
 		 * Currently implemented only on Android.
 		 * @return \< 0 on error.
@@ -7709,6 +8450,21 @@ group CameraFunctions "Camera Functions" {
 		 * @return \< 0 on error.
 		 */
 		int maScreenStateEventsOff();
+
+		/**
+		 * Lock device to be "awake". This means that the device
+		 * won't go to sleep while the app is running.
+		 * @param flag MA_WAKE_LOCK_ON or MA_WAKE_LOCK_OFF
+		 * @return \>0 on success, \< 0 on error (-1 if not available).
+		 */
+		int maWakeLock(in int flag);
+
+		constset int MA_WAKE_LOCK_ {
+			/// Application will run with screen on (consumes power).
+			ON = 1;
+			/// Turn off the wake lock.
+			OFF = 2;
+		}
 
 group OpenGLES "OpenGLES" {
 #include "opengl_non_generated.idl"
@@ -7737,9 +8493,9 @@ group OpenGLES "OpenGLES" {
 		* \param title The title of the message box shown.
 		* \param message The message should be short, not more than 40 characters,
 		* to ensure its visibility on all screen sizes.
-		* \button1 The text on the first button. On Android it indicates a positive selection.
-		* \button2 The text on the second button. On Android it indicates a neutral selection.
-		* \button3 The text on the third button. On Android it indicates that a negative selection.
+		* \param button1 The text on the first button. On Android it indicates a positive selection.
+		* \param button2 The text on the second button. On Android it indicates a neutral selection.
+		* \param button3 The text on the third button. On Android it indicates that a negative selection.
 		*/
 		void maAlert(in MAString title, in MAString message, in MAString button1, in MAString button2, in MAString button3);
 
@@ -7776,8 +8532,10 @@ group SensorAPI "Sensor API" {
 			ORIENTATION = 3;
 			// A constant describing a gyroscope sensor type.
 			GYROSCOPE = 4;
-			// A constant describing an proximity sensor type.
+			// A constant describing a proximity sensor type.
 			PROXIMITY = 5;
+			// A constant describing a compass sensor type.
+			COMPASS = 6;
 		}
 
 		} // end of sensor types
@@ -7866,8 +8624,7 @@ group NFCAPI "NFC API" {
 		* Start listening to NFC events.
 		* \return MA_NFC_NOT_ENABLED if NFC is not enabled on this device,
 		* MA_NFC_NOT_AVAILABLE if NFC is not at all available, or
-		* 0 otherwise. If the proper permissions (NFC) are not set, a panic will
-		* be raised.
+		* 0 otherwise.
 		*/
 		int maNFCStart();
 
@@ -8012,7 +8769,7 @@ group NFCAPI "NFC API" {
 
 		/**
 		* Creates a new NDEF message, to be used primarily by
-		* \code maNFCWriteDefMessage.
+		* \code maNFCWriteDefMessage. \endcode
 		* \param recordCount The number of records in the created message
 		* \return The handle to the created NDEF message; clients are
 		* responsible for destroying the message.
@@ -8022,7 +8779,8 @@ group NFCAPI "NFC API" {
 		/**
 		* Gets the NDEF message from a tag, which must
 		* be of the MA_NFC_TAG_TYPE_NDEF type.
-		* * If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* (Please note the difference between an NDEF \b tag and an NDEF \b message.)
 		* \return The handle to the NDEF message, which
 		* may be subsequently used in NDEF specfic functions,
 		* or the zero handle if the tag has no NDEF message
@@ -8038,15 +8796,15 @@ group NFCAPI "NFC API" {
 
 		/**
 		* \return A handle to the ith NDEF record of an NDEF message.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not an NDEF message, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
-		MAHandle maNFCGetNDEFRecord(in MAHandle ndef, in int ix);
+		MAHandle maNFCGetNDEFRecord(in MAHandle ndefMessage, in int ix);
 
 		/**
 		* \return The number of NDEF records in an NDEF message.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not an NDEF message, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
-		int maNFCGetNDEFRecordCount(in MAHandle ndef);
+		int maNFCGetNDEFRecordCount(in MAHandle ndefMessage);
 
 		/**
 		* Reads the variable length id of an NDEF record.
@@ -8054,7 +8812,7 @@ group NFCAPI "NFC API" {
 		* \param dst Where the result should be written to.
 		* \param len The maximum length to write.
 		* \return The number of bytes written.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not an NDEF message record, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCGetNDEFId(in MAHandle ndefRecord, out MAAddress dst, in int len);
 
@@ -8064,13 +8822,13 @@ group NFCAPI "NFC API" {
 		* \param dst Where the result should be written to.
 		* \param len The maximum length to write.
 		* \return The number of bytes written.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not an NDEF message record, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCGetNDEFPayload(in MAHandle ndefRecord, out MAAddress dst, in int len);
 
 		/**
 		* Returns the 3-bit TNF of an NDEF record.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not an NDEF message record, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCGetNDEFTnf(in MAHandle ndefRecord);
 
@@ -8080,31 +8838,31 @@ group NFCAPI "NFC API" {
 		* \param dst Where the result should be written to.
 		* \param len The maximum length to write.
 		* \return The number of bytes written.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not an NDEF message record, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCGetNDEFType(in MAHandle ndefRecord, out MAAddress dst, in int len);
 
 		/**
 		* Sets the variable length id of an NDEF record.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not an NDEF message record, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCSetNDEFId(in MAHandle ndefRecord, in MAAddress dst, in int len);
 
 		/**
 		* Sets the variable length payload of an NDEF record.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not NDEF message record, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCSetNDEFPayload(in MAHandle ndefRecord, in MAAddress dst, in int len);
 
 		/**
 		* Sets the 3-bit TNF of an NDEF record,
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not NDEF message record, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCSetNDEFTnf(in MAHandle ndefRecord, in int tnf);
 
 		/**
 		* Returns the variable length type field of an NDEF record.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not NDEF message record, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCSetNDEFType(in MAHandle ndefRecord, in MAAddress dst, in int len);
 
@@ -8118,13 +8876,13 @@ group NFCAPI "NFC API" {
 		* \param sectorIndex The sector to authenticate
 		* \param keySrc The address to the key to authenticate with
 		* \param keyLen The length of the key to authenticate with
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not a Mifare Classic tag, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCAuthenticateMifareSector(in MAHandle tagHandle, in int keyType, in int sectorIndex, in MAAddress keySrc, in int keyLen);
 
 		/**
 		* \return The number of sectors of a MIFARE Classic tag.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not a Mifare Classic tag, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCGetMifareSectorCount(in MAHandle tagHandle);
 
@@ -8132,7 +8890,7 @@ group NFCAPI "NFC API" {
 		* Returns the number of blocks in a sector of a MIFARE Classic tag.
 		* \param sector The sector to get the number of blocks in.
 		* \return The number of blocks in a given sector.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not a Mifare Classic tag, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCGetMifareBlockCountInSector(in MAHandle tagHandle, in int sector);
 
@@ -8140,7 +8898,7 @@ group NFCAPI "NFC API" {
 		* Returns the first block of a sector of a MIFARE Classic tag.
 		* \param sector The sector of which to get the first block.
 		* \return The index of the first block of the sector is returned.
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not a Mifare Classic tag, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCMifareSectorToBlock(in MAHandle tagHandle, in int sector);
 
@@ -8152,7 +8910,7 @@ group NFCAPI "NFC API" {
 		* \param dst The memory address to write to.
 		* \param len The number of bytes to read. Several blocks may be read, depending
 		* on len (A block is 16 bytes).
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not a Mifare Classic tag, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCReadMifareBlocks(in MAHandle tagHandle, in int firstBlock, out MAAddress dst, in int len);
 
@@ -8164,7 +8922,7 @@ group NFCAPI "NFC API" {
 		* \param dst The memory address to read from.
 		* \param len The number of bytes to write. Several blocks may be written, depending
 		* on len (A block is 16 bytes).
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not a Mifare Classic tag, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCWriteMifareBlocks(in MAHandle tagHandle, in int firstBlock, in MAAddress dst, in int len);
 
@@ -8176,7 +8934,7 @@ group NFCAPI "NFC API" {
 		* \param dst The memory address to write to.
 		* \param len The number of bytes to read. Several pages may be read, depending
 		* on len (A page is 16 bytes).
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not a Mifare Ultralight tag, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCReadMifarePages(in MAHandle tagHandle, in int firstPage, out MAAddress dst, in int len);
 
@@ -8188,7 +8946,7 @@ group NFCAPI "NFC API" {
 		* \param dst The memory address to read from.
 		* \param len The number of bytes to write. Several pages may be written, depending
 		* on len (A page is 16 bytes).
-		* If the handle is not an NDEF tag, MA_NFC_INVALID_TAG_TYPE will be returned.
+		* If the handle is not a Mifare Ultralight tag, MA_NFC_INVALID_TAG_TYPE will be returned.
 		*/
 		int maNFCWriteMifarePages(in MAHandle tagHandle, in int firstPage, in MAAddress dst, in int len);
 
@@ -8337,7 +9095,7 @@ group NFCAPI "NFC API" {
 		}
 	}//end of NFC API
 
-	group DBAPI "DB API" {
+	group DBAPI "Database API" {
 		struct MADBBlob {
 			MAAddress data;
 			int size;
@@ -8404,16 +9162,22 @@ group NFCAPI "NFC API" {
 
 		/**
 		 * @copydoc maDBExecSQL()
+		 *
 		 * @param params Array of values to bind to parameters.
-		 * Parameters are specified by question marks (?)
-		 * in the SQL statement.
+		 * Parameters are specified by question marks (?) in the SQL statement.
 		 *
-		 * If this function returns a cursor,
-		 * any text or blob values being pointed to by elements of the array must remain valid until
-		 * the cursor has been destroyed by maDBCursorDestroy().
-		 * The array itself does not need to remain valid after this function returns.
+		 * If this function returns a cursor, any text or blob values being
+		 * pointed to by elements of the array must remain valid until the
+		 * cursor has been destroyed by maDBCursorDestroy().
 		 *
-		 * @param paramCount Number of elements in the array pointed to by \a params.
+		 * The array itself does not need to remain valid after this
+		 * function returns.
+		 *
+		 * @param paramCount Number of elements in the array pointed to
+		 * by \a params.
+		 *
+		 * This function is currently available on iOS and MoRE
+		 * (not on Android).
 		 */
 		MAHandle maDBExecSQLParams(in MAHandle databaseHandle, in MAString sql,
 			in MADBValue params, in int paramCount);
@@ -8537,9 +9301,8 @@ group NFCAPI "NFC API" {
 			 */
 			NULL = -4;
 		}
-	} // End of DB API
+	} // End of Database API
 
-#if IX_AUDIO
 	group AudioAPI "Audio API" {
 		typedef int MAAudioData;
 		typedef int MAAudioInstance;
@@ -8552,6 +9315,7 @@ group NFCAPI "NFC API" {
 
 			constset int MA_AUDIO_ERR_ {
 				OK = 0;
+				// Invalid instance, the given MAAudioInstance can't do this
 				INVALID_INSTANCE = -2;
 				INVALID_DATA = -3;
 				INVALID_FILENAME = -4;
@@ -8561,25 +9325,202 @@ group NFCAPI "NFC API" {
 				POSITION_OUT_OF_RANGE = -8;
 				INVALID_SOUND_FORMAT = -9;
 				OUT_OF_MEMORY = -10;
+				ALREADY_PREPARED = -11;
+				PREPARE_FAILED = -12;
+				IS_PLAYING = -13;
+				GENERIC = -14;
 			}
 		} // end of Audio API constants
 
+		/**
+		* The Audio API gives the developer more control over playing music and
+		* and sound effects in MoSync applications.
+		* The Audio API uses streaming and non-streaming audio sources.
+		* The streaming could be songs for playing in the background in games.
+		* The non-streaming sounds should instead be used as sound effects.
+		* Please consider using short, as in a couple of seconds, samples in MP3
+		* format instead of WAV due to differences between platforms and WAV
+		* playback problems on Android.
+		* @attention The Audio API is only available on Android and iOS!
+		*/
 		group AudioAPIFunctions "Audio API Functions" {
+
+			/**
+			* @brief Creates a MAAudioData handle from a MoSync resource.
+			* @param mime 	The mime string for the resource. Can be NULL
+			* @param data 	The binary resource
+			* @param offset The offset in the binary file to where the data starts
+			* @param length The length of the data to use
+			* @param flags 	MA_AUDIO_DATA_STREAM means that the audio should be streamed
+			*				either from disk or over HTTP. This is only for music playback,
+			*				sound effects should have the flag set to 0.
+			* @attention 	Windows Phone only supports wave-files (see remarks here: http://msdn.microsoft.com/en-us/library/microsoft.xna.framework.audio.soundeffect.fromstream.aspx).
+			* @return A MAAudioData handle or <0 on error.
+			*/
 			MAAudioData maAudioDataCreateFromResource(in MAString mime, in MAHandle data, in int offset, in int length, in int flags);
-			MAAudioData maAudioDataCreateFromFile(in MAString mime, in MAString filename, in int flags);
+
+			/**
+			* @brief Creates a MAAudioData handle from an URL or file path.
+			* @param mime 	The mime string for the resource. Can be NULL
+			* @param url 	The URL to the resource file. Accepts 'http://' or 'http://' for
+			*				streaming from internet. Without protcol file is assumed.
+			* @param flags 	MA_AUDIO_DATA_STREAM means that the audio should be streamed
+			*				either from disk or over HTTP. This is only for music playback,
+			*				sound effects should have this flag set to 0.
+			* @return 		A MAAudioData handle or <0 on error.
+			* @attention 	iOS Only supports loading local files.
+			*/
+			MAAudioData maAudioDataCreateFromURL(in MAString mime, in MAString url, in int flags);
+
+			/**
+			* @brief Destroys a MAAudioData handle and releases used memory
+			*
+			* @param audioData 	The MAAudioData handle.
+			* @return 			MA_AUDIO_ERR_OK on success or <0 on fail.
+			*/
 			int maAudioDataDestroy(in MAAudioData audioData);
+
+			/**
+			* @brief Creates a MAAudioInstance handle from a MAAudioData handle.
+			*
+			* @param audioData 	The MAAudioData handle
+			*
+			* @return 			A MAAudioInstance handle or <0 on error.
+			*
+			*/
 			MAAudioInstance maAudioInstanceCreate(in MAAudioData audioData);
+
+			/**
+			* @brief Creates an MAAudioInstance that can be fed samples dynamically.
+			*
+			* @param sampleRate  The samplerate of the audio instance.
+			* @param numChannels Number of channels for the audio instance (1 means mono, 2 means stereo).
+			* @param bufferSize  The size of the underlying sample buffer (in samples).
+			*
+			* @return 			A MAAudioInstance handle or <0 on error.
+			*
+			*/
+			MAAudioInstance maAudioInstanceCreateDynamic(in int sampleRate, in int numChannels, in int bufferSize);
+
+			/**
+			* @brief Submits a buffer of samples to a dynamic MAAudioInstance
+			*
+			* @param instance	The handle to the MAAudioInstance
+			* @param buffer		A pointer to the samples that should be submitted. Each sample must be a signed 16-bit short. When using more than one channel, the samples should be interleaved.
+			* @param numBytes	The number of bytes to read.
+			* @return 			<0 on error.
+			*
+			*/
+			int maAudioSubmitBuffer(in MAAudioInstance instance, in MAAddress buffer, in int numBytes);
+
+			/**
+			* @brief Gets the pending buffer count for the dynamic MAAudioInstance
+			*
+			* @param instance	The handle to the MAAudioInstance
+			* @return 			<0 on error, otherwise the pending buffer count.
+			*
+			*/
+			int maAudioGetPendingBufferCount(in MAAudioInstance instance);
+
+			/**
+			* @brief Destroys a MAAudioInstance handle releases used memory
+			* @param audioInstance 	The MAAudioInstance handle
+			* @return 				MA_AUDIO_ERR_OK on success,
+			*						<0 on error.
+			*/
 			int maAudioInstanceDestroy(in MAAudioInstance audioInstance);
+
+			/**
+			* @brief Returns the lenght in milliseconds for this instance.
+			* @param audio 	The MAAudioInstance handle
+			* @return 		The lenght in milliseconds,
+			*				<0 on error.
+			*/
 			int maAudioGetLength(in MAAudioInstance audio);
+
+			/**
+			* @brief Sets the number of loops this instance will play
+			*
+			* @param audio 	The MAAudioInstance handle
+			* @param loops 	0 means play once,
+			*				>0 means loop 'loops' times,
+			* 				-1 means loop forever.
+			* @return 		MA_AUDIO_ERR_OK on success, <0 on error.
+			*/
 			int maAudioSetNumberOfLoops(in MAAudioInstance audio, in int loops);
+
+			/**
+			* @brief Prepares an MAAudioInstance before playback.
+			* If prepared asynchronous the call will return directly, but the
+			* MAAudioInstance will not be ready for playback until
+			* an EVENT_TYPE_AUDIO_PREPARED event has been sent.
+			* If synchronous the call will block execution until finished
+			* and the MAAudioInstance will be ready directly.
+			* @attention 	If a streaming audio is already playing and a new one is being prepared,
+			* 				on some platforms the playing audio will stop.
+			*
+			* @param audio The MAAudioInstance handle
+			* @param async 0 if synchronus, 1 if asynchronous
+			* @return 	MA_AUDIO_ERR_OK on success
+			*		MA_AUDIO_ERR_INVALID_INSTANCE on invalid audio instance
+			*		MA_AUDIO_ERR_ALREADY_PREPARED on already prepared audio instance
+			*/
+			int maAudioPrepare(in MAAudioInstance audio, in int async);
+
+			/**
+			* @brief Plays the current MAAudioInstance.
+			* @attention 	If the audio hasn't been prepared, on Android, it will be synchrounous
+			*				prepared before playing, this means that there might be a delay before
+			*				this call returns. Always make sure that your audio has been properly
+			*				prepared before playing.
+			* @param audio The MAAudioInstance handle.
+			* @return MA_AUDIO_ERR_OK on success, <0 on error.
+			*/
 			int maAudioPlay(in MAAudioInstance audio);
+
+			/**
+			* @brief Sets the current position in milliseconds.
+			* @param audio 			The MAAudioInstance handle.
+			* @param milliseconds 	The number of milliseconds from the start.
+			* @return 				MA_AUDIO_ERR_OK on success,
+			*						<0 on error.
+			*/
 			int maAudioSetPosition(in MAAudioInstance audio, in int milliseconds);
+
+			/**
+			* @brief Gets the current position in milliseconds.
+			* @param audio 	The MAAudioInstance handle.
+			* @return 		The current playing position in milliseconds,
+			*				<0 on error.
+			*/
 			int maAudioGetPosition(in MAAudioInstance audio);
+
+			/**
+			* @brief Sets the volume for this MAAudioInstance.
+			* @param audio 		The MAAudioInstance handle.
+			* @return 			MA_AUDIO_ERR_OK on success,
+			*					<0 on error
+			*/
 			int maAudioSetVolume(in MAAudioInstance audio, in float volume);
+
+			/**
+			* @brief Pauses the MAAudioInstance if it's playing.
+			* It will stay prepared, so the sound can be resumed at any time using maAudioPlay.
+			* @param audio The MAAudioInstance handle.
+			* @return MA_AUDIO_ERR_OK on success, <0 on error.
+			*/
+			int maAudioPause(in MAAudioInstance audio);
+
+			/**
+			* @brief Stops the the audio instance and sets the position to the beginning.
+			* The audio instance might be unprepared, meaning all it's prepared buffers might
+			* be released.
+			* @param audio The MAAudioInstance handle.
+			* @return MA_AUDIO_ERR_OK on success, <0 on error.
+			*/
 			int maAudioStop(in MAAudioInstance audio);
 		}// End of Audio API Functions
 	} // End of Audio API group
-#endif // IX_AUDIO
 
 	/**
 	* Enable panics for programmer errors.
@@ -8601,7 +9542,7 @@ group NFCAPI "NFC API" {
 	*/
 	int maSyscallPanicsDisable();
 
-group AdsAPI "Ads API" {
+group AdsAPI "Advertising API" {
 	group AdsResultCodes "Ads result codes" {
 		constset int MA_ADS_RES_ {
 			/**
@@ -8649,7 +9590,7 @@ group AdsAPI "Ads API" {
 		}
 	} // end of Ads Result Codes
 
-	group AdsErrorCodes "Ads error codes" {
+	group AdsErrorCodes "Advertising error codes" {
 		constset int MA_ADS_ERROR_ {
 			/**
 			* @brief Indicates that something happened internally: for instance, the Activity may have been destroyed mid-refresh.
@@ -8665,13 +9606,13 @@ group AdsAPI "Ads API" {
 
 			/**
 			* @brief Indicates that the connection to the advertisements server failed.
-			* Platform: Android and iOS.
+			* Platform: Android, iOS and Windows Phone 7.1.
 			*/
 			NETWORK = -3;
 
 			/**
 			* @brief Indicates that no ad was returned due to lack of ad inventory.
-			* Platform: Android and iOS.
+			* Platform: Android, iOS and Windows Phone 7.1.
 			*/
 			NO_FILL = -4;
 
@@ -8696,7 +9637,7 @@ group AdsAPI "Ads API" {
 		}
 	} // end of Ads Error Codes
 
-	group AdsProperties "Ads Properties" {
+	group AdsProperties "Advertising Properties" {
 		constset MAString MA_ADS_ {
 			/**
 			* @brief Gets the height of the ads banner.
@@ -8899,7 +9840,7 @@ group AdsAPI "Ads API" {
 		}
 	} // end of Ads properties
 
-	group AdsConstants "Ads Constants" {
+	group AdsConstants "Advertising Constants" {
 		constset int MA_ADS_SIZE_ {
 			// An Ad can be created ony with those predefined sizes.
 			// This is the default banner of size 320*50.
@@ -8913,10 +9854,17 @@ group AdsAPI "Ads API" {
 			// Of size 728*90.
 			// Availabe only on Android.
 			LEADERBOARD = 3;
+			// Of size 300*50 - X-Large Banner
+			// Available only on Windows Phone 7.1.
+			WP7_XLARGE = 4;
+			// Of size 480*80 - XX-Large Banner
+			// Available only on Windows Phone 7.1
+			WP7_XXLARGE = 5;
+
 		}
 	} // end of Ads Constants
 
-	group AdsEventTypes "Ads Event Types" {
+	group AdsEventTypes "Advertising Event Types" {
 		constset int MA_ADS_EVENT_ {
 			// This event is send when a banner view fails to load a new advertisement.
 			FAILED = 0;
@@ -8924,6 +9872,7 @@ group AdsAPI "Ads API" {
 			LOADED = 1;
 			// This event is send after a banner view finishes executing an action that
 			// covered your application's user interface.
+			// Event not available on windows phone 7.1 on the AdControl
 			ON_DISMISS = 2;
 			// This event is send when the user taps the banner view.
 			// The application is moved to background after this event is send.
@@ -8931,19 +9880,19 @@ group AdsAPI "Ads API" {
 		}
 	} // end of Ads Constants
 
-	group AdsFunctions "Ads Functions" {
+	group AdsFunctions "Advertising Functions" {
 		/**
 		* \brief Creates a new banner.
-		* \param bannerSize One of the MA_ADS_SIZE_ constants. Only for Android platform.
-		* \param publisherID Only for Android platform.
+		* \param bannerSize One of the MA_ADS_SIZE_ constants. Only for Android and WP7.1 platforms.
+		* \param publisherID Only for Android and WP 7.1 platforms.
 		* This param is ignored on iOS platform.
 		*
 		* \note A banner is a widget type object.
 		* For more info see Widget API.
 		*
 		* \returns
-		*  - MA_ADS_RES_UNSUPPORTED if ads are not supported on current system.
-		*  - MA_ADS_RES_ERROR if a error occurred while creating the banner widget.
+		*  - #MA_ADS_RES_UNSUPPORTED if ads are not supported on current system.
+		*  - #MA_ADS_RES_ERROR if a error occurred while creating the banner widget.
 		*  - a handle to a new banner widget(the handle value is >= 0).
 		*/
 		int maAdsBannerCreate(in int bannerSize, in MAString publisherID);
@@ -8954,8 +9903,8 @@ group AdsAPI "Ads API" {
 		* \param bannerHandle Handle to a banner.
 		*
 		* \returns One of the next constants:
-		* - MA_ADS_RES_OK if no error occurred.
-		* - MA_ADS_RES_INVALID_BANNER_HANDLE if the banner handle is invalid.
+		* - #MA_ADS_RES_OK if no error occurred.
+		* - #MA_ADS_RES_INVALID_BANNER_HANDLE if the banner handle is invalid.
 		*/
 		int maAdsBannerDestroy(in MAHandle bannerHandle);
 
@@ -8966,9 +9915,9 @@ group AdsAPI "Ads API" {
 		* \param layoutHandle Handle to a layout.
 		*
 		* \returns One of the next constants:
-		* - MA_ADS_RES_OK if no error occurred.
-		* - MA_ADS_RES_INVALID_BANNER_HANDLE if the banner handle is invalid.
-		* - MA_ADS_RES_INVALID_LAYOUT_HANDLE if the layout handle is invalid.
+		* - #MA_ADS_RES_OK if no error occurred.
+		* - #MA_ADS_RES_INVALID_BANNER_HANDLE if the banner handle is invalid.
+		* - #MA_ADS_RES_INVALID_LAYOUT_HANDLE if the layout handle is invalid.
 		*/
 		int maAdsAddBannerToLayout(in MAHandle bannerHandle, in MAHandle layoutHandle);
 
@@ -8979,9 +9928,9 @@ group AdsAPI "Ads API" {
 		* \param layoutHandle Handle to a layout.
 		*
 		* \returns One of the next constants:
-		* - MA_ADS_RES_OK if no error occurred.
-		* - MA_ADS_RES_INVALID_BANNER_HANDLE if the banner handle is invalid.
-		* - MA_ADS_RES_INVALID_LAYOUT_HANDLE if the layout handle is invalid.
+		* - #MA_ADS_RES_OK if no error occurred.
+		* - #MA_ADS_RES_INVALID_BANNER_HANDLE if the banner handle is invalid.
+		* - #MA_ADS_RES_INVALID_LAYOUT_HANDLE if the layout handle is invalid.
 		*/
 		int maAdsRemoveBannerFromLayout(in MAHandle bannerHandle, in MAHandle layoutHandle);
 
@@ -8993,10 +9942,10 @@ group AdsAPI "Ads API" {
 		* \param value The value that will be assigned to the property.
 		*
 		* \returns One of the next result codes:
-		* - MA_ADS_RES_OK if no error occurred.
-		* - MA_ADS_RES_INVALID_BANNER_HANDLE if the banner handle is invalid.
-		* - MA_ADS_RES_INVALID_PROPERTY_NAME if the property name is not valid.
-		* - MA_ADS_RES_INVALID_PROPERTY_VALUE if the property value is not valid.
+		* - #MA_ADS_RES_OK if no error occurred.
+		* - #MA_ADS_RES_INVALID_BANNER_HANDLE if the banner handle is invalid.
+		* - #MA_ADS_RES_INVALID_PROPERTY_NAME if the property name is not valid.
+		* - #MA_ADS_RES_INVALID_PROPERTY_VALUE if the property value is not valid.
 		*/
 		int maAdsBannerSetProperty(in MAHandle bannerHandle, in MAString property, in MAString value);
 
@@ -9009,10 +9958,10 @@ group AdsAPI "Ads API" {
 		* \param bufSize Size of the buffer.
 		*
 		* \returns One of the next result codes:
-		* - MA_ADS_RES_OK if no error occurred.
-		* - MA_ADS_RES_INVALID_BANNER_HANDLE if the banner handle is invalid.
-		* - MA_ADS_RES_INVALID_PROPERTY_NAME if the property name is not valid.
-		* - MA_ADS_RES_INVALID_STRING_BUFFER_SIZE if the buffer size was to small.
+		* - #MA_ADS_RES_OK if no error occurred.
+		* - #MA_ADS_RES_INVALID_BANNER_HANDLE if the banner handle is invalid.
+		* - #MA_ADS_RES_INVALID_PROPERTY_NAME if the property name is not valid.
+		* - #MA_ADS_RES_INVALID_STRING_BUFFER_SIZE if the buffer size was to small.
 		*/
 		int maAdsBannerGetProperty(in MAHandle bannerHandle, in MAString property, out MAString value range("bufSize"), in int bufSize);
 	}//End of Ads Functions
@@ -9032,19 +9981,19 @@ group NotificationAPI "Notification API" {
 			INVALID_HANDLE = -1;
 
 			/**
-			* @brief Indicates that the call to maNotificationSetProperty or maNotificationGetProperty received
+			* @brief Indicates that the call to maNotificationLocalSetProperty or maNotificationLocalGetProperty received
 			* an invalid property name.
 			*/
 			INVALID_PROPERTY_NAME = -3;
 
 			/**
-			* @brief Indicates that the call to maNotificationSetProperty or maNotificationGetProperty received
+			* @brief Indicates that the call to maNotificationLocalSetProperty or maNotificationLocalGetProperty received
 			* an invalid property value.
 			*/
 			INVALID_PROPERTY_VALUE = -4;
 
 			/**
-			* @brief Indicates that the call to maNotificationGetProperty or maNotificationPushGetData needs a larger buffer.
+			* @brief Indicates that the call to maNotificationLocalGetProperty or maNotificationPushGetData needs a larger buffer.
 			*/
 			INVALID_STRING_BUFFER_SIZE = -5;
 
@@ -9054,22 +10003,35 @@ group NotificationAPI "Notification API" {
 			UNSUPPORTED = -6;
 
 			/**
+			* @brief Indicates that maNotficationLocalSetProperty cannot be called after scheduling via
+			* maNotificationLocalSchedule, or that the call to maNotificationLocalSchedule failed because
+			* the notification was already scheduled.
+			*/
+			ALREADY_SCHEDULED = -7;
+
+			/**
+			* @brief Indicates that the call to maNotificationLocalUnschedule failed because the notification
+			* was not scheduled.
+			*/
+			CANNOT_UNSCHEDULE = -8;
+
+			/**
 			* @brief Indicates that the call to maNotificationPushRegister was unsuccessful because
 			* the application is already registered for receiving push notification.
 			*/
-			ALREADY_REGISTERED = -7;
+			ALREADY_REGISTERED = -9;
 
 			/**
 			* @brief Indicates that the call to maNotificationPushUnregister was unsuccessful because
 			* the application is not registered for receiving push notification.
 			*/
-			NOT_REGISTERED = -8;
+			NOT_REGISTERED = -10;
 
 			/**
 			* @brief Indicates that the call to maNotificationPushRegister was unsuccessful because
 			* the application did not finish processing a previous registration request.
 			*/
-			REGISTRATION_IN_PROGRESS = -9;
+			REGISTRATION_IN_PROGRESS = -11;
 
 			/**
 			* @brief Indicates that the call to maNotificationPushRegister was unsuccesfull because the
@@ -9077,7 +10039,7 @@ group NotificationAPI "Notification API" {
 			* The application should use exponential back off and retry.
 			* Platform: Android only.
 			*/
-			REGISTRATION_SERVICE_NOT_AVAILABLE = -10;
+			REGISTRATION_SERVICE_NOT_AVAILABLE = -12;
 
 			/**
 			* @brief Indicates that the call to maNotificationPushRegister was unsuccesfull because there is no
@@ -9085,14 +10047,14 @@ group NotificationAPI "Notification API" {
 			* The application should ask the user to open the account manager and add a Google account.
 			* Platform: Android only.
 			*/
-			REGISTRATION_ACCOUNT_MISSING = -11;
+			REGISTRATION_ACCOUNT_MISSING = -13;
 
 			/**
 			* @brief Indicates that the call to maNotificationPushRegister was unsuccesfull because the password was bad.
 			* The application should ask the user to enter his/her password, and let user retry manually later.
 			* Platform: Android only.
 			*/
-			REGISTRATION_AUTHENTICATION_FAILED = -12;
+			REGISTRATION_AUTHENTICATION_FAILED = -14;
 
 			/**
 			* @brief Indicates that the call to maNotificationPushRegister was unsuccesfull because the user has too many
@@ -9100,36 +10062,36 @@ group NotificationAPI "Notification API" {
 			* The application should tell the user to uninstall some other applications, let user retry manually.
 			* Platform: Android only.
 			*/
-			REGISTRATION_TOO_MANY_REGISTRATIONS = -13;
+			REGISTRATION_TOO_MANY_REGISTRATIONS = -15;
 
 			/**
 			* @brief Indicates that the call to maNotificationPushRegister was unsuccesfull because the sender account
 			* is not recognized.
 			* Platform: Android only.
 			*/
-			REGISTRATION_INVALID_SENDER = -14;
+			REGISTRATION_INVALID_SENDER = -16;
 
 			/**
 			* @brief  Indicates that the call to maNotificationPushRegister was unsuccesfull because of incorrect
 			* phone registration with Google. This phone doesn't currently support C2DM.
 			* Platform: Android only.
 			*/
-			REGISTRATION_PHONE_REGISTRATION_ERROR = -15;
+			REGISTRATION_PHONE_REGISTRATION_ERROR = -17;
 
 			/**
 			* @brief Indicates that the call to maNotificationPushGetRegistration needs a larger buffer.
 			*/
-			REGISTRATION_MESSAGE_BUF_TOO_SMALL = -16;
+			REGISTRATION_MESSAGE_BUF_TOO_SMALL = -18;
 
 			/**
 			* @brief Indicates that the call to maNotificationPushGetRegistration occured before trying to register.
 			*/
-			REGISTRATION_NOT_CALLED = -17;
+			REGISTRATION_NOT_CALLED = -19;
 
 			/**
 			* @brief Indicates that the call to an notification syscall was unsuccessful.
 			*/
-			ERROR = -18;
+			ERROR = -20;
 		}
 	} // end of Notification Result Codes
 
@@ -9163,6 +10125,34 @@ group NotificationAPI "Notification API" {
 			AUTO_CANCEL = 16;
 		}
 	} // end of Notification Flags
+
+		group NotificationDisplayFlags "Notification Display Flags" {
+		constset int MA_NOTIFICATION_DISPLAY_FLAG_ {
+			/**
+			* For local notifications: if set, the incoming notifications will be displayed to
+			* the user only if the application is in background.
+			* For push notifications: if set, the incoming notifications will be displayed to
+			* the user only if the application is not in use.
+			* Note that the received push notification event will always be received regardless
+			* of this flag.
+			* This setting is enabled by default.
+			* Platform: Android only.
+			*/
+			DEFAULT = 0;
+
+			/**
+			* If set, all the incoming notification will be displayed to the user regardless of
+			* it's focus state.
+			* For local notifications: this means that the user will get the notifications when the
+			* application is in background, but also in foreground.
+			* For push notifications: this means that the user will get the notifications when the
+			* application is closed, but also when it's in use.
+			* Note that the  event will always be received regardless of this flag.
+			* Platform: Android only.
+			*/
+			ANYTIME = 1;
+		}
+	} // end of Notification Display Flags
 
 	group NotificationPushTypes "Notification Push Types" {
 		constset int MA_NOTIFICATION_PUSH_TYPE_ {
@@ -9231,7 +10221,7 @@ group NotificationAPI "Notification API" {
 			*
 			* @par Example
 			* \code
-			*	maNotificationLocalSetProperty(notificationHandle, MA_NOTIFICATION_LOCAL_ALERT_BODY, "Did you forget something?");
+			*	maNotificationLocalSetProperty(notificationHandle, MA_NOTIFICATION_LOCAL_CONTENT_BODY, "Did you forget something?");
 			* \endcode
 			*/
 			CONTENT_BODY = "content_body";
@@ -9269,6 +10259,9 @@ group NotificationAPI "Notification API" {
 
 			/**
 			* @brief Set the sound to play when an alert is displayed.
+			* The sound file should be saved in a notifications folder under sdcard storage.
+			* Note that some devices can only play notification sounds stored in the internal storage,
+			* in the \system\media\audio\notifications folder.
 			* Platform: Android.
 			*
 			* @validvalue a valid path to an audio file.
@@ -9313,14 +10306,14 @@ group NotificationAPI "Notification API" {
 			TICKER_TEXT = "tickerText";
 
 			/**
-			* @brief Set or get the flags applied to the local notification.
+			* @brief Set the flags applied to the local notification.
 			* Platform: Android.
 			*
 			* @validvalue One of the constants:
-			* - MA_NOTIFICATION_FLAG_INSISTENT
-			* - MA_NOTIFICATION_FLAG_AUTO_CANCEL
-			* - MA_NOTIFICATION_FLAG_HIGH_PRIORITY
-			* - MA_NOTIFICATION_FLAG_NO_CLEAR.
+			* - #MA_NOTIFICATION_FLAG_INSISTENT
+			* - #MA_NOTIFICATION_FLAG_AUTO_CANCEL
+			* - #MA_NOTIFICATION_FLAG_HIGH_PRIORITY
+			* - #MA_NOTIFICATION_FLAG_NO_CLEAR.
 			*
 			* @setonly
 			*
@@ -9330,6 +10323,25 @@ group NotificationAPI "Notification API" {
 			* \endcode
 			*/
 			FLAG = "flag";
+
+			/**
+			* @brief Set the display flag applied to the local notification.
+			* Note the regardless of this flag, the #EVENT_TYPE_LOCAL_NOTIFICATION event will be received.
+			* Platform: Android.
+			*
+			* @validvalue One of the constants:
+			* - #MA_NOTIFICATION_DISPLAY_FLAG_DEFAULT Which is enabled by default.
+			* - #MA_NOTIFICATION_DISPLAY_FLAG_ANYTIME.
+			*
+			* @setonly
+			*
+			* @par Example
+			* \code
+			*    // Display the notification even when the application is in foreground.
+			*    maNotificationLocalSetProperty(notificationHandle, MA_NOTIFICATION_LOCAL_DISPLAY_FLAG, MA_NOTIFICATION_DISPLAY_FLAG_ANYTIME);
+			* \endcode
+			*/
+			DISPLAY_FLAG = "displayFlag";
 
 			/**
 			* @brief Enable/disable the the default vibration when an alert is displayed.
@@ -9379,6 +10391,7 @@ group NotificationAPI "Notification API" {
 			* @par Example
 			* \code
 			*	maNotificationLocalSetProperty(notificationHandle, MA_NOTIFICATION_LOCAL_FLASH_LIGHTS, "true");
+			* \endcode
 			*/
 			FLASH_LIGHTS = "flashLights";
 
@@ -9393,13 +10406,14 @@ group NotificationAPI "Notification API" {
 			* - a value for the ledARGB field (for the color),
 			* - the ledOffMS field (length of time, in milliseconds, to keep the light off),
 			* - the ledOnMS (length of time, in milliseconds, to keep the light on).
-			*  returns MA_NOTIFICATION_ERROR if the current device doesn't support flashing LED.
+			*  returns #MA_NOTIFICATION_RES_ERROR if the current device doesn't support flashing LED.
 			* @setonly
 			*
 			* @par Example
 			* \code
 			* 	// In this example, the green light repeatedly flashes on for 300 milliseconds and turns off for one second.
 			*	maNotificationLocalSetProperty(notificationHandle, MA_NOTIFICATION_LOCAL_FLASH_LIGHTS_PATTERN, "0xff00ff00,300,1000");
+			* \endcode
 			*/
 			FLASH_LIGHTS_PATTERN = "flashLightsPattern";
 		}
@@ -9416,9 +10430,10 @@ group NotificationAPI "Notification API" {
 			/// Specific to iOS. On Android it will be #MA_NOTIFICATION_PUSH_TYPE_ALERT.
 			int type;
 
-			/// The  buffer that will contain the message displayed in the notification alert.
+			/// The  buffer that will contain the message displayed in the notification alert,
+			/// or the notification content on Android.
 			/// This buffer will be filled only if the type is MA_NOTIFICATION_PUSH_TYPE_ALERT.
-			/// Platform: iOS only.
+			/// Platform: iOS and Android.
 			MAString alertMessage;
 
 			/// The size of the buffer that will contain the notification alert message.
@@ -9445,8 +10460,8 @@ group NotificationAPI "Notification API" {
 		* \brief Creates a new local notification object.
 		*
 		* \returns
-		*  - MA_NOTIFICATION_RES_UNSUPPORTED if the notifications are not supported on current system.
-		*  - MA_NOTIFICATION_RES_ERROR if a error occurred while creating the notification object.
+		*  - #MA_NOTIFICATION_RES_UNSUPPORTED if the notifications are not supported on current system.
+		*  - #MA_NOTIFICATION_RES_ERROR if a error occurred while creating the notification object.
 		*  - a handle to a new local notification object(the handle value is >= 0).
 		*/
 		MAHandle maNotificationLocalCreate();
@@ -9474,6 +10489,7 @@ group NotificationAPI "Notification API" {
 		* - #MA_NOTIFICATION_RES_INVALID_HANDLE if the notificationHandle is invalid.
 		* - #MA_NOTIFICATION_RES_INVALID_PROPERTY_NAME if the property name is not valid.
 		* - #MA_NOTIFICATION_RES_INVALID_PROPERTY_VALUE if the property value is not valid.
+		* - #MA_NOTIFICATION_RES_ALREADY_SCHEDULED if the notification is scheduled.
 		*/
 		int maNotificationLocalSetProperty(in MAHandle notificationHandle, in MAString property, in MAString value);
 
@@ -9496,12 +10512,16 @@ group NotificationAPI "Notification API" {
 
 		/**
 		* \brief Schedules a local notification for delivery at its encapsulated date and time.
+		* By default, the notifications are displayed to the user only if the application is
+		* in background. But on Android you can configure this by setting the
+		* #MA_NOTIFICATION_LOCAL_DISPLAY_FLAG property.
 		*
 		* \param notificationHandle Handle to a local notification object.
 		*
 		* \returns One of the next constants:
 		* - #MA_NOTIFICATION_RES_OK if no error occurred.
 		* - #MA_NOTIFICATION_RES_INVALID_HANDLE if the notificationHandle is invalid.
+		* - #MA_NOTIFICATION_RES_ALREADY_SCHEDULED if the notification was already scheduled.
 		*/
 		int maNotificationLocalSchedule(in MAHandle notificationHandle);
 
@@ -9510,11 +10530,12 @@ group NotificationAPI "Notification API" {
 		* Calling this method also programmatically dismisses the notification if
 		* it is currently displaying an alert.
 		*
-		* \param bannerHandle Handle to a local notification object.
+		* \param notificationHandle Handle to a local notification object.
 		*
 		* \returns One of the next constants:
 		* - #MA_NOTIFICATION_RES_OK if no error occurred.
 		* - #MA_NOTIFICATION_RES_INVALID_HANDLE if the notificationHandle is invalid.
+		* - #MA_NOTIFICATION_RES_CANNOT_UNSCHEDULE if the notification was not scheduled.
 		*/
 		int maNotificationLocalUnschedule(in MAHandle notificationHandle);
 
@@ -9537,8 +10558,9 @@ group NotificationAPI "Notification API" {
 		*
 		* \returns One of the next constants:
 		* - #MA_NOTIFICATION_RES_OK if no error occurred.
-		* - #MA_NOTIFICATION_ALREADY_REGISTERED if the application is already registered for
+		* - #MA_NOTIFICATION_RES_ALREADY_REGISTERED if the application is already registered for
 		* receiving push notifications.
+		* - #MA_NOTIFICATION_RES_UNSUPPORTED if notifications are not supported on current platform.
 		*/
 		int maNotificationPushRegister(in MAHandle pushNotificationTypes, in MAString accountID);
 
@@ -9547,20 +10569,20 @@ group NotificationAPI "Notification API" {
 		*
 		* \returns One of the next constants:
 		* - #MA_NOTIFICATION_RES_OK if no error occurred.
-		* - #MA_NOTIFICATION_NOT_REGISTERED if the application was not registered for receiving
+		* - #MA_NOTIFICATION_RES_NOT_REGISTERED if the application was not registered for receiving
 		* push notification.
 		*/
 		int maNotificationPushUnregister();
 
 		/**
 		* \brief Gets the latest push notification registration response.
-		* \param buffer The registrationID if the registration was successfull, or the error messsage otherwise.
-		* \param bufSize Size of the buffer.
-		* \response  One of the next constants:
+		* \param registrationMesssage The registrationID if the registration was successfull, or the error messsage otherwise.
+		* \param registrationMessageSize Size of the buffer.
+		* \returns  One of the next constants:
 		* - #MA_NOTIFICATION_RES_OK if the application registered successfully.
 		* - #MA_NOTIFICATION_RES_REGISTRATION_NOT_CALLED if maNotificationPushRegister was not called.
-		* - MA_NOTIFICATION_RES_REGISTRATION_MESSAGE_BUF_TOO_SMALL if the buffer is too small.
-		* - MA_NOTIFICATION_RES_ERROR if registration has failed.
+		* - #MA_NOTIFICATION_RES_REGISTRATION_MESSAGE_BUF_TOO_SMALL if the buffer is too small.
+		* - #MA_NOTIFICATION_RES_ERROR if registration has failed.
 		*/
 		int maNotificationPushGetRegistration(out MAString registrationMesssage range("registrationMessageSize"),
 											 in int registrationMessageSize);
@@ -9632,8 +10654,381 @@ group NotificationAPI "Notification API" {
 		* - #MA_NOTIFICATION_RES_ERROR.
 		*/
 		int maNotificationPushSetMessageTitle(in MAString messageTitle);
+
+		/**
+		* \brief Set the display flags applied to the incoming push notifications.
+		* Note that regardless of this setting, the #EVENT_TYPE_PUSH_NOTIFICATION event
+		* will be received for each incoming notification.
+		* #MA_NOTIFICATION_DISPLAY_FLAG_DEFAULT is enabled by default.
+		* Platform: Android only.
+		* \param displayFlag One of the constants:
+		* - #MA_NOTIFICATION_DISPLAY_FLAG_DEFAULT Which is enabled by default.
+		* - #MA_NOTIFICATION_DISPLAY_FLAG_ANYTIME.
+		* \return One of the next constants:
+		* - #MA_NOTIFICATION_RES_OK if no error occurred.
+		* - #MA_NOTIFICATION_RES_ERROR if push notifications are not supported,
+		* or the input value is not valid.
+		*/
+		int maNotificationPushSetDisplayFlag(in int displayFlag);
 	}//End of Notification Functions
 } // End of Notification API
+
+group CaptureAPI "Capture API" {
+	group CaptureResultCodes "Capture result codes" {
+		constset int MA_CAPTURE_RES_ {
+			/**
+			* @brief Indicates that the call was successful.
+			* Platform: Android and iOS.
+			*/
+			OK = 0;
+
+			/**
+			* @brief The given file name is invalid.
+			* Platform: iOS.
+			*/
+			FILE_INVALID_NAME = -1;
+
+			/**
+			* @brief The file already exists.
+			* Platform: iOS.
+			*/
+			FILE_ALREADY_EXISTS = -2;
+
+			/**
+			* @brief Indicates that the call to maCaptureSetProperty or maCaptureGetProperty received
+			* an invalid property name.
+			* Platform: iOS and Android.
+			*/
+			INVALID_PROPERTY = -3;
+
+			/**
+			* @brief Indicates that the call to maCaptureSetProperty or maCaptureGetProperty received
+			* an invalid property value.
+			* Platform: iOS and Android.
+			*/
+			INVALID_PROPERTY_VALUE = -4;
+
+			/**
+			* @brief Indicates that the call to maCaptureGetProperty needs a larger buffer.
+			* Platform: iOS and Android.
+			*/
+			INVALID_STRING_BUFFER_SIZE = -5;
+
+			/**
+			* @brief Indicates that the call to maCaptureAction received an invalid action type.
+			* Platform: iOS and Android.
+			*/
+			INVALID_ACTION = -6;
+
+			/**
+			* @brief Indicates that the call to maCaptureDestroyData received an invalid handle.
+			* Platform: iOS and Android.
+			*/
+			INVALID_HANDLE = -7;
+
+			/**
+			* @brief Indicates that capture is not supported on current platform.
+			* Platform: iOS.
+			*/
+			UNSUPPORTED = -8;
+
+			/**
+			* @brief Indicates that camera is not available at the moment.
+			* Platform: iOS.
+			*/
+			CAMERA_NOT_AVAILABLE = -9;
+
+			/**
+			* @brief Indicates that video recording is not supported.
+			* Platform: iOS.
+			*/
+			VIDEO_NOT_SUPPORTED = -10;
+
+			/**
+			* @brief Indicates that camera picture mode is not supported.
+			* Platform: iOS.
+			*/
+			PICTURE_NOT_SUPPORTED = -11;
+
+			/**
+			* @brief Indicates that flash mode is not supported.
+			* Platform: iOS.
+			*/
+			FLASH_NOT_SUPPORTED = -12;
+
+			/**
+			* @brief Indicates that the recording max duration is not supported.
+			* Platform: Android.
+			*/
+			MAX_DURATION_NOT_SUPPORTED = -13;
+
+			/**
+			* @brief Indicates that a call to maCaptureGetProperty was unsuccessfull
+			* because the property was not previously set.
+			* Platform: Android.
+			*/
+			PROPERTY_VALUE_UNDEFINED = -14;
+		}
+	} // end of Capture Result Codes
+
+	group CaptureProperties "Capture Properties" {
+		constset MAString MA_CAPTURE_ {
+			/**
+			* @brief Maximum duration video that should be recorded, in seconds.
+			* Platform: Android and iOS.
+			*
+			* @validvalue Positive integer value.
+			* Default value is platform specific.
+			*
+			* On iOS the maximum duration is by defualt set to 600 seconds.
+			*
+			* On Android devices with API level lower than 8
+			* it returns #MA_CAPTURE_RES_MAX_DURATION_NOT_SUPPORTED.
+			*
+			* @setandget
+			*
+			* @par Example
+			* \code
+			*   char buf[256];
+			*   sprintf(buf, "%d", 100);
+			*	maCaptureSetProperty(MA_CAPTURE_MAX_DURATION, buf);
+			* \endcode
+			*/
+			MAX_DURATION = "maxDuration";
+
+			/**
+			* @brief Set the video recording quality.
+			* Platform: Android and iOS.
+			* Android: Note that some devices the default camera either does not support low-res video capture,
+			* or it doesn't understand/process the MediaStore.EXTRA_SIZE_LIMIT correctly.
+			*
+			* @validvalue One of the \link #MA_CAPTURE_VIDEO_QUALITY_LOW MA_CAPTURE_VIDEO_QUALITY \endlink constants.
+			* iOS: Default value is MA_CAPTURE_VIDEO_QUALITY_MEDIUM.
+			* Android: Default value is MA_CAPTURE_VIDEO_QUALITY_HIGH.
+			*
+			* @setandget
+			*
+			* @par Example
+			* \code
+			*   char buf[256];
+			*   sprintf(buf, "%d", MA_CAPTURE_VIDEO_QUALITY_HIGH);
+			*	maCaptureSetProperty(MA_CAPTURE_VIDEO_QUALITY, buf);
+			* \endcode
+			*/
+			VIDEO_QUALITY = "videoQuality";
+
+			/**
+			* @brief Store the recorded movie/taken photo to the user’s Camera Roll album.
+			* Platform: iOS.
+			*
+			* @validvalue "false" or "true".
+			* Default value: "true".
+			*
+			* @setandget
+			*
+			* @par Example
+			* \code
+			*   char buf[256];
+			*   sprintf(buf, "%s", "true");
+			*	maCaptureSetProperty(MA_CAPTURE_CAMERA_ROLL, buf);
+			* \endcode
+			*/
+			CAMERA_ROLL = "cameraRoll";
+
+			/**
+			* @brief Set the flash mode used by the active camera.
+			* Platform: iOS.
+			*
+			* @validvalue One of the \link #MA_CAPTURE_FLASH_AUTO MA_CAPTURE_FLASH \endlink constants.
+			* Default value: #MA_CAPTURE_FLASH_AUTO.
+			*
+			* @setandget
+			*
+			* @par Example
+			* \code
+			*   char buf[256];
+			*   sprintf(buf, "%d", MA_CAPTURE_FLASH_OFF);
+			*	maCaptureSetProperty(MA_CAPTURE_FLASH, buf);
+			* \endcode
+			*/
+			FLASH = "flash";
+
+			/**
+			* @brief Show/hide default camera controls.
+			* @brief Show/hide default camera controls.
+			* Platform: iOS.
+			*
+			* @validvalue "true" or "false".
+			* Default value: "true".
+			*
+			* @setandget
+			*
+			* @par Example
+			* \code
+			*   char buf[256];
+			*   sprintf(buf, "%s", "false");
+			*	maCaptureSetProperty(MA_CAPTURE_CAMERA_CONTROLS, buf);
+			* \endcode
+			*/
+			CAMERA_CONTROLS = "cameraControls";
+		}
+	} // end of Capture properties
+
+	group CaptureVideoQuality "Capture Video Quality" {
+		constset int MA_CAPTURE_VIDEO_QUALITY_ {
+			/// Use low-quality video recording.
+			/// Platform: iOS and Android.
+			LOW = 0;
+			/// The highest-quality video recording supported for the active camera on the device.
+			/// Platform: iOS and Android.
+			HIGH = 1;
+			/// Use medium-quality video recording.
+			/// Platform: iOS only.
+			MEDIUM = 2;
+		}
+	} // end of Capture Media Types
+
+	group CaptureAction "Capture Action" {
+		constset int MA_CAPTURE_ACTION_ {
+			/// Start the picker with video mode and stores the result in a data object.
+			/// Platform: Android and iOS.
+			RECORD_VIDEO = 0;
+			/// Stops the recording.
+			/// Platform: iOS only.
+			STOP_RECORDING = 1;
+			/// Starts the picker with picture mode and  stores the picture in a data object.
+			/// Platform: Android and iOS.
+			TAKE_PICTURE = 2;
+		}
+	} // end of Capture Action
+
+	group CaptureEventType "Capture Event type" {
+		constset int MA_CAPTURE_EVENT_TYPE_ {
+			/// Send after a image has been taken.
+			/// Platform: Android and iOS.
+			IMAGE = 0;
+			/// Send after a video has been taken.
+			/// Platform: Android and iOS.
+			VIDEO = 1;
+			/// Send if the user cancels taking image/video.
+			/// Platform: iOS and Android.
+			CANCEL = 2;
+		}
+	} // end of Capture Event type
+
+	group CaptureFlashMode "Capture flash mode" {
+		constset int MA_CAPTURE_FLASH_ {
+			/// Specifies that the device should consider ambient light conditions to automatically
+			/// determine whether or not to use flash illumination.
+			/// Platform: iOS.
+			AUTO = 0;
+			/// Specifies that flash illumination is always on, no matter what the ambient light conditions are.
+			/// Platform: iOS.
+			ON = 1;
+			/// Specifies that flash illumination is always off, no matter what the ambient light conditions are.
+			/// Platform: iOS.
+			OFF = 2;
+		}
+	} // end of Capture flash mode
+
+	group CaptureFunctions "Capture Functions" {
+		/**
+		* \brief Sets the properties to the Native Image Picker.
+		* \param property A string representing which property to set.
+		*  One of the \link #MA_CAPTURE_VIDEO_QUALITY MA_CAPTURE \endlink constants.
+		* \param value The value that will be assigned to the property.
+		*
+		* \returns One of the next constants:
+		*  - #MA_CAPTURE_RES_OK if no error occurred.
+		*  - #MA_CAPTURE_RES_INVALID_PROPERTY if the property name is not valid.
+		*  - #MA_CAPTURE_RES_INVALID_PROPERTY_VALUE if the property value is not valid.
+		*  - #MA_CAPTURE_RES_MAX_DURATION_NOT_SUPPORTED if the duration limit is not supported ( Android only).
+		*/
+		int maCaptureSetProperty(in MAString property, in MAString value);
+
+		/**
+		* \brief Retrieves the properties from the Native Image Picker.
+		*
+		* \param property A string representing which property to get.
+		*  One of the \link #MA_CAPTURE_VIDEO_QUALITY MA_CAPTURE \endlink constants.
+		* \param value A buffer that will hold the value of the property, represented as a string.
+		* \param bufSize Size of the buffer.
+		*
+		* \returns One of the next constants:
+		* - #MA_CAPTURE_RES_OK if no error occurred.
+		* - #MA_CAPTURE_RES_INVALID_PROPERTY if the property name is not valid.
+		* - #MA_CAPTURE_RES_INVALID_STRING_BUFFER_SIZE if the buffer size was to small.
+		* - #MA_CAPTURE_RES_PROPERTY_VALUE_UNDEFINED if the property was not previously set ( Android only).
+		* - #MA_CAPTURE_RES_MAX_DURATION_NOT_SUPPORTED if the duration limit is not supported ( Android only).
+		*/
+		int maCaptureGetProperty(in MAString property, out MAString value range("bufSize"), in int bufSize);
+
+		/**
+		* \brief Perform an action on the image picker.
+		* \param action One of the \link #MA_CAPTURE_ACTION_TAKE_PICTURE MA_CAPTURE_ACTION \endlink constants.
+		*
+		* \returns One of the next constants:
+		*  - #MA_CAPTURE_RES_OK if no error occurred.
+		*  - #MA_CAPTURE_RES_INVALID_ACTION if the given action is invalid.
+		*  - #MA_CAPTURE_RES_CAMERA_NOT_AVAILABLE if camera is not available at the moment.
+		*  - #MA_CAPTURE_RES_VIDEO_NOT_SUPPORTED if video recording is not supported.
+		*  - #MA_CAPTURE_RES_PICTURE_NOT_SUPPORTED if camera picture mode is not supported.
+		*/
+		int maCaptureAction(in int action);
+
+		/**
+		* \brief Save a image data object to a file.
+		* \param handle Handle to an image data object.
+		* \param fullPath A buffer containing the a full path where the file will be created.
+		* \param fullPathBufSize The size of the fullPath buffer.
+		*
+		* \returns One of the next constants:
+		*  - #MA_CAPTURE_RES_OK if no error occurred.
+		*  - #MA_CAPTURE_RES_INVALID_HANDLE if the given handle was invalid.
+		*  - #MA_CAPTURE_RES_FILE_INVALID_NAME if the fullPath param is invalid.
+		*  - #MA_CAPTURE_RES_FILE_ALREADY_EXISTS if the file already exists.
+		*/
+		int maCaptureWriteImage(in MAHandle handle, in MAString fullPath, in int fullPathBufSize);
+
+		/**
+		* \brief Get full path to a taken picture.
+		* Available on Android only.
+		* \param handle Handle to an image data object.
+		* \param buffer Will contain the full path of the image file.
+		* \param bufferSize Maximum size of the buffer.
+		*
+		* \returns One of the next constants:
+		*  - #MA_CAPTURE_RES_OK if no error occurred.
+		*  - #MA_CAPTURE_RES_INVALID_HANDLE if the given handle was invalid.
+		*  - #MA_CAPTURE_RES_INVALID_STRING_BUFFER_SIZE if the buffer size was to small.
+		*/
+		int maCaptureGetImagePath(in MAHandle handle, out MAString buffer range("bufferSize"), in int bufferSize);
+
+		/**
+		* \brief Get full path to a recorded video.
+		* \param handle Handle to a video data object.
+		* \param buffer Will contain the full path to the video file.
+		* \param bufferSize Maximum size of the buffer.
+		*
+		* \returns One of the next constants:
+		*  - #MA_CAPTURE_RES_OK if no error occurred.
+		*  - #MA_CAPTURE_RES_INVALID_HANDLE if the given handle was invalid.
+		*  - #MA_CAPTURE_RES_INVALID_STRING_BUFFER_SIZE if the buffer size was to small.
+		*/
+		int maCaptureGetVideoPath(in MAHandle handle, out MAString buffer range("bufferSize"), in int bufferSize);
+
+		/**
+		* \brief Destroys a image/video data object.
+		* \param handle Handle to a image/video data object.
+		*
+		* \returns One of the next constants:
+		*  - #MA_CAPTURE_RES_OK if no error occurred.
+		*  - #MA_CAPTURE_RES_INVALID_HANDLE if the given handle was invalid.
+		*/
+		int maCaptureDestroyData(in MAHandle handle);
+	}//End of Capture Functions
+
+} // End of Capture API
 
 }
 	constset int IOCTL_ {

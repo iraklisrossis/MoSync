@@ -25,6 +25,42 @@ namespace MoSync
 		private double mCurrentFontSize = 24;
 
 		TextBlock textBlock = new TextBlock();
+
+		void GetTextSize(String text, out int w, out int h)
+		{
+			int textWidth = 0, textHeight = 0;
+
+			MoSync.Util.RunActionOnMainThreadSync(() =>
+			{
+				textBlock.Text = text;
+				textWidth = (int)textBlock.ActualWidth;
+				textHeight = (int)textBlock.ActualHeight;
+			});
+
+			w = textWidth;
+			h = textHeight;
+		}
+
+		void DrawText(String text, int left, int top)
+		{
+			WriteableBitmap bitmap = null;
+			double w = 0, h = 0;
+
+			MoSync.Util.RunActionOnMainThreadSync(() =>
+			{
+				textBlock.Text = text;
+				textBlock.Foreground = new SolidColorBrush(mCurrentWindowsColor);
+				bitmap = new WriteableBitmap(textBlock, null);
+			});
+
+			w = bitmap.PixelWidth;
+			h = bitmap.PixelHeight;
+			mCurrentDrawTarget.Blit(new Rect(left, top, w, h),
+				bitmap,
+				new Rect(0, 0, w, h));
+			bitmap = null;
+		}
+
 		public void SetCurrentFontSource(System.Windows.Documents.FontSource src)
 		{
 			//textBlock.FontSize = mCurrentFontSize;
@@ -87,6 +123,13 @@ namespace MoSync
 				(int)screenHeight);
 
 			mMainImage.Source = mFrontBuffer;
+
+			// clear front and backbuffer.
+			for (int i = 0; i < mFrontBuffer.PixelWidth * mFrontBuffer.PixelHeight; i++)
+			{
+				mBackBuffer.Pixels[i] = mBackBuffer.Pixels[i] = (int)(0xff<<24);
+			}
+
 			mCurrentDrawTarget = mBackBuffer;
 
 			mCurrentWindowsColor = System.Windows.Media.Color.FromArgb(0xff,
@@ -107,6 +150,11 @@ namespace MoSync
 
 			syscalls.maSetClipRect = delegate(int x, int y, int w, int h)
 			{
+				MoSync.GraphicsUtil.ClipRectangle(
+					x, y, w, h,
+					0, 0, mCurrentDrawTarget.PixelWidth, mCurrentDrawTarget.PixelHeight,
+					out x, out y, out w, out h);
+
 				mClipRect.X = x;
 				mClipRect.Y = y;
 				mClipRect.Width = w;
@@ -136,7 +184,33 @@ namespace MoSync
 
 			syscalls.maFillRect = delegate(int x, int y, int w, int h)
 			{
-				mCurrentDrawTarget.FillRectangle(x, y, x + w, y + h, (int)mCurrentColor);
+				// this function has a bug (it only fills one pixel less than the image.)
+				//mCurrentDrawTarget.FillRectangle(x, y, x + w, y + h, (int)mCurrentColor);
+
+				MoSync.GraphicsUtil.ClipRectangle(
+					x, y, w, h,
+					0, 0, mCurrentDrawTarget.PixelWidth, mCurrentDrawTarget.PixelHeight,
+					out x, out y, out w, out h);
+
+				MoSync.GraphicsUtil.ClipRectangle(
+					x, y, w, h,
+					(int)mClipRect.X, (int)mClipRect.Y, (int)mClipRect.Width, (int)mClipRect.Height,
+					out x, out y, out w, out h);
+
+				if (w <= 0 || h <= 0)
+					return;
+
+				int index = x + y * mCurrentDrawTarget.PixelWidth;
+				while(h-- != 0)
+				{
+					int width = w;
+					while(width-- != 0)
+					{
+						mCurrentDrawTarget.Pixels[index] = (int)mCurrentColor;
+						index++;
+					}
+					index += -w + mCurrentDrawTarget.PixelWidth;
+				}
 			};
 
 			syscalls.maLine = delegate(int x1, int y1, int x2, int y2)
@@ -156,16 +230,7 @@ namespace MoSync
 			{
 				String text = core.GetDataMemory().ReadStringAtAddress(str);
 				if (text.Length == 0) return;
-
-				MoSync.Util.RunActionOnMainThreadSync(() =>
-				{
-					textBlock.Text = text;
-					textBlock.Foreground = new SolidColorBrush(mCurrentWindowsColor);
-					WriteableBitmap b = new WriteableBitmap(textBlock, null);
-					mCurrentDrawTarget.Blit(new Rect(left, top, b.PixelWidth, b.PixelHeight),
-						b,
-						new Rect(0, 0, b.PixelWidth, b.PixelHeight));
-				});
+				DrawText(text, left, top);
 			};
 
 			syscalls.maGetTextSize = delegate(int str)
@@ -173,14 +238,7 @@ namespace MoSync
 				String text = core.GetDataMemory().ReadStringAtAddress(str);
 				int textWidth = 0;
 				int textHeight = 0;
-
-				MoSync.Util.RunActionOnMainThreadSync(() =>
-				{
-					textBlock.Text = text;
-					textWidth = (int)textBlock.ActualWidth;
-					textHeight = (int)textBlock.ActualHeight;
-				});
-
+				GetTextSize(text, out textWidth, out textHeight);
 				return MoSync.Util.CreateExtent(textWidth, textHeight);
 			};
 
@@ -189,25 +247,7 @@ namespace MoSync
 				String text = core.GetDataMemory().ReadWStringAtAddress(str);
 				if (text.Length == 0) return;
 
-				MoSync.Util.RunActionOnMainThreadSync(() =>
-				{
-					textBlock.Text = text;
-					textBlock.Foreground = new SolidColorBrush(mCurrentWindowsColor);
-					WriteableBitmap b = new WriteableBitmap(textBlock, null);
-					Rect dstRect = new Rect(left, top, b.PixelWidth, b.PixelHeight);
-					Rect srcRect = new Rect(0, 0, b.PixelWidth, b.PixelHeight);
-					// cliprect..
-					Rect clipRect = new Rect(0, 0, mBackBuffer.PixelWidth, mBackBuffer.PixelHeight);
-					clipRect.Intersect(dstRect);
-					if (clipRect.IsEmpty == true)
-					{
-						return;
-					}
-
-					mCurrentDrawTarget.Blit(dstRect,
-						b,
-						srcRect);
-				});
+				DrawText(text, left, top);
 			};
 
 			syscalls.maGetTextSizeW = delegate(int str)
@@ -215,14 +255,7 @@ namespace MoSync
 				String text = core.GetDataMemory().ReadWStringAtAddress(str);
 				int textWidth = 0;
 				int textHeight = 0;
-
-				MoSync.Util.RunActionOnMainThreadSync(() =>
-				{
-					textBlock.Text = text;
-					textWidth = (int)textBlock.ActualWidth;
-					textHeight = (int)textBlock.ActualHeight;
-				});
-
+				GetTextSize(text, out textWidth, out textHeight);
 				return MoSync.Util.CreateExtent(textWidth, textHeight);
 			};
 
@@ -287,6 +320,8 @@ namespace MoSync
 			{
 				Resource res = runtime.GetResource(MoSync.Constants.RT_IMAGE, handle);
 				BitmapSource src = (BitmapSource)res.GetInternalObject();
+				if (src == null)
+					MoSync.Util.CriticalError("maGetImageSize used with an invalid image resource.");
 				int w = 0, h = 0;
 
 				MoSync.Util.RunActionOnMainThreadSync(() =>
@@ -322,9 +357,8 @@ namespace MoSync
 
 				Rect srcRect = new Rect(srcRectX, srcRectY, srcRectW, srcRectH);
 				Rect dstRect = new Rect(dstPointX, dstPointY, srcRectW, srcRectH);
-				// mCurrentDrawTarget.Blit(dstRect, src, srcRect, WriteableBitmapExtensions.BlendMode.Alpha);
 
-				GraphicsUtil.DrawImageRegion(mCurrentDrawTarget, dstPointX, dstPointY, srcRect, src, transformMode);
+				GraphicsUtil.DrawImageRegion(mCurrentDrawTarget, dstPointX, dstPointY, srcRect, src, transformMode, mClipRect);
 			};
 
 			syscalls.maCreateDrawableImage = delegate(int placeholder, int width, int height)
@@ -336,6 +370,11 @@ namespace MoSync
 				MoSync.Util.RunActionOnMainThreadSync(() =>
 				{
 					bitmap = new WriteableBitmap(width, height);
+
+					for (int i = 0; i < bitmap.PixelWidth * bitmap.PixelHeight; i++)
+					{
+						bitmap.Pixels[i] = (int)(0xff << 24);
+					}
 				});
 
 				if (bitmap == null) return MoSync.Constants.RES_OUT_OF_MEMORY;
@@ -366,12 +405,9 @@ namespace MoSync
 					}
 				}
 
-				runtime.SetResource(_placeholder,
-					new Resource(
-						bitmap,
-						MoSync.Constants.RT_IMAGE
-						)
-					);
+				Resource res = runtime.GetResource(MoSync.Constants.RT_PLACEHOLDER, _placeholder);
+				res.SetInternalObject(bitmap);
+				res.SetResourceType(MoSync.Constants.RT_IMAGE);
 				return MoSync.Constants.RES_OK;
 			};
 
@@ -446,26 +482,42 @@ namespace MoSync
 			syscalls.maCreateImageFromData = delegate(int _placeholder, int _data, int _offset, int _size)
 			{
 				Resource res = runtime.GetResource(MoSync.Constants.RT_BINARY, _data);
-				Memory mem = (Memory)res.GetInternalObject();
-
-				Stream s = mem.GetStream(_offset, _size);
+				if (res == null)
+					return MoSync.Constants.RES_BAD_INPUT;
+				Stream bin = (Stream)res.GetInternalObject();
+				if (bin == null)
+					return MoSync.Constants.RES_BAD_INPUT;
+				BoundedStream s = new BoundedStream(bin, _offset, _size);
 				WriteableBitmap bitmap = MoSync.Util.CreateWriteableBitmapFromStream(s);
 				s.Close();
-				runtime.SetResource(
-					_placeholder,
-					new Resource(
-						bitmap,
-						MoSync.Constants.RT_IMAGE
-						)
-				);
 
+				if (bitmap == null)
+					return MoSync.Constants.RES_BAD_INPUT;
+
+				Resource imageRes = runtime.GetResource(MoSync.Constants.RT_PLACEHOLDER, _placeholder);
+				imageRes.SetInternalObject(bitmap);
+				imageRes.SetResourceType(MoSync.Constants.RT_IMAGE);
 				return MoSync.Constants.RES_OK;
 			};
 		}
 
-		protected Syscalls.Delegate_maUpdateScreen mOldUpdateScreenImplementation;
+		protected Syscalls.Delegate_maUpdateScreen mOldUpdateScreenImplementation = null;
 		public void Init(Ioctls ioctls, Core core, Runtime runtime)
 		{
+
+			ioctls.maFontSetCurrent = delegate(int _font)
+			{
+				FontModule.FontInfo finfo = runtime.GetModule<FontModule>().GetFont(_font);
+				MoSync.Util.RunActionOnMainThreadSync(() =>
+					{
+						textBlock.FontFamily = finfo.family;
+						textBlock.FontStyle = finfo.style;
+						textBlock.FontWeight = finfo.weight;
+						textBlock.FontSize = finfo.size;
+					});
+
+				return 0;
+			};
 
 			ioctls.maFrameBufferInit = delegate(int frameBufferPointer)
 			{
@@ -496,8 +548,17 @@ namespace MoSync
 
 			ioctls.maFrameBufferClose = delegate()
 			{
+				if (mOldUpdateScreenImplementation == null)
+					return 0;
 				Syscalls syscalls = runtime.GetSyscalls();
 				syscalls.maUpdateScreen = mOldUpdateScreenImplementation;
+				mOldUpdateScreenImplementation = null;
+				if(mCurrentDrawTarget == mFrontBuffer)
+					mCurrentDrawTarget = mBackBuffer;
+
+				System.Buffer.BlockCopy(mBackBuffer.Pixels, 0, mFrontBuffer.Pixels, 0, mFrontBuffer.PixelWidth * mFrontBuffer.PixelHeight * 4);
+				InvalidateWriteableBitmapBackBufferOnMainThread(mFrontBuffer);
+
 				return 1;
 			};
 

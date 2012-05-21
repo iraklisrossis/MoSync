@@ -41,7 +41,6 @@ namespace MoSync
         public class PanoramaView : Screen
         {
             protected Microsoft.Phone.Controls.Panorama mPanorama;
-
             /**
              * The constructor
              */
@@ -49,7 +48,9 @@ namespace MoSync
             {
                 mPanorama = new Microsoft.Phone.Controls.Panorama();
 
-                mPage.Content = mPanorama;
+                mPage.Children.Add(mPanorama);
+                Grid.SetColumn(mPanorama, 0);
+                Grid.SetRow(mPanorama, 0);
             }
 
             /**
@@ -64,7 +65,7 @@ namespace MoSync
                     {
                         mPanorama.Items.Add(new Microsoft.Phone.Controls.PanoramaItem
                         {
-                            Header = ((child as Screen).View as Microsoft.Phone.Controls.PhoneApplicationPage).Title,
+                            Header = (child as Screen).getScreenTitle,
                             Content = (child as Screen).View
                         });
                     });
@@ -142,7 +143,9 @@ namespace MoSync
                             //The panorama gets the brush as a background
                             mPanorama.Background = imgBrush;
                         }
+                        else throw new InvalidPropertyValueException();
                     }
+                    throw new InvalidPropertyValueException();
                 }
             }
 
@@ -164,21 +167,23 @@ namespace MoSync
              * MAW_PANORAMA_VIEW_CURRENT_SCREEN property implementation
              */
             [MoSyncWidgetProperty(MoSync.Constants.MAW_PANORAMA_VIEW_CURRENT_SCREEN)]
-            public String CurrentScreen
+            public int CurrentScreen
             {
                 set
                 {
-                    int val = 0;
-                    if (Int32.TryParse(value, out val))
-                    {
-                        if(-1 < val && mPanorama.Items.Count > val)
-                            mPanorama.DefaultItem = mPanorama.Items[val];
-                    }
+                    if (-1 < value && mPanorama.Items.Count > value)
+                        mPanorama.DefaultItem = mPanorama.Items[value];
+                    else throw new InvalidPropertyValueException();
                 }
                 get
                 {
-                    return mPanorama.SelectedIndex.ToString();
+                    return mPanorama.SelectedIndex;
                 }
+            }
+
+            public IScreen getSelectedScreen()
+            {
+                return mChildren[mPanorama.SelectedIndex] as IScreen;
             }
         }
     }

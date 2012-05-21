@@ -9,6 +9,24 @@ namespace MoSync
         private UIManager mNativeUI;
         private List<IWidget> mWidgets = new List<IWidget>();
 
+		public IWidget GetWidget(int handle)
+		{
+			if (handle < 0 || handle >= mWidgets.Count)
+				return null;
+			IWidget w = mWidgets[handle];
+			return w;
+		}
+
+        /*
+         * Ads a widget to the widgets array.
+         * @param adControl The widget to be added.
+         */
+        public int AddWidget(IWidget widget)
+        {
+            mWidgets.Add(widget);
+            return mWidgets.Count-1;
+        }
+
         public void Init(Ioctls ioctls, Core core, Runtime runtime)
         {
             mNativeUI = new NativeUI.NativeUIWindowsPhone();
@@ -108,7 +126,7 @@ namespace MoSync
                 {
                     widget.SetProperty(property, value);
                 }
-                catch (InvalidPropertyNameException e)
+                catch (InvalidPropertyNameException)
                 {
                     MoSync.Util.Log(widget.GetType().ToString() + " invalid property name: " + property);
                     return MoSync.Constants.MAW_RES_INVALID_PROPERTY_NAME;

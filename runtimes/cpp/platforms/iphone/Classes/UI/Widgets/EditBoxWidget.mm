@@ -26,14 +26,25 @@
 @implementation EditBoxWidget
 
 - (id)init {
-	textField = [[UITextField alloc] initWithFrame:CGRectMake(0, 10, 100, 30)];
-	textField.borderStyle = UITextBorderStyleRoundedRect;
-	view = textField;			
-	id ret = [super init];
-	[self setAutoSizeParamX:WRAP_CONTENT andY:WRAP_CONTENT];
-	textField.delegate = self;
-    [textField addTarget:self action:@selector(textChanged) forControlEvents:UIControlEventEditingChanged];
-	return ret;
+	self = [super init];
+    if (self)
+    {
+        textField = [[UITextField alloc] initWithFrame:CGRectMake(0, 10, 100, 30)];
+        textField.borderStyle = UITextBorderStyleRoundedRect;
+
+        view = textField;
+        [view setUserInteractionEnabled:YES];
+        view.contentMode = UIViewContentModeRedraw;
+        view.autoresizesSubviews = NO;
+        [textField setOpaque:NO];
+
+        [self setAutoSizeParamX:WRAP_CONTENT andY:WRAP_CONTENT];
+        textField.delegate = self;
+        [textField addTarget:self action:@selector(textChanged) forControlEvents:UIControlEventEditingChanged];
+        mMaxTextLength = INT_MAX;
+    }
+
+	return self;
 }
 
 - (int)setPropertyWithKey: (NSString*)key toValue: (NSString*)value {
@@ -151,6 +162,15 @@
             return MAW_RES_INVALID_PROPERTY_VALUE;
         }
     }
+    else if ([key isEqualToString:@MAW_EDIT_BOX_MAX_LENGTH])
+    {
+        int maxTextLength = [value intValue];
+        if (maxTextLength < 0)
+        {
+            return MAW_RES_INVALID_PROPERTY_VALUE;
+        }
+        mMaxTextLength = maxTextLength;
+    }
 	else {
 		return [super setPropertyWithKey:key toValue:value];
 	}
@@ -160,8 +180,21 @@
 
 - (NSString*)getPropertyWithKey: (NSString*)key {
 	if([key isEqualToString:@MAW_EDIT_BOX_TEXT]) {
-		return [textField.text retain];
+        NSString* text;
+        if (textField.text)
+        {
+            text = [[NSString alloc] initWithString:textField.text];
+        }
+        else
+        {
+            text = [[NSString alloc] initWithString:@""];
+        }
+		return text;
 	}
+    else if ([key isEqualToString:@MAW_EDIT_BOX_MAX_LENGTH])
+    {
+        return [[NSString alloc] initWithFormat:@"%d", mMaxTextLength];
+    }
 
 	return [super getPropertyWithKey:key];
 }
@@ -200,6 +233,24 @@
 - (void) textChanged
 {
     [super sendEvent:MAW_EVENT_EDIT_BOX_TEXT_CHANGED];
+}
+
+/**
+ * Delegate method called before the text has been changed.
+ * @param uiTextField The text field containing the text.
+ * @param range The range of characters to be replaced.
+ * @param string The replacement string.
+ * @return YES if the specified text range should be replaced; otherwise, NO to keep the old text.
+ */
+- (BOOL)textField:(UITextField *)uiTextField shouldChangeCharactersInRange:(NSRange)range
+replacementString:(NSString *)string
+{
+    if ([string length] > 0 && [uiTextField.text length] >= mMaxTextLength)
+    {
+        uiTextField.text = [uiTextField.text substringToIndex:mMaxTextLength];
+        return NO;
+    }
+    return YES;
 }
 
 @end

@@ -31,12 +31,14 @@ LOCAL_SRC_FILES := FileImpl.cpp \
 	../../base/MemStream.cpp \
 	../../base/Stream.cpp \
 	../../base/Image.cpp \
+	../../base/ResourceArray.cpp \
 	../../base/Syscall.cpp \
 	../../core/Core.cpp \
 	../../core/disassembler.cpp \
 	../../core/Recompiler/ArmAssembler.cpp \
 	../../core/Recompiler/ArmRecompiler.cpp \
 	../../../../intlibs/hashmap/hashmap.cpp \
+	../../core/Recompiler/ashmem.cpp \
 
 
 ifeq ($(ANDROID_API_BELOW_7),true)

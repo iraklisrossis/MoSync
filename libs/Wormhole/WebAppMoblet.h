@@ -26,7 +26,7 @@ MA 02110-1301, USA.
 
 /**
  * @file WebAppMoblet.h
- * @author Mikael KIndborg
+ * @author Mikael Kindborg
  *
  * @brief High-level moblet that has a WebView and supports
  * communication between a JavaScript and C++.
@@ -42,6 +42,9 @@ MA 02110-1301, USA.
 #include "WebViewMessage.h"
 #include "FileUtil.h"
 
+/**
+ * @brief Classes for communication with JavaScript code
+ */
 namespace Wormhole
 {
 	// Forward declaration.
@@ -132,6 +135,11 @@ namespace Wormhole
 		 * value did not exist, such as on first time load).
 		 */
 		virtual bool checksumHasChanged();
+
+		/**
+		 * Write the current checksum to file.
+		 */
+		virtual void writeChecksum();
 
 	protected:
 		/**

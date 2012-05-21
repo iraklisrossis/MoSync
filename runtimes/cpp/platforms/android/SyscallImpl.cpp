@@ -1,5 +1,4 @@
-/* Copyright (C) 2010 MoSync AB
-/* Copyright (C) 2010 MoSync AB
+/* Copyright (C) 2012 MoSync AB
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License, version 2, as published by
@@ -27,6 +26,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include <jni.h>
 #include <GLES/gl.h>
+
+// we only expose the GL_OES_FRAMEBUFFER_OBJECT extension for now.
+#define GL_GLEXT_PROTOTYPES
+#include <GLES/glext.h>
+
 #ifndef _android_1
 #include <GLES2/gl2.h>
 #endif
@@ -35,7 +39,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "helpers/CPP_IX_OPENGL_ES.h"
 #include "helpers/CPP_IX_GL1.h"
 #include "helpers/CPP_IX_GL2.h"
-//#include "helpers/CPP_IX_GL_OES_FRAMEBUFFER_OBJECT.h"
+#include "helpers/CPP_IX_GL_OES_FRAMEBUFFER_OBJECT.h"
 #include "helpers/CPP_IX_PIM.h"
 #include "helpers/CPP_IX_CELLID.h"
 
@@ -167,16 +171,21 @@ namespace Base
 	char* Syscall::loadBinary(int resourceIndex, int size)
 	{
 		SYSLOG("loadBinary");
-		//get current thread's JNIEnvrionmental variable
+		//get current thread's JNIEnvironmental variable
 		JNIEnv * env = getJNIEnvironment();
+
+		// Debug print.
+		/*
 		char* b = (char*)malloc(200);
 		sprintf(b, "loadBinary index:%d size:%d", resourceIndex, size);
-		//__android_log_write(ANDROID_LOG_INFO, "MoSync Syscall", b);
+		__android_log_write(ANDROID_LOG_INFO, "MoSync Syscall", b);
 		free(b);
+		*/
 
 		char* buffer = (char*)malloc(size);
-		jobject byteBuffer = env->NewDirectByteBuffer((void*)buffer, size);
+		if(buffer == NULL) return NULL;
 
+		jobject byteBuffer = env->NewDirectByteBuffer((void*)buffer, size);
 		if(byteBuffer == NULL) return NULL;
 
 		jclass cls = env->GetObjectClass(mJThis);
@@ -193,6 +202,7 @@ namespace Base
 			free(buffer);
 			return NULL;
 		}
+
 		return buffer;
 	}
 
@@ -286,6 +296,12 @@ namespace Base
 	{
 		SYSLOG("PostEvent");
 		gEventFifo.put(event);
+	}
+
+	int Syscall::getEventQueueSize()
+	{
+		SYSLOG("getEventQueueSize");
+		return gEventFifo.count();
 	}
 
 	SYSCALL(int,  maSetColor(int rgb))
@@ -978,6 +994,17 @@ namespace Base
 		SYSCALL_THIS->VM_Yield();
 	}
 
+	SYSCALL(int, maLoadResource(MAHandle handle, MAHandle placeholder, int flag))
+	{
+		jclass cls = mJNIEnv->GetObjectClass(mJThis);
+		jmethodID methodID = mJNIEnv->GetMethodID(cls, "maLoadResource", "(III)I");
+		if (methodID == 0) ERROR_EXIT;
+		mJNIEnv->CallIntMethod(mJThis, methodID,
+			handle, placeholder, flag);
+
+		mJNIEnv->DeleteLocalRef(cls);
+	}
+
 	SYSCALL(void,  maLoadProgram(MAHandle data, int reload))
 	{
 		SYSLOG("maLoadProgram");
@@ -1257,82 +1284,7 @@ namespace Base
 		return _maOpenGLCloseFullscreen(mJNIEnv, mJThis);
 	}
 
-// the wrapper generator can't yet handle a few set of functions
-// in the opengles 2.0 api (so we manually override them).
-// remove implementations for broken bindings..
-// override implementations for broken bindings..
-#undef maIOCtl_glGetPointerv_case
-#define maIOCtl_glGetPointerv_case(func) \
-case maIOCtl_glGetPointerv: \
-{\
-GLenum _pname = (GLuint)a; \
-void* _pointer = GVMR(b, MAAddress);\
-wrap_glGetPointerv(_pname, _pointer); \
-return 0; \
-}
-
-#undef maIOCtl_glGetVertexAttribPointerv_case
-#define maIOCtl_glGetVertexAttribPointerv_case(func) \
-case maIOCtl_glGetVertexAttribPointerv: \
-{\
-GLuint _index = (GLuint)a; \
-GLenum _pname = (GLuint)b; \
-void* _pointer = GVMR(c, MAAddress);\
-wrap_glGetVertexAttribPointerv(_index, _pname, _pointer); \
-return 0; \
-}
-
-
-#undef maIOCtl_glShaderSource_case
-#define maIOCtl_glShaderSource_case(func) \
-case maIOCtl_glShaderSource: \
-{ \
-GLuint _shader = (GLuint)a; \
-GLsizei _count = (GLsizei)b; \
-void* _string = GVMR(c, MAAddress); \
-const GLint* _length = GVMR(SYSCALL_THIS->GetValidatedStackValue(0 VSV_ARGPTR_USE), GLint); \
-wrap_glShaderSource(_shader, _count, _string, _length); \
-return 0; \
-}
-
-    void wrap_glShaderSource(GLuint shader, GLsizei count, void* strings, const GLint* length) {
-        int* stringsArray = (int*)strings;
-        const GLchar** strCopies = new const GLchar*[count];
-
-        for(int i = 0; i < count; i++) {
-            void* src = GVMR(stringsArray[i], MAAddress);
-            strCopies[i] = (GLchar*)src;
-        }
-#ifndef _android_1
-        glShaderSource(shader, count, strCopies, length);
-#endif
-        delete strCopies;
-    }
-
-    void wrap_glGetVertexAttribPointerv(GLuint index, GLenum pname, void* pointer) {
-        GLvoid* outPointer;
-#ifndef _android_1
-        glGetVertexAttribPointerv(index, pname, &outPointer);
-
-        if(pname != GL_VERTEX_ATTRIB_ARRAY_POINTER)
-            return;
-#endif
-        *(int*)pointer = gSyscall->TranslateNativePointerToMoSyncPointer(outPointer);
-    }
-
-    void wrap_glGetPointerv(GLenum pname, void* pointer) {
-        GLvoid* outPointer;
-        glGetPointerv(pname, &outPointer);
-
-        if(pname != GL_COLOR_ARRAY_POINTER &&
-           pname != GL_NORMAL_ARRAY_POINTER &&
-           pname != GL_POINT_SIZE_ARRAY_POINTER_OES &&
-           pname != GL_TEXTURE_COORD_ARRAY_POINTER &&
-           pname != GL_VERTEX_ARRAY_POINTER)
-            return;
-
-        *(int*)pointer = gSyscall->TranslateNativePointerToMoSyncPointer(outPointer);
-    }
+#include "GLFixes.h"
 
 	/**
 	 * Utility function for displaying and catching pending
@@ -1382,7 +1334,7 @@ return 0; \
 #ifndef _android_1
 		maIOCtl_IX_GL2_caselist
 #endif
-	//	maIOCtl_IX_GL_OES_FRAMEBUFFER_OBJECT_caselist
+		maIOCtl_IX_GL_OES_FRAMEBUFFER_OBJECT_caselist
 
 		case maIOCtl_maWriteLog:
 			SYSLOG("maIOCtl_maWriteLog");
@@ -1572,6 +1524,144 @@ return 0; \
 			SYSLOG("maIOCtl_maFrameBufferClose");
 			return _maFrameBufferClose(mJNIEnv, mJThis);
 
+
+		// Audio API
+
+		case maIOCtl_maAudioDataCreateFromResource:
+		{
+			SYSLOG("maIOCtl_maAudioDataCreateFromResource");
+
+			const char* mime = SYSCALL_THIS->GetValidatedStr(a);
+			int data = b;
+			int offset = c;
+			int length = SYSCALL_THIS->GetValidatedStackValue(0);
+			int flags = SYSCALL_THIS->GetValidatedStackValue(4);
+
+			return _maAudioDataCreateFromResource(mime, data, offset, length, flags, mJNIEnv, mJThis);
+		}
+
+		case  maIOCtl_maAudioDataCreateFromURL:
+		{
+			SYSLOG("maIOCtl_maAudioDataCreateFromURL");
+
+			const char* mime = SYSCALL_THIS->GetValidatedStr(a);
+			const char* url = SYSCALL_THIS->GetValidatedStr(b);
+			int flags = c;
+
+			return _maAudioDataCreateFromURL(mime, url, flags, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioDataDestroy:
+		{
+			SYSLOG("maIOCtl_maAudioDataDestroy");
+			int audioData = a;
+
+			return _maAudioDataDestroy(audioData, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioInstanceCreate:
+		{
+			SYSLOG("maIOCtl_maAudioInstanceCreate");
+
+			int audioData = a;
+
+			return _maAudioInstanceCreate(audioData, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioInstanceDestroy:
+		{
+			SYSLOG("maIOCtl_maAudioInstanceDestroy");
+
+			int audioInstance = a;
+
+			return _maAudioInstanceDestroy(audioInstance, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioGetLength:
+		{
+			SYSLOG("maIOCtl_maAudioGetLength");
+
+			int audioInstance = a;
+
+			return _maAudioGetLength(audioInstance, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioSetNumberOfLoops:
+		{
+			SYSLOG("maIOCtl_maAudioSetNumberOfLoops");
+
+			int audioInstance = a;
+			int loops = b;
+
+			return _maAudioSetNumberOfLoops(audioInstance, loops, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioPrepare:
+		{
+			SYSLOG("maIOCtl_maAudioPrepare");
+
+			int audioInstance = a;
+			int async = b;
+
+			return _maAudioPrepare(audioInstance, async, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioPlay:
+		{
+			SYSLOG("maIOCtl_maAudioPlay");
+
+			int audioInstance = a;
+
+			return _maAudioPlay(audioInstance, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioSetPosition:
+		{
+			SYSLOG("maIOCtl_maAudioSetPosition");
+
+			int audioInstance = a;
+			int milliseconds = b;
+
+			return _maAudioSetPosition(audioInstance, milliseconds, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioGetPosition:
+		{
+			SYSLOG("maIOCtl_maAudioGetPosition");
+
+			int audioInstance = a;
+
+			return _maAudioGetPosition(audioInstance, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioSetVolume:
+		{
+			SYSLOG("maIOCtl_maAudioSetVolume");
+
+			int audioInstance = a;
+			float volume = (float)b;
+
+			return _maAudioSetVolume(audioInstance, volume, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioPause:
+		{
+			SYSLOG("maIOCtl_maAudioPause");
+
+			int audioInstance = a;
+
+			return _maAudioPause(audioInstance, mJNIEnv, mJThis);
+		}
+
+		case maIOCtl_maAudioStop:
+		{
+			SYSLOG("maIOCtl_maAudioStop");
+
+			int audioInstance = a;
+
+			return _maAudioStop(audioInstance, mJNIEnv, mJThis);
+		}
+
 		// Audio buffer syscalls
 
 		case maIOCtl_maAudioBufferInit:
@@ -1717,6 +1807,13 @@ return 0; \
 			return _maWidgetGetProperty((int)gCore->mem_ds, _widget, _property, _valueBuffer, _valueBufferSize, mJNIEnv, mJThis);
 		}
 
+		case maIOCtl_maWidgetScreenAddOptionsMenuItem:
+		{
+			SYSLOG("maIOCtl_maWidgetScreenAddOptionsMenuItem");
+			int _iconPredefined = SYSCALL_THIS->GetValidatedStackValue(0);
+			return _maWidgetScreenAddOptionsMenuItem(a, SYSCALL_THIS->GetValidatedStr(b), c, _iconPredefined, mJNIEnv, mJThis);
+		}
+
 		case maIOCtl_maWidgetScreenShow:
 			SYSLOG("maIOCtl_maWidgetScreenShow");
 			return _maWidgetScreenShow(a, mJNIEnv, mJThis);
@@ -1799,6 +1896,10 @@ return 0; \
 			SYSLOG("maIOCtl_maScreenStateEventsOff");
 			// 0 = events off
 			return _maScreenStateEventsOnOff(0, mJNIEnv, mJThis);
+
+		case maIOCtl_maWakeLock:
+			SYSLOG("maIOCtl_maWakeLock");
+			return _maWakeLock(a, mJNIEnv, mJThis);
 
 		case maIOCtl_maMessageBox:
 			SYSLOG("maIOCtl_maMessageBox");
@@ -2093,20 +2194,13 @@ return 0; \
 		{
 
 			// b is pointer to struct 	MA_CAMERA_FORMAT
-				MA_CAMERA_FORMAT* sizeInfo = (MA_CAMERA_FORMAT*) SYSCALL_THIS->GetValidatedMemRange(b, sizeof(MA_CAMERA_FORMAT));
 
-			// Size of buffer to store device name.
-			int width = sizeInfo->width;
-
-			// Size of buffer to store device name.
-			int height = sizeInfo->height;
 
 
 			// Returns 1 for success, 0 for no more devices.
 			return _maCameraFormat(
 				a,
-				width,
-				height,
+				b,
 				mJNIEnv,
 				mJThis);
 		}
@@ -2600,7 +2694,14 @@ return 0; \
 				c,
 				_valueBufferSize * sizeof(char));
 
-			return _maAdsBannerGetProperty((int)gCore->mem_ds, _ad, _property, _valueBuffer, _valueBufferSize, mJNIEnv, mJThis);
+			return _maAdsBannerGetProperty(
+				(int)gCore->mem_ds,
+				_ad,
+				_property,
+				_valueBuffer,
+				_valueBufferSize,
+				mJNIEnv,
+				mJThis);
 		}
 
 		// ********** Notifications API **********
@@ -2634,7 +2735,14 @@ return 0; \
 				c,
 				_valueBufferSize * sizeof(char));
 
-			return _maNotificationLocalGetProperty((int)gCore->mem_ds, _notification, _property, _valueBuffer, _valueBufferSize, mJNIEnv, mJThis);
+			return _maNotificationLocalGetProperty(
+				(int)gCore->mem_ds,
+				_notification,
+				_property,
+				_valueBuffer,
+				_valueBufferSize,
+				mJNIEnv,
+				mJThis);
 		}
 
 		case maIOCtl_maNotificationLocalSchedule:
@@ -2705,6 +2813,87 @@ return 0; \
 					mJNIEnv,
 					mJThis);
 		}
+
+		case maIOCtl_maNotificationPushSetDisplayFlag:
+			return _maNotificationPushSetDisplayFlag(a, mJNIEnv, mJThis);
+
+		// ********** Capture API **********
+
+		case maIOCtl_maCaptureSetProperty:
+		{
+			const char *_property = SYSCALL_THIS->GetValidatedStr(a);
+			const char *_value = SYSCALL_THIS->GetValidatedStr(b);
+			return _maCaptureSetProperty(
+					_property,
+					_value,
+					mJNIEnv,
+					mJThis);
+		}
+
+		case maIOCtl_maCaptureGetProperty:
+		{
+			int _valueBufferSize = c;
+			int _valueBuffer = (int) SYSCALL_THIS->GetValidatedMemRange(
+				b,
+				_valueBufferSize * sizeof(char));
+			const char *_property = SYSCALL_THIS->GetValidatedStr(a);
+			return _maCaptureGetProperty(
+				(int)gCore->mem_ds,
+				_property,
+				_valueBuffer,
+				_valueBufferSize,
+				mJNIEnv,
+				mJThis);
+		}
+
+		case maIOCtl_maCaptureAction:
+			return _maCaptureAction(a, mJNIEnv, mJThis);
+
+		case maIOCtl_maCaptureWriteImage:
+		{
+			const char *_path = SYSCALL_THIS->GetValidatedStr(b);
+			return _maCaptureWriteImage(
+				a,
+				_path,
+				c,
+				mJNIEnv,
+				mJThis);
+		}
+
+		case maIOCtl_maCaptureGetImagePath:
+		{
+			int _pathBufferSize = c;
+			int _pathBuffer = (int) SYSCALL_THIS->GetValidatedMemRange(
+				b,
+				_pathBufferSize * sizeof(char));
+			return _maCaptureGetImagePath(
+				(int)gCore->mem_ds,
+				a,
+				_pathBuffer,
+				_pathBufferSize,
+				mJNIEnv,
+				mJThis);
+		}
+
+		case maIOCtl_maCaptureGetVideoPath:
+		{
+			int _pathBufferSize = c;
+			int _pathBuffer = (int) SYSCALL_THIS->GetValidatedMemRange(
+				b,
+				_pathBufferSize * sizeof(char));
+			return _maCaptureGetVideoPath(
+				(int)gCore->mem_ds,
+				a,
+				_pathBuffer,
+				_pathBufferSize,
+				mJNIEnv,
+				mJThis);
+		}
+
+		case maIOCtl_maCaptureDestroyData:
+			return _maCaptureDestroyData(a, mJNIEnv, mJThis);
+
+		// ********** Panics **********
 
 		case maIOCtl_maSyscallPanicsEnable:
 			SYSLOG("maIOCtl_maSyscallPanicsEnable");

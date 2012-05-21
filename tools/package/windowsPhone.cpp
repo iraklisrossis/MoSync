@@ -37,7 +37,7 @@ void packageWindowsPhone(const SETTINGS& s, const RuntimeInfo& ri) {
 	testName(s);
 	testVendor(s);
 	testVersion(s);
-	//testIOSCert(s);
+	testVsBuildPath(s);
 
 	std::ostringstream generateCmd;
 	std::ostringstream buildCmd;
@@ -48,27 +48,39 @@ void packageWindowsPhone(const SETTINGS& s, const RuntimeInfo& ri) {
 	string templateLocation = string(ri.path) + "/template";
 	string templateFileLocation = string(ri.path) + "/template/mosync.csproj";
 	string csprojOutputFile = dst + "/project/mosync.csproj";
-	string csprojOutput = dst + "/project";
 
-	/*
-	generateCmd << getBinary("iphone-builder") << " generate -project-name " <<
-		arg(s.name) << " -version " << s.version << " -company-name " <<
-		arg(s.vendor) << " -cert " << arg(s.iOSCert) << " -input " << file(templateLocation) <<
-		" -output " << file(xcodeprojOutput);
-	*/
+	string appManifestInputFile = string(ri.path) + "/template/Properties/WMAppManifest.xml";
+	string appManifestOutputFile = dst + "/project/Properties/WMAppManifest.xml";
+
+	string csprojOutput = dst + "/project";
+	string outputType = s.outputType ? string(s.outputType) : string("interpreted");
+	if(s.csOutputDir)
+	{
+		outputType = "rebuilt";
+	}
 
 	_mkdir(csprojOutput.c_str());
 	copyFilesRecursively(templateLocation.c_str(), csprojOutput.c_str());
 
-	std::string outputType = "interpreted";
-	if(streq(s.WPconfig, "rebuild_debug") || streq(s.WPconfig, "rebuild_release"))
-		outputType = "rebuilt";
-
-
 	generateCmd << getBinary("winphone-builder") <<
-		" -output-type " << outputType <<
+		" -version " << arg(s.version) <<
+		" -company-name " << arg(s.vendor) <<
+		" -input-app-manifest-file " << file(appManifestInputFile) <<
+		" -output-app-manifest-file " << file(appManifestOutputFile) <<
+		" -project-name " << arg(s.name) <<
+		" -output-type " << arg(outputType) <<
 		" -input-file " << file(templateFileLocation) <<
 		" -output-file " << file(csprojOutputFile);
+
+	if(s.WPguid)
+	{
+		generateCmd << " -guid " << s.WPguid;
+	}
+
+	if(!s.resource)
+	{
+		generateCmd << " -exclude-resource-file";
+	}
 
 	sh(generateCmd.str().c_str(), s.silent);
 
@@ -86,36 +98,34 @@ void packageWindowsPhone(const SETTINGS& s, const RuntimeInfo& ri) {
 	if(s.resource) {
 		copyFile(resourceFileCopy.c_str(), s.resource);
 	} else {
-		ofstream empty(resourceFileCopy.c_str());
-		empty.close();
+		//ofstream empty(resourceFileCopy.c_str());
+		//empty.close();
 	}
 
 	// Icons!
-	/*
 	if (s.icon) {
-		const string sizes[3] = { "57x57", "72x72", "114x114" };
-		const string filenames[3] = { "Icon.png", "Icon-72.png", "Icon@2x.png" };
+		const string sizes[2] = { "62x62", "173x173"};
+		const string filenames[2] = { "ApplicationIcon.png", "Background.png"};
 
-		for(int i = 0; i < 3; i++) {
+		for(int i = 0; i < 2; i++) {
 			std::ostringstream iconInjectCmd;
 			string size = sizes[i];
-			string outputIcon = xcodeprojOutput + "/" + filenames[i];
-			injectIcon("iOS", size.c_str(), s.icon, outputIcon.c_str(), s.silent);
+			string outputIcon = csprojOutput + "/" + filenames[i];
+			injectIcon("Windows Phone", size.c_str(), s.icon, outputIcon.c_str(), s.silent);
 		}
 	}
-	*/
 
 	if (!s.WPgenerateOnly) {
 #ifdef PLATFORM_WIN32
 		//testIOSSdk(s);
 
 		// todo: find this programatically...
-		std::string msBuildPath =
-			"/Windows/Microsoft.NET/Framework/v4.0.30319/MSBuild.exe";
+		//std::string vsBuildPath =
+		//	"/Windows/Microsoft.NET/Framework/v4.0.30319/MSBuild.exe";
 
 		_chdir(csprojOutput.c_str());
 
-		buildCmd << msBuildPath << " mosync.csproj";
+		buildCmd << s.WPvsBuildPath << " mosync.csproj";
 
 		// Set our configuration.
 		buildCmd << " /p:Configuration=" << s.WPconfig;

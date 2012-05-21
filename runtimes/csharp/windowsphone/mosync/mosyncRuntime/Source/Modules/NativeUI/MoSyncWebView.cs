@@ -51,6 +51,15 @@ namespace MoSync
             //this is used when loading relative paths
             protected String mBaseURL = "";
 
+            //navigation counter helper value
+            private int mBackCounter = 0;
+
+            //navigation boolean, set on true while back is handled
+            private bool mFromHistory = false;
+
+            //boolean set on true if the web browser gains focus
+            private bool mFocused = false;
+
             //MAW_WEB_VIEW_URL property implementation
             [MoSyncWidgetProperty(MoSync.Constants.MAW_WEB_VIEW_URL)]
             public String Url
@@ -67,9 +76,18 @@ namespace MoSync
                     else
                     {
                         Uri uri;
-                        if (value.StartsWith("http://"))
+                        if (value.StartsWith("http://") || value.StartsWith("www."))
                         {
-                            uri = new Uri(value, UriKind.Absolute);
+                            if (value.StartsWith("http://") == false)
+                            {
+                                string newUri = "http://" + value;
+                                uri = new Uri(newUri, UriKind.Absolute);
+                            }
+                            else
+                            {
+                                uri = new Uri(value, UriKind.Absolute);
+                            }
+
                         }
                         else
                         {
@@ -169,6 +187,26 @@ namespace MoSync
                     {
                         mWebBrowser.InvokeScript("eval", "history.go(1)");
                     }
+                    else throw new InvalidPropertyValueException();
+                }
+            }
+
+            public void BackKeyPressHandler(object from, System.ComponentModel.CancelEventArgs args)
+            {
+                try
+                {
+                    //mBackCounter is firstly increased when the webview navigates to the source page
+                    if (mBackCounter > 1 && mFocused)
+                    {
+                        mBackCounter--;
+                        mFromHistory = true;
+                        Navigate = "back";
+                        args.Cancel = true;
+                    }
+                }
+                catch
+                {
+                    //supress the error
                 }
             }
 
@@ -179,6 +217,22 @@ namespace MoSync
                 mView = mWebBrowser;
                 mWebBrowser.IsScriptEnabled = true;
 
+                mWebBrowser.IsGeolocationEnabled = true;
+
+                (Application.Current.RootVisual as Microsoft.Phone.Controls.PhoneApplicationFrame).BackKeyPress += new EventHandler<System.ComponentModel.CancelEventArgs>(BackKeyPressHandler);
+
+                mWebBrowser.GotFocus += new RoutedEventHandler(
+                    delegate(object from, RoutedEventArgs args)
+                    {
+                        mFocused = true;
+                    });
+
+                mWebBrowser.LostFocus += new RoutedEventHandler(
+                    delegate(object from, RoutedEventArgs args)
+                    {
+                        mFocused = false;
+                    });
+
                 fillSpaceHorizontalyEnabled = false;
                 fillSpaceVerticalyEnabled = false;
 
@@ -187,23 +241,9 @@ namespace MoSync
                     delegate(object from, NotifyEventArgs args)
                     {
                         String str = args.Value;
-                        MoSync.Util.Log(str + "\n");
+                        //MoSync.Util.Log(str + "\n");
 
-                        int hookType = 0;
-
-                        //determine the hook type
-                        if (Regex.IsMatch(str, mHardHook))
-                        {
-                            hookType = MoSync.Constants.MAW_CONSTANT_HARD;
-                        }
-                        else if (Regex.IsMatch(str, mSoftHook))
-                        {
-                            hookType = MoSync.Constants.MAW_CONSTANT_SOFT;
-                        }
-                        else
-                        {
-                            return;
-                        }
+                        int hookType = MoSync.Constants.MAW_CONSTANT_SOFT;
 
                         //the MAW_EVENT_WEB_VIEW_HOOK_INVOKED needs a chunk of 16 bytes of memory
                         Memory eventData = new Memory(16);
@@ -213,14 +253,15 @@ namespace MoSync
                         const int MAWidgetEventData_urlData = 12;
 
                         //constructing the urlData
-                        Memory urlData = new Memory(str.Length + 1);
-                        urlData.WriteStringAtAddress(0, str, str.Length + 1);
+                        System.IO.MemoryStream urlData = new System.IO.MemoryStream(str.Length + 1);
+						byte[] strBytes = System.Text.UTF8Encoding.UTF8.GetBytes(str);
+						urlData.Write(strBytes, 0, strBytes.Length);
 
                         eventData.WriteInt32(MAWidgetEventData_eventType, MoSync.Constants.MAW_EVENT_WEB_VIEW_HOOK_INVOKED);
                         eventData.WriteInt32(MAWidgetEventData_widgetHandle, mHandle);
                         eventData.WriteInt32(MAWidgetEventData_hookType, hookType);
                         eventData.WriteInt32(MAWidgetEventData_urlData, mRuntime.AddResource(
-                            new Resource(urlData, MoSync.Constants.RT_BINARY)));
+                            new Resource(urlData, MoSync.Constants.RT_BINARY, true)));
                         mRuntime.PostCustomEvent(MoSync.Constants.EVENT_TYPE_WIDGET, eventData);
                     });
 
@@ -267,6 +308,8 @@ namespace MoSync
                         eventData.WriteInt32(MAWidgetEventData_status, MoSync.Constants.MAW_CONSTANT_STARTED);
 
                         mRuntime.PostCustomEvent(MoSync.Constants.EVENT_TYPE_WIDGET, eventData);
+
+                        if (!mFromHistory && (args.NavigationMode == NavigationMode.Forward || args.NavigationMode == NavigationMode.New)) mBackCounter++;
                     });
             }
         }

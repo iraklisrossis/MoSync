@@ -1244,7 +1244,7 @@ namespace Base {
 		return fileSpace(file, SPACE_TOTAL);
 	}
 
-	int Syscall::maFileDate(MAHandle file) {
+	s64 Syscall::maFileDate(MAHandle file) {
 		LOGF("maFileDate(%i)\n", file);
 		FileHandle& fh(getFileHandle(file));
 		time_t t;
@@ -1269,8 +1269,8 @@ namespace Base {
 			}
 			t = st.st_mtime;
 		}
-		LOGF("mtime: %i\n", (int)t);
-		return (int)t;
+		LOGF("mtime: %" PFZT "\n", t);
+		return t;
 	}
 
 	int Syscall::maFileTruncate(MAHandle file, int offset) {

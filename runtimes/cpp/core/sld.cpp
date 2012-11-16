@@ -400,6 +400,7 @@ int mapFileLine(const char* filename, int lineNumber, vector<int>& addresses) {
 	LineMapping lm;
 	lm.file = fileIndex;
 	lm.line = lineNumber;
+	lm.ip = -1;
 
 	AddressSet::const_iterator itr = gAddressSet.lower_bound(lm);
 

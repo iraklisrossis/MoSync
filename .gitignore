@@ -49,6 +49,8 @@ config_platform.h
 
 wormhole.js
 
+LocalFiles.bin*
+
 /*.bat
 
 /ipch/*
@@ -120,6 +122,7 @@ wormhole.js
 /testPrograms/copyfiles.bat
 /testPrograms/filesystem/
 /testPrograms/gcc-torture/settings.rb
+/testPrograms/httpPut/config.h
 
 /runtimes/cpp/generated
 

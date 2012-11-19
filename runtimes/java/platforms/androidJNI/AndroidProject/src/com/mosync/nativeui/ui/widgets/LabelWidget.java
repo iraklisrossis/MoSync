@@ -19,9 +19,11 @@ package com.mosync.nativeui.ui.widgets;
 
 import android.graphics.Typeface;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.widget.TextView;
 
 import com.mosync.internal.android.MoSyncFont;
+import com.mosync.internal.android.MoSyncThread;
 import com.mosync.internal.android.MoSyncFont.MoSyncFontHandle;
 import com.mosync.internal.generated.IX_WIDGET;
 import com.mosync.nativeui.core.Types;
@@ -48,6 +50,20 @@ public class LabelWidget extends Widget
 	private int m_maxNrLines = 0;
 
 	/**
+	 * The current horizontal text alignment. Defaults to CENTER_HORIZONTAL.
+	 * This value is needed because when we set a new value, we need
+	 * to bit-or the horizontal and vertical components.
+	 */
+	private int mHorizontalGravity = Gravity.CENTER_HORIZONTAL;
+
+	/**
+	 * The current vertical text alignment. Defaults to TOP.
+	 * This value is needed because when we set a new value, we need
+	 * to bit-or the horizontal and vertical components.
+	 */
+	private int mVerticalGravity = Gravity.TOP;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param handle handle Integer handle corresponding to this instance.
@@ -56,14 +72,15 @@ public class LabelWidget extends Widget
 	public LabelWidget(int handle, TextView view)
 	{
 		super( handle, view );
-		view.setGravity( 0 );
+		view.setGravity( Gravity.CENTER );
 	}
 
 	/**
 	 * @see Widget.setProperty.
 	 */
 	@Override
-	public boolean setProperty(String property, String value) throws PropertyConversionException, InvalidPropertyValueException
+	public boolean setProperty(String property, String value)
+		throws PropertyConversionException, InvalidPropertyValueException
 	{
 		if( super.setProperty(property, value) )
 		{
@@ -87,15 +104,15 @@ public class LabelWidget extends Widget
 		{
 			textView.setTextSize( TypedValue.COMPLEX_UNIT_PX, FloatConverter.convert( value ) );
 		}
-		else if( property.equals( Types.WIDGET_PROPERTY_TEXT_HORIZONTAL_ALIGNMENT ) )
+		else if (property.equals(Types.WIDGET_PROPERTY_TEXT_HORIZONTAL_ALIGNMENT))
 		{
-			int currentGravity = HorizontalAlignment.clearHorizontalAlignment( textView.getGravity( ) );
-			textView.setGravity( currentGravity | HorizontalAlignment.convert( value ) );
+			mHorizontalGravity = HorizontalAlignment.convert(value);
+			textView.setGravity(mHorizontalGravity | mVerticalGravity);
 		}
-		else if( property.equals( Types.WIDGET_PROPERTY_TEXT_VERTICAL_ALIGNMENT ) )
+		else if (property.equals(Types.WIDGET_PROPERTY_TEXT_VERTICAL_ALIGNMENT))
 		{
-			int currentGravity = VerticalAlignment.clearVerticalAlignment( textView.getGravity( ) );
-			textView.setGravity( currentGravity | VerticalAlignment.convert( value ) );
+			mVerticalGravity = VerticalAlignment.convert(value);
+			textView.setGravity(mHorizontalGravity | mVerticalGravity);
 		}
 		else if( property.equals(IX_WIDGET.MAW_LABEL_MAX_NUMBER_OF_LINES ) )
 		{
@@ -115,6 +132,20 @@ public class LabelWidget extends Widget
 			{
 				textView.setMaxLines( m_maxNrLines );
 			}
+		}
+		else if( property.equals( IX_WIDGET.MAW_LABEL_FONT_HANDLE ) )
+		{
+			MoSyncFontHandle currentFont = null;
+
+			// Search the handle in the list of fonts.
+			currentFont = MoSyncThread.getMoSyncFont(IntConverter .convert(value));
+
+			if ( currentFont != null )
+			{
+				setFontTypeface(currentFont.getTypeface(), currentFont.getFontSize());
+			}
+			else
+				throw new InvalidPropertyValueException(property, value);
 		}
 		else
 		{
@@ -166,13 +197,11 @@ public class LabelWidget extends Widget
 	 * @return True if the widget supports font setting, false otherwise.
 	 */
 	@Override
-	public boolean setFontTypeface(Typeface aTypeface, float aSize)
+	public void setFontTypeface(Typeface aTypeface, float aSize)
 	{
 		TextView textView = (TextView) getView( );
 		textView.setTypeface(aTypeface);
 		textView.setTextSize(aSize);
-
-		return true;
 	}
 
 }

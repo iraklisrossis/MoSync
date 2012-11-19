@@ -485,6 +485,11 @@ static char *flt(char *str, double num, int size, int precision, char fmt, int f
   char c, sign;
   int n, i;
 
+	if(isnan(num)) {
+		strcpy(str, "NaN");
+		return str+3;
+	}
+
   // Left align means no zero padding
   if (flags & LEFT) flags &= ~ZEROPAD;
 

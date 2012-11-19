@@ -617,7 +617,7 @@ int HttpConnection::readResponseCode(const char* line, int len) {
 }
 
 int HttpConnection::write(const void* src, int len) {
-	MYASSERT(mMethod == HTTP_POST, ERR_HTTP_NONPOST_WRITE);
+	MYASSERT(mMethod == HTTP_POST || mMethod == HTTP_PUT, ERR_HTTP_READONLY_WRITE);
 	return ProtocolConnection::write(src, len);
 }
 

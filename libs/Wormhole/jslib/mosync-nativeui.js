@@ -50,6 +50,11 @@ mosync.nativeui.eventCallBackTable = {};
 mosync.nativeui.widgetCounter = 0;
 
 /**
+ * A unique string id for the main webview widget.
+ */
+mosync.nativeui.mainWebViewId = "mosync.nativeui.mainWebViewId";
+
+/**
  * Creates a mosync.nativeui Widget and registers it callback for return of the
  * handle, Used internally use mosync.nativeui.create in your code.
  *
@@ -404,6 +409,23 @@ mosync.nativeui.createCallback = function(callbackID, widgetID, handle) {
 	}
 };
 
+/**
+ * Sets the web view widget handle and maps it inside the widgetIDList
+ * @param handle The handle of the web view widget.
+ */
+mosync.nativeui.setWebViewHandle = function(handle)
+{
+	// Bind the string id of the main webview to the native widget handle.
+	mosync.nativeui.widgetIDList[mosync.nativeui.mainWebViewId] = handle;
+
+	// Create a JS widget object for the main webview.
+	new mosync.nativeui.NativeWidgetElement(
+		"WebView", mosync.nativeui.mainWebViewId,
+		{},
+		null,
+		null);
+};
+
 mosync.nativeui.success = function(callbackID) {
 	var callBack = mosync.nativeui.callBackTable[callbackID];
 
@@ -604,11 +626,27 @@ mosync.nativeui.NativeWidgetElement = function(widgetType, widgetID, params,
 		}
 
 	};
-	/*
-	 * Create the widget in the Native Side
-	 */
-	mosync.nativeui.maWidgetCreate(widgetType, self.id, this.onSuccess, this.onError,
-			self.processedMessage, self.params);
+
+	// Send a message to the native layer to create the widget.
+	// Note that if we get the id of the main webviwe, we don't
+	// create a new widget, it already exists.
+	// This allows us to create widget tree where the main
+	// webveiw can be inserted.
+	if (self.id !== mosync.nativeui.mainWebViewId)
+	{
+		mosync.nativeui.maWidgetCreate(
+			widgetType,
+			self.id,
+			this.onSuccess,
+			this.onError,
+			self.processedMessage,
+			self.params);
+	}
+	else
+	{
+		self.created = true;
+		self.handle = mosync.nativeui.widgetIDList[mosync.nativeui.mainWebViewId];
+	}
 
 	/**
 	 * Sets a property to the widget in question.
@@ -1198,8 +1236,19 @@ mosync.nativeui.NativeWidgetElement = function(widgetType, widgetID, params,
  *    myScreen.show()
  * \endcode
  */
-document.getNativeElementById = function(widgetID) {
+document.getNativeElementById = function(widgetID)
+{
 	return mosync.nativeui.NativeElementsTable[widgetID];
+};
+
+/**
+ * Get the id of the main webview. This can be used to
+ * insert the main webview into a widget tree.
+ * @return The string id of the main webview widget.
+ */
+mosync.nativeui.getMainWebViewId = function()
+{
+	return mosync.nativeui.mainWebViewId;
 };
 
 /**
@@ -1228,7 +1277,6 @@ document.getNativeElementById = function(widgetID) {
  *					"width" : "100%"
  * 					});
  * \endcode
-
  */
 mosync.nativeui.create = function(widgetType, widgetID, params,
 		successCallback, errorCallback) {
@@ -1307,6 +1355,42 @@ mosync.nativeui.widgetIDList = {};
 mosync.nativeui.getElementById = function(elementID)
 {
 	return mosync.nativeui.widgetIDList[elementID];
+};
+
+/**
+ * Get the MoSync widget handle for the JavaScript NativeUI
+ * element with the given ID.
+ *
+ * @param elementId A string id that identifies the widget (this
+ * is the id of the DOM element that holds the widget info).
+ */
+mosync.nativeui.getNativeHandleById = function(elementId)
+{
+	return mosync.nativeui.widgetIDList[elementId];
+};
+
+/**
+ * Constant to be used to reference the main WebView in an app
+ * when calling mosync.nativeui.callJS().
+ */
+mosync.nativeui.MAIN_WEBVIEW = 0;
+
+/**
+ * Evaluate JavaScript code in another WebView. This provides a
+ * way to pass messages and communicate between WebViews.
+ *
+ * @param webViewHandle The MoSync handle of the WebView widget.
+ * Use mosync.nativeui.MAIN_WEBVIEW to refer to the main WebView
+ * in the application (this is the hidden WebView in a JavaScript
+ * NativeUI app).
+ * @param script A string with JavaScript code.
+ */
+mosync.nativeui.callJS = function(webViewHandle, script)
+{
+	mosync.bridge.send([
+		"CallJS",
+		"" + webViewHandle,
+		script]);
 };
 
 /**
@@ -1669,26 +1753,12 @@ mosync.nativeui.initUI = function() {
 	return true;
 };
 
-/*
+/**
  * Store the screen size information coming from MoSync
- * in the mosync.nativeui namespace.
+ * in the mosync.nativeui namespace. This function is
+ * called from C++.
  */
-if (typeof mosyncScreenWidth != "undefined" &&
-	typeof mosyncScreenHeight != "undefined")
-{
-	mosync.nativeui.screenWidth = mosyncScreenWidth;
-	mosync.nativeui.screenHeight = mosyncScreenHeight;
-}
-else
-{
-	try
-	{
-		mosync.nativeui.screenWidth = window.screen.availWidth;
-		mosync.nativeui.screenHeight = window.screen.availHeight;
-	}
-	catch (error)
-	{
-		mosync.nativeui.screenWidth = window.innerWidth;
-		mosync.nativeui.screenHeight = window.innerHeight;
-	}
+mosync.nativeui.setScreenSize = function(width, height) {
+	mosync.nativeui.screenWidth = width;
+	mosync.nativeui.screenHeight = height;
 }

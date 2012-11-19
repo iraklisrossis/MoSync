@@ -102,6 +102,9 @@
     <Compile Include="Source\Modules\MoSyncOptionsBoxModule.cs" />
     <Compile Include="Source\Modules\MoSyncScreenOrientationModule.cs" />
     <Compile Include="Source\Modules\MoSyncSensorsModule.cs" />
+    <Compile Include="Source\Modules\NativeUI\ListView\ListViewModel\ListItem.cs" />
+    <Compile Include="Source\Modules\NativeUI\ListView\ListViewModel\ListSection.cs" />
+    <Compile Include="Source\Modules\NativeUI\ListView\ListViewWidgets\MoSyncListViewSection.cs" />
     <Compile Include="Source\Modules\NativeUI\MoSyncActivityIndicator.cs" />
     <Compile Include="Source\Modules\NativeUI\MoSyncAd.cs" />
     <Compile Include="Source\Modules\NativeUI\MoSyncCameraPreview.cs" />
@@ -128,8 +131,8 @@
     <Compile Include="Source\Modules\NativeUI\MoSyncImage.cs" />
     <Compile Include="Source\Modules\NativeUI\MoSyncImageButton.cs" />
     <Compile Include="Source\Modules\NativeUI\MoSyncLabel.cs" />
-    <Compile Include="Source\Modules\NativeUI\MoSyncListView.cs" />
-    <Compile Include="Source\Modules\NativeUI\MoSyncListViewItem.cs" />
+    <Compile Include="Source\Modules\NativeUI\ListView\ListViewWidgets\MoSyncListView.cs" />
+    <Compile Include="Source\Modules\NativeUI\ListView\ListViewWidgets\MoSyncListViewItem.cs" />
     <Compile Include="Source\Modules\NativeUI\MoSyncNativeUI.cs" />
     <Compile Include="Source\Modules\NativeUI\MoSyncNativeUIWindowsPhone.cs" />
     <Compile Include="Source\Modules\NativeUI\MoSyncRelativeLayout.cs" />

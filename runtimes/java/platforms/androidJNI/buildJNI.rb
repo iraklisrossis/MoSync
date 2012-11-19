@@ -71,6 +71,8 @@ if(extra)
 	end
 end
 
+# Converts the android version to an Integer
+androidVersionInt = Integer(androidVersion)
 
 if ENV['MOSYNC_SRC'] == nil
 	cd "../../../../"
@@ -93,8 +95,12 @@ ENV['MOSYNC_JAVA_SRC'] = cpath
 #We need two different make files for android due to some restrictions in JNI
 
 puts "android version is: #{androidVersion}"
-if((androidVersion == "3") ||(androidVersion == "4"))
+if(androidVersionInt < 7)
 	ENV['ANDROID_API_BELOW_7'] = "true"
+end
+
+if(androidVersionInt >= 15)
+	ENV['ANDROID_API_15_OR_ABOVE'] = "true"
 end
 
 if androidNDKPath == nil

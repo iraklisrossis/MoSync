@@ -154,6 +154,7 @@ extern "C" int mosyncLibMain(int argc, char** argv, mainfunc MAMain) {
 
 #ifndef _USE_REBUILDER_
 void* Base::Syscall::GetValidatedMemRange(int address, int size) {
+	DEBUG_ASSERT(sizeof(void*) == sizeof(int));
 	return (void*)(size_t)address;
 }
 void Base::Syscall::ValidateMemRange(const void* ptr, int size) {
@@ -169,14 +170,17 @@ int Base::Syscall::GetValidatedStackValue(int offset, va_list argptr) {
 	return va_arg(argptr, int);
 }
 const char* Base::Syscall::GetValidatedStr(int address) {
+	DEBUG_ASSERT(sizeof(void*) == sizeof(int));
 	return (const char*)(size_t)address;
 }
 const wchar* Base::Syscall::GetValidatedWStr(int address) {
+	DEBUG_ASSERT(sizeof(void*) == sizeof(int));
 	return (const wchar*)(size_t)address;
 }
 
 // warn: not gonna work in 64-bit systems.
 int Base::Syscall::TranslateNativePointerToMoSyncPointer(void* n) {
+	DEBUG_ASSERT(sizeof(void*) == sizeof(int));
 	return (int)(size_t)n;
 }
 

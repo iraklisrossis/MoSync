@@ -1,8 +1,8 @@
 /*
  * membench.h
  *
- *  Created on: 13 jul 2011
- *      Author: Alex
+ *	Created on: 13 jul 2011
+ *		Author: Alex
  */
 
 #ifndef MEMBENCH_H_
@@ -16,9 +16,11 @@
 //IOS headers
 #include <objc/message.h>
 #include <objc/runtime.h>
+//benchmark publishing
+#include "BenchDB.h"
 
 #define ALOT 1024 //used as number of iterations when we want to do a lot of operations
-#define	RUNNING_TIME 1.0f //running time per test in msecs
+#define RUNNING_TIME 1.0f //running time per test in msecs
 
 
 /* Test types */
@@ -79,21 +81,22 @@ public:
 
 	/* start benching! */
 	void bench();
-    
-    /* Register objective-C object */
-    void reg_objc_obj(id obj);
+
+	/* Register objective-C object */
+	void reg_objc_obj(id obj);
 
 private:
 
+	void runNextBench();
 	float heapBench(int numRuns, int size, int testType);
 	float memAccess(int numRuns, int size, int testType);
 
 	/* Timer functions */
 	float currTime();
-    
-    /* Callback to obj-C */
-    void call_objc_obj(char *msg);
-    id mObjcPtr;
+
+	/* Callback to obj-C */
+	void call_objc_obj(char *msg);
+	id mObjcPtr;
 
 	/* member variables */
 	char *mArray;
@@ -102,6 +105,7 @@ private:
 	DummyObjectMix mDom;
 	DummyStruct mDs;
 
+	BenchResult mBr;
 };
 
 

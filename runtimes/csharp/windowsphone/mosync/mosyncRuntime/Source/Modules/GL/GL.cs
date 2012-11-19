@@ -2296,6 +2296,7 @@ class GL : GLConstants
 			}
 			catch (Exception)
 			{
+				//int a = 2;	// breakpoint dummy
 			}
 			mBasicEffect.Texture = t;
 	}

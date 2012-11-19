@@ -83,9 +83,9 @@ long writedata( struct cdata *cd, long pos, FILE *fpout, FILE *fptemp )
 
   	fseek( fptemp,pos, SEEK_SET );
   	tmp = (byte *) calloc( cd->ncbytes, sizeof(byte) );
-  	res = fread( tmp, cd->ncbytes, 1, fptemp );
-	if(res != 1)
-		abort();
+		res = fread( tmp, cd->ncbytes, 1, fptemp );
+		if(res != 1)
+			abort();
 
      // compute checksum
 	csum = compute_checksum( (byte *) &cd->ncbytes,

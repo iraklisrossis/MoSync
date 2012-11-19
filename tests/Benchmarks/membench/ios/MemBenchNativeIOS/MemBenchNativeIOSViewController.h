@@ -10,12 +10,15 @@
 
 @interface MemBenchNativeIOSViewController : UIViewController {
     IBOutlet UITextView *txtView;
+    IBOutlet UIActivityIndicatorView *activityIndicatorView;
     NSMutableString *txt;
 }
 
 @property(nonatomic,retain) IBOutlet UITextView *txtView;
+@property(nonatomic,retain) IBOutlet UIActivityIndicatorView *activityIndicatorView;
 
 - (IBAction)startBench:(id)sender;
 - (void)postResult:(char *)res;
+- (void)runNextBench:(char*)msg;
 
 @end

@@ -51,6 +51,7 @@ int gUsedMem = 0;
 int gWastedMem = 0;
 int gNumMallocs = 0, gNumFrees = 0;
 #endif
+
 #if HAVE_STACK_DUMP
 static MAHandle sDumpFile = 0;
 static void dumpStack(int req, int block, void* address);
@@ -281,7 +282,7 @@ void * malloc(size_t size)
 #if HAVE_STACK_DUMP
 		dumpStack(size, gBlockSizeHook(result), result);
 #endif
-		}
+	}
 #endif
 
 #ifdef MEMORY_PROTECTION

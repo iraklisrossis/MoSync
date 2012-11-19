@@ -178,7 +178,7 @@ public class MoSyncThread extends Thread
 	MoSyncNativeUI mMoSyncNativeUI;
 	MoSyncFile mMoSyncFile;
 	// Module for device fonts.
-	MoSyncFont mMoSyncFont;
+	static MoSyncFont mMoSyncFont;
 	MoSyncCameraController mMoSyncCameraController;
 	MoSyncSMS mMoSyncSMS;
 	MoSyncSensor mMoSyncSensor;
@@ -585,6 +585,19 @@ public class MoSyncThread extends Thread
 
 		mCanvas = mDrawTargetScreen.mCanvas;
 		mBitmap = mDrawTargetScreen.mBitmap;
+
+		// Set/reset clip rect.
+		mClipLeft = 0;
+		mClipTop = 0;
+		mClipWidth = mWidth;
+		mClipHeight = mHeight;
+
+		// Set original clip rect.
+		// Save the clip state since we have a new canvas created.
+		// This initial save is needed for the clip rect stack to
+		// work correctly when calling restore clip rect.
+		mCanvas.save();
+		mCanvas.clipRect(mClipLeft, mClipTop, mClipWidth, mClipHeight, Region.Op.REPLACE);
 
 		updateScreen();
 
@@ -1122,17 +1135,10 @@ public class MoSyncThread extends Thread
 	void initSyscalls()
 	{
 		SYSLOG("initSyscalls");
+
+		//Log.i("@@@@@", "initSyscalls");
+
 		mUsingFrameBuffer = false;
-
-		mClipLeft = 0;
-		mClipTop = 0;
-		mClipWidth = mWidth;
-		mClipHeight = mHeight;
-
-		// Set original clip rect.
-		// First we save the clip state.
-		mCanvas.save();
-		mCanvas.clipRect(mClipLeft, mClipTop, mClipWidth, mClipHeight, Region.Op.REPLACE);
 
 		mPaint.setStyle(Paint.Style.FILL);
 		mPaint.setAntiAlias(false);
@@ -1237,7 +1243,7 @@ public class MoSyncThread extends Thread
 		//mMemDataSection.position(address);
 		//IntBuffer ib = mMemDataSection.asIntBuffer();
 
-		IntBuffer ib = getMemorySlice(address, -1).asIntBuffer();
+		IntBuffer ib = getMemorySlice(address, -1).order(null).asIntBuffer();
 
 		int[] vertices = new int[count*2];
 		ib.get(vertices);
@@ -1299,7 +1305,7 @@ public class MoSyncThread extends Thread
 		//mMemDataSection.position(address);
 		//IntBuffer ib = mMemDataSection.asIntBuffer();
 
-		IntBuffer ib = getMemorySlice(address, -1).asIntBuffer();
+		IntBuffer ib = getMemorySlice(address, -1).order(null).asIntBuffer();
 
 		int[] vertices = new int[count*2];
 		ib.get(vertices);
@@ -1498,7 +1504,7 @@ public class MoSyncThread extends Thread
 	 * @param fontHandle A font handle.
 	 * @return The font handle object.
 	 */
-	public MoSyncFontHandle getMoSyncFont(int fontHandle)
+	public static MoSyncFontHandle getMoSyncFont(int fontHandle)
 	{
 		return mMoSyncFont.getMoSyncFont(fontHandle);
 	}
@@ -1658,7 +1664,7 @@ public class MoSyncThread extends Thread
 		//mMemDataSection.position(mem);
 		//IntBuffer ib = mMemDataSection.asIntBuffer();
 
-		IntBuffer ib = getMemorySlice(mem, -1).asIntBuffer();
+		IntBuffer ib = getMemorySlice(mem, -1).order(null).asIntBuffer();
 
 		for (int y = 0; y < srcRectHeight; y++)
 		{
@@ -4215,7 +4221,7 @@ public class MoSyncThread extends Thread
 	 * multiple icons will be added. The shortcut launches the current
 	 * application.
 	 * @param name The text that will be used for the shortcut label.
-	 * @return <0 on error
+	 * @return < 0 on error
 	 */
 	int maHomeScreenShortcutAdd(String name)
 	{
@@ -4225,7 +4231,7 @@ public class MoSyncThread extends Thread
 	/**
 	 * Remove a shortcut icon to the home screen.
 	 * @param name The shortcut(s) with this label will be removed.
-	 * @return <0 on error
+	 * @return < 0 on error
 	 */
 	int maHomeScreenShortcutRemove(String name)
 	{
@@ -4454,7 +4460,8 @@ public class MoSyncThread extends Thread
 	 */
 	public void acquireHardware()
 	{
-		if (mMoSyncCameraController != null) {
+		if (mMoSyncCameraController != null)
+		{
 			mMoSyncCameraController.acquireCamera();
 		}
 	}
@@ -4501,7 +4508,7 @@ public class MoSyncThread extends Thread
 		}
 
 		int result = mMoSyncCameraController.cameraStop();
-		//go back to the previous screen'
+		//go back to the previous screen
 		if(cameraScreen != 0)
 		{
 			maWidgetDestroy(cameraScreen);
@@ -4556,7 +4563,7 @@ public class MoSyncThread extends Thread
 	 * Selects the active Camera
 	 *
 	 * @param cameraNumber index of the camera in the list
-	 * @return >0 for success, <0 for failure
+	 * @return > 0 for success, < 0 on failure
 	 */
 	int maCameraSelect(int cameraNumber)
 	{
@@ -4641,10 +4648,60 @@ public class MoSyncThread extends Thread
 			return IOCTL_UNAVAILABLE;
 		}
 
-		return mMoSyncCameraController.getCameraPorperty(key,
+		return mMoSyncCameraController.getCameraProperty(key,
 										memBuffer,
 										memBufferSize);
 	}
+
+	public int maCameraPreviewSize()
+	{
+		if(mMoSyncCameraController == null)
+		{
+			return IOCTL_UNAVAILABLE;
+		}
+
+		return mMoSyncCameraController.getPreviewSize();
+	}
+
+	public int maCameraPreviewEventEnable(
+			int eventType,
+			int previewBuffer,
+			int rectLeft,
+			int rectTop,
+			int rectWidth,
+			int rectHeight
+		)
+	{
+		if(mMoSyncCameraController == null)
+		{
+			return IOCTL_UNAVAILABLE;
+		}
+
+		return mMoSyncCameraController.enablePreviewEvents(
+			eventType, previewBuffer, rectLeft, rectTop,
+			rectWidth, rectHeight);
+	}
+
+	int maCameraPreviewEventDisable()
+	{
+		if(mMoSyncCameraController == null)
+		{
+			return IOCTL_UNAVAILABLE;
+		}
+
+		return mMoSyncCameraController.disablePreviewEvents();
+	}
+
+	int maCameraPreviewEventConsumed()
+	{
+		if(mMoSyncCameraController == null)
+		{
+			return IOCTL_UNAVAILABLE;
+		}
+
+		return mMoSyncCameraController.previewEventConsumed();
+	}
+
 
 	/**
 	 * Called when the back button has been pressed.
@@ -5171,6 +5228,10 @@ public class MoSyncThread extends Thread
 
 	public int maNFCGetSize(int tagHandle) {
 		return mMoSyncNFC == null ? IOCTL_UNAVAILABLE : mMoSyncNFC.maNFCGetSize(tagHandle);
+	}
+
+	public int maNFCGetId(int tagHandle, int dst, int len) {
+		return mMoSyncNFC == null ? IOCTL_UNAVAILABLE : mMoSyncNFC.maNFCGetId(tagHandle, dst, len);
 	}
 
 	void maNFCConnectTag(int tagHandle) {

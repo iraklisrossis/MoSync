@@ -123,10 +123,9 @@ const SParseOpt KCtrlOptions[] =
 #define NUMCTRLOPTIONS (sizeof(KCtrlOptions)/sizeof(SParseOpt))
 
 // Parse options lookups
-#define MAXTOKENLEN	30*1024
 struct SParseToken
 	{
-	WCHAR pszOpt[MAXTOKENLEN];
+	const WCHAR* pszOpt;
 	DWORD dwOpt;
 	};
 

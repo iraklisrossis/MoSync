@@ -406,11 +406,9 @@ struct SIGNATURENODE
 	TUint16 iNumCerts;
 	};
 
-#define MAXOPTLEN 20*1024
-
 struct SParseOpt
 	{
-	WCHAR pszOpt[MAXOPTLEN];
+	const WCHAR* pszOpt;
 	DWORD dwOpt;
 	};
 

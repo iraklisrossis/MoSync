@@ -111,7 +111,6 @@ int maketempfile( int nof, FILE *fp )
 	int i;
 	FILE *fp2;
 	byte *tmp;
-	int res;
 
 	for( i=0; i<nof; ++i )
 	{

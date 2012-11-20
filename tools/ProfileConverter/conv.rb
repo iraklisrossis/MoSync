@@ -728,7 +728,11 @@ runtimes.each do |platform_name, platform|
 		end
 
 		release_defines = ['PHONE_RELEASE', 'MOSYNC_COMMERCIAL']
-		if(platform_name == :sp2003 || platform_name == :wm5 || platform_name == :wm6 || platform_name == :wm6pro || platform_name == :s60v3 || platform_name == :s60v5 || platform_name == :android_7x || platform_name == :android_16x )
+
+		# These platforms do not support hardware float, required by the new arm recompiler.
+		#platform_name == :sp2003 || platform_name == :wm5 || platform_name == :wm6 || platform_name == :wm6pro || platform_name == :s60v3 || platform_name == :s60v5 ||
+
+		if(platform_name == :android_7x || platform_name == :android_16x )
 			release_defines << "USE_ARM_RECOMPILER"
 		end
 		if(platform_name == :s60v3 || platform_name == :s60v5)

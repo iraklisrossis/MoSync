@@ -46,7 +46,7 @@ You'll also need the NDK: http://dl.google.com/android/ndk/android-ndk-r8c-linux
 Unpack it into a separate directory.
 
 
-Todo: moblin, eclipse.
+Todo: eclipse.
 
 Write a file WORKSPACE_ROOT/Settings.rb, based on MoSync-source/tools/RuntimeBuilder/Settings.rb.example.
 It contains paths to the SDKs.

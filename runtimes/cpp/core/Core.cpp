@@ -30,6 +30,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #ifndef SYMBIAN
 #define __STDC_FORMAT_MACROS
+#include <wchar.h>	// works around a build error on Windows Mobile.
 #include <inttypes.h>
 #endif
 

@@ -6,15 +6,15 @@ Linux slave:
 Starting with Mint 13 (Maya)/Cinnamon/x64:
  Will probably work with *buntu 11.10 or later.
 
-sudo apt-get install git ruby g++ libsdl1.2-dev libbluetooth-dev libssl-dev libexpat1-dev libglew1.6-dev libgtk2.0-dev libsdl-image1.2-dev libsdl-ttf2.0-dev libfreeimage-dev gperf bison flex libgmp-dev libmpfr-dev libmpc-dev libc6-dev-i386 lib32z1-dev
+sudo apt-get install git ruby g++ libsdl1.2-dev libbluetooth-dev libssl-dev libexpat1-dev libglew1.6-dev libgtk2.0-dev libsdl-image1.2-dev libsdl-ttf2.0-dev libfreeimage-dev gperf bison flex libgmp-dev libmpfr-dev libmpc-dev libc6-dev-i386 lib32z1-dev rubygems ruby-sqlite3 default-jdk
 
 Run 'ssh-keygen', if ~/.ssh/id_rsa doesn't exist.
 Add id_rsa.pub to ~/.ssh/authorized_keys on relevant servers, so the scripts can login automatically later.
 
 Now you can start the Jenkins slave. The web interface will tell you how.
 
+
 To also be able to compile JavaME runtimes:
-sudo apt-get install tofrodos rubygems ruby-sqlite3 default-jdk
 
 Install JavaME SDK:
 Go to http://www.oracle.com/technetwork/java/javasebusiness/downloads/java-archive-downloads-javame-419430.html
@@ -25,6 +25,8 @@ Go to http://proguard.sourceforge.net/#downloads.html
 Download proguard.zip. Latest version is recommended, 4.7 and 4.8 are tested.
 Copy proguard.jar to the WTK bin directory (default ~/WTK2.5.2/bin/)
 
+Todo: android, moblin, eclipse.
+
 The first build will fail. Edit MoSync-source/tools/RuntimeBuilder/Settings.rb.
 
 
@@ -32,6 +34,11 @@ The first build will fail. Edit MoSync-source/tools/RuntimeBuilder/Settings.rb.
 Windows slave:
 Starting with Windows 7, 64-bit:
  May work with 32-bit, xp and 8.
+
+This guide is only guaranteed to work as long as no programs are installed that could interfere with it.
+Known interference includes:
+* Cygwin
+* Old versions of MinGW
 
 Create a directory for installing gnuwin32 programs.
 Add its /bin/ subdirectory to the PATH environment variable.
@@ -44,6 +51,7 @@ Install therein:
  * unzip - http://gnuwin32.sourceforge.net/packages/unzip.htm
  * sed - http://gnuwin32.sourceforge.net/packages/sed.htm
  * gperf - http://gnuwin32.sourceforge.net/packages/gperf.htm
+Make sure to install the dependencies for each program.
 
 Install these programs:
  * Ruby 1.9 - http://rubyinstaller.org/downloads/
@@ -62,7 +70,7 @@ Download dlfcn-win32: http://dlfcn-win32.googlecode.com/files/dlfcn-win32-r19.ta
 Compile and install it into mingw. (Binutils needs it.)
  * Using mingw shell in /dlfcn-win32-r19/:
   * ./configure
-	* make install
+	* make && make install
 
 mingw-get install libz msys-bison msys-flex mpfr mpc gmp
 

@@ -25,9 +25,31 @@ Go to http://proguard.sourceforge.net/#downloads.html
 Download proguard.zip. Latest version is recommended, 4.7 and 4.8 are tested.
 Copy proguard.jar to the WTK bin directory (default ~/WTK2.5.2/bin/)
 
-Todo: android, moblin, eclipse.
 
-The first build will fail. Edit MoSync-source/tools/RuntimeBuilder/Settings.rb.
+Android:
+First, some prerequisites:
+sudo apt-get install libstdc++6:i386
+
+If you use the UI, install API 16.
+
+You can also use command-line tools, which is more difficult:
+Index file: https://dl-ssl.google.com/android/repository/repository-7.xml
+Required parts:
+* https://dl-ssl.google.com/android/repository/tools_r21-linux.zip
+* https://dl-ssl.google.com/android/repository/platform-tools_r16-linux.zip
+* https://dl-ssl.google.com/android/repository/android-16_r03.zip
+
+Create an empty directory (ex. "sdk"). Unpack tools and platform-tools into that directory.
+Unpack android-16 into "sdk/platforms/android-16".
+
+You'll also need the NDK: http://dl.google.com/android/ndk/android-ndk-r8c-linux-x86.tar.bz2
+Unpack it into a separate directory.
+
+
+Todo: moblin, eclipse.
+
+Write a file WORKSPACE_ROOT/Settings.rb, based on MoSync-source/tools/RuntimeBuilder/Settings.rb.example.
+It contains paths to the SDKs.
 
 
 13:40 2012-10-31

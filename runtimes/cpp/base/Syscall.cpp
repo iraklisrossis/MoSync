@@ -1547,7 +1547,7 @@ namespace Base {
 		sFileList.files.clear();
 		if(path[0] == 0) {	//empty string
 			//list filesystem roots
-#if FILESYSTEM_CHROOT || defined(LINUX) || defined(__IPHONE__) || defined(_WIN32_WCE)
+#if FILESYSTEM_CHROOT || defined(LINUX) || defined(__IPHONE__) || defined(_WIN32_WCE) || defined(__BB10__)
 			FileListItem fli;
 			fli.name = "/";
 #ifdef _WIN32_WCE

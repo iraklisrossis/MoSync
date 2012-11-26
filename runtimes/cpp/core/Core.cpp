@@ -910,9 +910,9 @@ public:
 	//Definitions
 	//****************************************
 #ifdef COUNT_INSTRUCTION_USE
-#define OPC(opcode)	case _##opcode: LOGC("%x: %i %s", (int)(ip - mem_cs - 1), _##opcode, #opcode); countInstructionUse(#opcode, op);
+#define OPC(opcode)	case OP_##opcode: LOGC("%x: %i %s", (int)(ip - mem_cs - 1), OP_##opcode, #opcode); countInstructionUse(#opcode, op);
 #else
-#define OPC(opcode)	case _##opcode: LOGC("%x: %i %s", (int)(ip - mem_cs - 1), _##opcode, #opcode);
+#define OPC(opcode)	case OP_##opcode: LOGC("%x: %i %s", (int)(ip - mem_cs - 1), OP_##opcode, #opcode);
 #endif
 #ifdef CORE_DEBUGGING_MODE
 #define EOP	LOGC("\n"); break;

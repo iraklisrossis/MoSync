@@ -83,10 +83,12 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 	m(CASE)\
 	m(FAR)
 
-#define ENUM_INSTRUCTION_ELEM(inst) _ ## inst,
+#define ENUM_INSTRUCTION_ELEM(inst) OP_##inst,
 enum
 {
 	_NUL = 0,
+	_PUSHAinst,
+	_POPAinst,
 	INSTRUCTIONS(ENUM_INSTRUCTION_ELEM)
 	_ENDOP
 };

@@ -25,6 +25,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #else
 #ifdef __BB10__
 #include <hash_map>
+using namespace std;
 #else
 #include <ext/hash_map>
 using namespace __gnu_cxx;

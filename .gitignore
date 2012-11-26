@@ -149,6 +149,7 @@ LocalFiles.bin*
 /runtimes/cpp/platforms/symbian/sis-ed5/1/*
 
 /runtimes/cpp/platforms/bb10/.metadata
+/runtimes/cpp/platforms/bb10/MoSync/Simulator-Debug/*
 
 /runtimes/java/source/MAAPI_consts.h
 /runtimes/java/source/core_consts.h

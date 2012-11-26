@@ -54,7 +54,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -113,7 +113,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -172,7 +172,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -231,7 +231,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -292,7 +292,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -350,7 +350,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -408,7 +408,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/ThreadPool.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

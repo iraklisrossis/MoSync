@@ -26,6 +26,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #ifdef __BB10__
 typedef unsigned char byte;
+#include "config_platform.h"
+#include "helpers/log.h"
+#include "base/FileStream.h"
 #endif
 
 

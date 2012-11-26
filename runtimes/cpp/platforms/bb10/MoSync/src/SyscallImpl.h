@@ -14,6 +14,9 @@ public:
 //SDL_Surface* loadSprite(SDL_Surface* surface, ushort left, ushort top,
 //	ushort width, ushort height, ushort cx, ushort cy);
 
+	void* loadImage(MemStream& s);
+	void* loadSprite(void* surface, ushort left, ushort top, ushort width, ushort height, ushort cx, ushort cy);
+
 public:
 	/*
 		struct STARTUP_SETTINGS {

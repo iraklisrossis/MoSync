@@ -986,7 +986,7 @@ namespace Base {
 		return MAIDL_HASH;
 	}
 
-#if !defined(_android)
+#if !defined(_android) && !defined(__BB10__)
 	int Syscall::maBtGetNewDevice(MABtDevice* dst) {
 		MABtDeviceNative dn;
 		dn.nameBufSize = dst->nameBufSize;

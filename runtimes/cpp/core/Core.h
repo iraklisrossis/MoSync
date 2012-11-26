@@ -39,6 +39,11 @@ typedef union _LARGE_INTEGER {
 #include <helpers/types.h>
 #include <helpers/helpers.h>
 
+#ifdef __BB10__
+typedef unsigned short wchar;
+typedef long long int longlong;
+#endif
+
 #ifdef _android
 #include <jni.h>
 

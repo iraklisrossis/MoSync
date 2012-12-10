@@ -46,10 +46,12 @@ You'll also need the NDK: http://dl.google.com/android/ndk/android-ndk-r8c-linux
 Unpack it into a separate directory.
 
 
-Todo: eclipse.
-
 Write a file WORKSPACE_ROOT/Settings.rb, based on MoSync-source/tools/RuntimeBuilder/Settings.rb.example.
 It contains paths to the SDKs.
+
+
+Eclipse:
+sudo apt-get install ruby-rmagick ant
 
 
 13:40 2012-10-31
@@ -83,10 +85,12 @@ Install these programs:
  * Java - http://www.oracle.com/technetwork/java/javase/downloads/index.html
   * Tested version: JDK 7u9, 64-bit.
 
-Add MinGW/bin and MinGW/msys/1.0/bin to system-wide PATH.
+Add MinGW/bin and MinGW/msys/1.0/bin to PATH.
 
 * If you build GCC manually, make sure MinGW/msys/1.0/bin is first in PATH,
   otherwise GCC's configure will fail with weird SED errors and gcc's make will fail with a 'sort' error.
+ * However, MinGW/msys/1.0/bin must be last in PATH when building everything else.
+  * The Jenkins scripts take care of this when building automatically.
 
 Download dlfcn-win32: http://dlfcn-win32.googlecode.com/files/dlfcn-win32-r19.tar.bz2
 Compile and install it into mingw. (Binutils needs it.)
@@ -106,6 +110,8 @@ Start Jenkins slave.
 OSX slave, partial:
 Tested on 10.6, SHOULD work on 10.7, MAY work on 10.8.
 
+* Install xcode, and its "command-line compiler".	// todo: check terminology.
+
 * Install macports.
  * sudo port install gmp +universal
  * sudo port install libmpc +universal
@@ -119,5 +125,9 @@ Tested on 10.6, SHOULD work on 10.7, MAY work on 10.8.
  * sudo port install expat +universal
  * sudo port install glew +universal
  * sudo port install libelf +universal
+ * sudo port install freeimage +universal
+
+* Install ruby gems:
+ * sudo gem install nokogiri
 
 Start Jenkins slave.

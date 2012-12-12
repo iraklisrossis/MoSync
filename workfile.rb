@@ -210,9 +210,9 @@ end
 
 def all_configs(target)
 	sh "ruby workfile.rb #{target}"
-	sh "ruby workfile.rb #{target} CONFIG="
+	sh "ruby workfile.rb #{target} CONFIG=debug"
 	sh "ruby workfile.rb #{target} USE_NEWLIB="
-	sh "ruby workfile.rb #{target} USE_NEWLIB= CONFIG="
+	sh "ruby workfile.rb #{target} USE_NEWLIB= CONFIG=debug"
 end
 
 target :all_configs do

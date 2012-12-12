@@ -29,6 +29,7 @@
 //#define DEBUGGING_MODE
 
 //#define CORE_DEBUGGING_MODE	//very slow
+//#define LOG_STATE_CHANGE
 
 #define MEMORY_PROTECTION
 #define STACK_POINTER_VERIFICATION

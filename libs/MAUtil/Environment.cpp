@@ -35,7 +35,7 @@ namespace MAUtil {
 	void KeyListener::keyReleaseEvent(int keyCode, int nativeCode) {}
 	void KeyListener::charEvent(uint character) {}
 
-	Environment::TimerEventInstance::TimerEventInstance(TimerListener* tl, int aPeriod, int aNumTimes) 
+	Environment::TimerEventInstance::TimerEventInstance(TimerListener* tl, int aPeriod, int aNumTimes)
 		: e(tl), period(aPeriod), numTimes(aNumTimes)
 	{
 		addTime = maGetMilliSecondCount();
@@ -44,17 +44,8 @@ namespace MAUtil {
 
 	Environment* Environment::sEnvironment = NULL;
 
-	Environment::Environment() 
-		: mKeyListeners(false),
-		mPointerListeners(false),
-		mBtListener(NULL),
-		mConnListeners(false),
-		mIdleListeners(false),
-		mTimerEvents(true),
-		mFocusListeners(false),
-		mCustomEventListeners(false),
-		mTextBoxListeners(false),
-		mSensorListeners(false)
+	Environment::Environment()
+		: mBtListener(NULL)
 	{
 		if(sEnvironment)
 			PANIC_MESSAGE("The application tried to instantiate more than one Environment. "
@@ -131,17 +122,17 @@ namespace MAUtil {
 		if (NULL == cl) {
 			PANIC_MESSAGE("Environment::setConnListener: The listener must not be NULL");
 		}
-		
+
 		//MAASSERT(sEnvironment == this);
-		
+
 		// First remove the existing listener, if any.
 		removeConnListener(conn);
-		
+
 		// Set the listener for the connection.
 		cl->_mConn = conn;
 		mConnListeners.add(cl);
 	}
-	
+
 	void Environment::removeConnListener(MAHandle conn) {
 		ListenerSet_each(ConnListener, itr, mConnListeners) {
 			if(itr->_mConn == conn) {
@@ -201,7 +192,7 @@ namespace MAUtil {
 			}
 		}
 	}
-	
+
 	void Environment::addCustomEventListener(CustomEventListener* cl) {
 		//MAASSERT(sEnvironment == this);
 		mCustomEventListeners.add(cl);
@@ -220,7 +211,7 @@ namespace MAUtil {
 	void Environment::removeTextBoxListener(TextBoxListener* tl) {
 		//MAASSERT(sEnvironment == this);
 		mTextBoxListeners.remove(tl);
-	}	
+	}
 
 	void Environment::addSensorListener(SensorListener* tl) {
 		//MAASSERT(sEnvironment == this);
@@ -231,7 +222,7 @@ namespace MAUtil {
 		//MAASSERT(sEnvironment == this);
 		mSensorListeners.remove(tl);
 	}
-	
+
 	void Environment::fireFocusGainedEvent() {
 		//MAASSERT(sEnvironment == this);
 		mFocusListeners.setRunning(true);
@@ -356,7 +347,7 @@ namespace MAUtil {
 			(*i)->closeEvent();
 		}
 	}
-	
+
 	void Environment::fireCustomEventListeners(const MAEvent& e) {
 		//MAASSERT(sEnvironment == this);
 		mCustomEventListeners.setRunning(true);
@@ -365,7 +356,7 @@ namespace MAUtil {
 		}
 		mCustomEventListeners.setRunning(false);
 	}
-	
+
 	void Environment::fireTextBoxListeners(int result, int textLength) {
 		//MAASSERT(sEnvironment == this);
 		mTextBoxListeners.setRunning(true);
@@ -373,7 +364,7 @@ namespace MAUtil {
 			i->textBoxClosed(result, textLength);
 		}
 		mTextBoxListeners.setRunning(false);
-	}	
+	}
 
 	void Environment::fireSensorListeners(MASensor a) {
 		//MAASSERT(sEnvironment == this);

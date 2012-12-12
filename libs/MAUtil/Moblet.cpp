@@ -25,14 +25,14 @@ namespace MAUtil {
 		//environment = this;
 		addKeyListener(this);
 		addPointerListener(this);
-		addCloseListener(this);		
+		addCloseListener(this);
 		addCustomEventListener(this);
 	}
 
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
-	
+
 	//always returns >= 0
 	int Moblet::timeToNextTimer() {
 		int now = maGetMilliSecondCount();
@@ -55,6 +55,7 @@ namespace MAUtil {
 		// run all timer events and remove those that have run their number of times.
 		// run them at most one time each, as to allow for periods <= 0.
 		mTimerEvents.setRunning(true);
+		bool deleteRequired = false;
 		ListenerSet_each(TimerEventInstance, tei, mTimerEvents) {
 			if(now >= tei->nextInvoke) {
 				tei->e->runTimerEvent();
@@ -62,14 +63,19 @@ namespace MAUtil {
 					tei->numTimes--;
 					if(tei->numTimes == 0) {
 						mTimerEvents.remove(&*tei);
+						deleteRequired = true;
 					}
 				}
-				tei->nextInvoke += tei->period; 
+				tei->nextInvoke += tei->period;
 			}
+		}
+		if(deleteRequired) ListenerSet_each(TimerEventInstance, tei, mTimerEvents) {
+			if(tei->numTimes == 0)
+				delete &*tei;
 		}
 		mTimerEvents.setRunning(false);
 	}
-	
+
 	void Moblet::run(Moblet* moblet) {
 		while(moblet->mRun) {
 			MAEvent event;
@@ -129,7 +135,7 @@ namespace MAUtil {
 			moblet->runPendingTimers();
 
 #if 0	//unstable in the face of removals
-			for(int i=moblet->idleListeners.size()-1; i >= 0; i--) 
+			for(int i=moblet->idleListeners.size()-1; i >= 0; i--)
 				moblet->idleListeners[i]->idle();
 #else
 			moblet->runIdleListeners();

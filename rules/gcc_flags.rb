@@ -21,6 +21,9 @@ require "#{File.dirname(__FILE__)}/util.rb"
 module GccFlags
 def define_cflags
 
+#only valid in GCC 4.7 and later
+gcc47_warnings = ' -Wunused-local-typedefs -ftrack-macro-expansion'
+
 #only valid in GCC 4.3 and later
 gcc43_warnings = ''
 gcc43_warnings << ' -Wvla' if(!isPipeWork)
@@ -97,6 +100,9 @@ if(@GCC_IS_V4) then
 			cpp_flags << ' -std=gnu++0x'
 		end
 		cpp_flags << ' -DHAVE_TR1'
+	end
+	if(@GCC_V4_SUB >= 7)
+		version_warnings << gcc47_warnings
 	end
 end
 if(!(@GCC_IS_V4 && @GCC_V4_SUB >= 3)) then

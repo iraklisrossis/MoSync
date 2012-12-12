@@ -15,7 +15,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.
 */
 
-/** 
+/**
 * \file InputPolicy.h
 * \brief Handling of input policies.
 * TODO: Document what an input policy is.
@@ -30,7 +30,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 namespace MAUI {
 	class Widget;
 
-	/** 
+	/**
 	 * Direction constants.
 	 * TODO: DOcument how NONE is used?
 	 */
@@ -61,14 +61,16 @@ namespace MAUI {
 		 * \param owner TODO: Document param.
 		 */
 		InputPolicy(Widget* owner);
-		
+
+		virtual ~InputPolicy();
+
 		/**
 		 * Set the owner of this input policy.
 		 * TODO: Document what an owner is.
 		 * \param owner TODO: Document param.
 		 */
 		void setOwner(Widget *owner);
-		
+
 		/**
 		 * Get the owner of this input policy.
 		 * TODO: Document what an owner is.
@@ -86,7 +88,7 @@ namespace MAUI {
 		 * \return true to keep focus, false if focus should be lost.
 		 */
 		virtual bool keyPressed(int keyCode, int nativeCode);
-		
+
 		/**
 		 * Called when a key is released. Override in the subclass
 		 * that defines the input policy.
@@ -106,7 +108,7 @@ namespace MAUI {
 		 * \return true to keep focus, false if focus should be changed.
 		 */
 		virtual bool pointerPressed(MAPoint2d point, int id);
-		
+
 		/**
 		 * TODO: Document the return value, current comment might be wrong.
 		 *
@@ -117,7 +119,7 @@ namespace MAUI {
 		 * \return true to keep focus, false if focus should be changed.
 		 */
 		virtual bool pointerMoved(MAPoint2d point, int id);
-		
+
 		/**
 		 * TODO: Document the return value, current comment might be wrong.
 		 *
@@ -147,7 +149,7 @@ namespace MAUI {
 		 * \param owner TODO: Document param.
 		 */
 		DefaultInputPolicy(Widget* owner);
-		
+
 		/**
 		 * TODO: Document the return value, current comment might be wrong.
 		 *
@@ -158,7 +160,7 @@ namespace MAUI {
 		 * \return true to keep focus, false if focus should be lost.
 		 */
 		virtual bool keyPressed(int keyCode, int nativeCode);
-		
+
 		/**
 		 * Called when a key is released. Override in the subclass
 		 * that defines the input policy.
@@ -167,7 +169,7 @@ namespace MAUI {
 		 * \return TODO: Document return value.
 		 */
 		virtual bool keyReleased(int keyCode, int nativeCode);
-		
+
 		/**
 		 * TODO: Document the return value, current comment might be wrong.
 		 *
@@ -178,7 +180,7 @@ namespace MAUI {
 		 * \return true to keep focus, false if focus should be changed.
 		 */
 		virtual bool pointerPressed(MAPoint2d p, int id);
-		
+
 		/**
 		 * TODO: Document the return value, current comment might be wrong.
 		 *
@@ -189,7 +191,7 @@ namespace MAUI {
 		 * \return true to keep focus, false if focus should be changed.
 		 */
 		virtual bool pointerMoved(MAPoint2d p, int id);
-		
+
 		/**
 		 * TODO: Document the return value, current comment might be wrong.
 		 *

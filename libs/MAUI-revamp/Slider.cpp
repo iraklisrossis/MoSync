@@ -28,22 +28,21 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 namespace MAUI {
 
 Slider::Slider(
-	int x, 
-	int y, 
-	int width, 
+	int x,
+	int y,
+	int width,
 	int height,
-	Orientation ori, 
-	double minValue, 
-	double maxValue, 
+	Orientation ori,
+	double minValue,
+	double maxValue,
 	double defaultValue) :
 		Widget(x, y, width, height),
-		mPressed(false), 
-		mOrientation(ori), 
-		mMinValue(minValue), 
+		mPressed(false),
+		mOrientation(ori),
+		mMinValue(minValue),
 		mMaxValue(maxValue),
-		mValueChanged(false), 
-		mMoveToPoint(false), 
-		mSliderListeners(false)
+		mValueChanged(false),
+		mMoveToPoint(false)
 {
 	setValue(defaultValue);
 }
@@ -56,11 +55,11 @@ int Slider::getSliderPos() const {
 	int sliderPos;
 	double normalizedValue = (mValue-mMinValue)/(mMaxValue-mMinValue);
 	if(mOrientation == HORIZONTAL) {
-		sliderPos = (int) 
+		sliderPos = (int)
 			((double)(mPaddedBounds.width-mSliderGripWidth)*normalizedValue);
-	} 
+	}
 	else {
-		sliderPos = (int) 
+		sliderPos = (int)
 			((double)(mPaddedBounds.height-mSliderGripHeight)*normalizedValue);
 	}
 	return sliderPos;
@@ -72,36 +71,36 @@ bool Slider::pointerPressed(MAPoint2d p, int id) {
 	if(mMoveToPoint || !mGripImage) {
 		double newValue;
 		if(mOrientation == HORIZONTAL) {
-			newValue = 
+			newValue =
 				mMinValue
 				+ (((double)(p.x-(mPaddedBounds.x+(mSliderGripWidth>>1))))
-					* (mMaxValue-mMinValue)) 
+					* (mMaxValue-mMinValue))
 				/ (double)(mPaddedBounds.width-mSliderGripWidth);
 		}
 		else {
-			newValue = 
-				mMinValue 
+			newValue =
+				mMinValue
 				+ (((double)(p.y-(mPaddedBounds.y+(mSliderGripHeight>>1))))
 					*(mMaxValue-mMinValue))
 				/(double)(mPaddedBounds.height-mSliderGripHeight);
 		}
 		setValue(newValue);
 		mPressed = true;
-	} 
+	}
 	else {
-		if (mOrientation == HORIZONTAL 
-			&& p.x>(mPaddedBounds.x+sliderPos-mSliderGripWidth) 
-			&& (p.x<mPaddedBounds.x+sliderPos+mSliderGripWidth*2)) 
+		if (mOrientation == HORIZONTAL
+			&& p.x>(mPaddedBounds.x+sliderPos-mSliderGripWidth)
+			&& (p.x<mPaddedBounds.x+sliderPos+mSliderGripWidth*2))
 		{
 			mPressed = true;
 		}
-		else if (mOrientation == VERTICAL 
-			&& p.y>(mPaddedBounds.y+sliderPos-mSliderGripHeight) 
-			&& p.y<(mPaddedBounds.x+sliderPos+mSliderGripHeight*2)) 
+		else if (mOrientation == VERTICAL
+			&& p.y>(mPaddedBounds.y+sliderPos-mSliderGripHeight)
+			&& p.y<(mPaddedBounds.x+sliderPos+mSliderGripHeight*2))
 		{
 			mPressed = true;
 		}
-		else 
+		else
 		{
 			mPressed = false;
 			return false;
@@ -121,14 +120,14 @@ bool Slider::pointerMoved(MAPoint2d p, int id) {
 		int relY = p.y-mStartY;
 		double newValue;
 		if(mOrientation == HORIZONTAL) {
-			newValue = 
-				mStartValue 
+			newValue =
+				mStartValue
 				+ (((double)relX)*(mMaxValue-mMinValue))
 				/ (double)(mPaddedBounds.width-mSliderGripWidth);
 		}
 		else {
-			newValue = 
-				mStartValue 
+			newValue =
+				mStartValue
 				+ (((double)relY)*(mMaxValue-mMinValue))
 				/ (double)(mPaddedBounds.height-mSliderGripHeight);
 		}
@@ -152,45 +151,45 @@ void Slider::drawWidget() {
 	if(mOrientation == HORIZONTAL) {
 		if(mBkgSkin) {
 			mBkgSkin->draw(
-				sliderPos+(mSliderGripWidth>>1), 
+				sliderPos+(mSliderGripWidth>>1),
 				(mPaddedBounds.height>>1)-(mSliderWeight>>1),
-				mPaddedBounds.width-(sliderPos+(mSliderGripWidth>>1)), 
+				mPaddedBounds.width-(sliderPos+(mSliderGripWidth>>1)),
 				mSliderWeight);
 		}
 		if(mAmountSkin) {
 			mAmountSkin->draw(
-				0, 
-				(mPaddedBounds.height>>1)-(mSliderWeight>>1), 
-				sliderPos+(mSliderGripWidth>>1), 
+				0,
+				(mPaddedBounds.height>>1)-(mSliderWeight>>1),
+				sliderPos+(mSliderGripWidth>>1),
 				mSliderWeight);
 		}
 		if(mGripImage) {
 			Gfx_drawImage(
-				mGripImage, 
-				sliderPos, 
+				mGripImage,
+				sliderPos,
 				(mPaddedBounds.height>>1)-(mSliderGripHeight>>1));
 		}
-	} 
+	}
 	else {
 		if(mBkgSkin)
 		{
 			mBkgSkin->draw(
-				(mPaddedBounds.width>>1)-(mSliderWeight>>1), 
+				(mPaddedBounds.width>>1)-(mSliderWeight>>1),
 				sliderPos+(mSliderGripHeight>>1),
-				mSliderWeight, 
+				mSliderWeight,
 				mPaddedBounds.height-(sliderPos+(mSliderGripHeight>>1)));
 		}
 		if(mAmountSkin) {
-			mAmountSkin->draw( 
-				(mPaddedBounds.width>>1)-(mSliderWeight>>1), 
-				0, 
-				mSliderWeight, 
+			mAmountSkin->draw(
+				(mPaddedBounds.width>>1)-(mSliderWeight>>1),
+				0,
+				mSliderWeight,
 				sliderPos+(mSliderGripHeight>>1));
 		}
 		if(mGripImage) {
 			Gfx_drawImage(
-				mGripImage, 
-				(mPaddedBounds.width>>1)-(mSliderGripWidth>>1), 
+				mGripImage,
+				(mPaddedBounds.width>>1)-(mSliderGripWidth>>1),
 				sliderPos);
 		}
 	}
@@ -201,12 +200,12 @@ void Slider::restyle() {
 	if(getStyle() == NULL) {
 		setStyle(Engine::getSingleton().getDefaultStyle("Slider"));
 	}
-	
+
 	Widget::restyle();
 
 	const SliderStyle* style = (const SliderStyle*)getStyle();
 
-	mAmountSkin = 
+	mAmountSkin =
 		style->getSafe<DrawableProperty>("sliderAmountSkin")->mDrawable;
 	mBkgSkin = style->getSafe<DrawableProperty>("sliderSkin")->mDrawable;
 	ImageProperty* prop = style->get<ImageProperty>("gripImage");
@@ -222,18 +221,18 @@ void Slider::restyle() {
 		mGripImage = prop->mHandle;
 		mSliderGripWidth = EXTENT_X(maGetImageSize(mGripImage));
 		mSliderGripHeight = EXTENT_Y(maGetImageSize(mGripImage));
-	} 
+	}
 	else {
 		// TODO: What is this empty else branch doing here?
 	}
 
 	if(mOrientation == HORIZONTAL) {
 		//mBkgSkin->getEndY()-mBkgSkin->getStartY();
-		mSliderWeight = mSliderGripHeight; 
+		mSliderWeight = mSliderGripHeight;
 	}
 	else {
 		//mBkgSkin->getEndX()-mBkgSkin->getStartX();
-		mSliderWeight = mSliderGripWidth; 
+		mSliderWeight = mSliderGripWidth;
 	}
 }
 
@@ -277,10 +276,10 @@ void Slider::updateInternal()
 	if(mValueChanged)
 	{
 		ListenerSet_fire(
-			SliderListener, 
-			mSliderListeners, 
+			SliderListener,
+			mSliderListeners,
 			onValueChange(this, mValue));
-		
+
 		mValueChanged = false;
 	}
 }
@@ -306,8 +305,8 @@ void Slider::removeSliderListener(SliderListener* sl) {
 }
 
 SliderStyle::SliderStyle(
-	DrawableProperty* slider_amt, 
-	DrawableProperty* slider_bkg, 
+	DrawableProperty* slider_amt,
+	DrawableProperty* slider_bkg,
 	ImageProperty* grip) : Style(0, 0, 0, 0, NULL, NULL)
 {
 	this->mProperties["sliderSkin"] = slider_bkg;

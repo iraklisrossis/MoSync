@@ -50,6 +50,9 @@ namespace MAUtil {
 			int refCount;
 		};
 
+		bool mRunning, mUpdateRequired;
+		Vector<Combo> mVec;
+
 	public:
 		/**
 		* \brief An iterator for a listener set.
@@ -78,8 +81,7 @@ namespace MAUtil {
 			int mIndex;
 		};
 
-		ListenerSet(bool shouldDelete) : mRunning(false), mUpdateRequired(false),
-			mShouldDelete(shouldDelete)
+		ListenerSet() : mRunning(false), mUpdateRequired(false)
 		{
 		}
 
@@ -105,8 +107,6 @@ namespace MAUtil {
 						i->refCount = 0;
 						mUpdateRequired = true;
 					} else {
-						if(mShouldDelete)
-							delete i->listener;
 						mVec.remove(i);
 					}
 					return;
@@ -128,8 +128,6 @@ namespace MAUtil {
 				//for(int i=vec.size(); i>=0; i--)
 				templateVector_each(Combo, itr, mVec) {
 					if(itr->refCount <= 0) {
-						if(mShouldDelete)
-							delete itr->listener;
 						*itr = mVec[--s];
 					}
 				}
@@ -141,10 +139,6 @@ namespace MAUtil {
 		int size() const {	//unsafe if running
 			return mVec.size();
 		}
-
-	private:
-		bool mRunning, mUpdateRequired, mShouldDelete;
-		Vector<Combo> mVec;
 	};
 } // namespace MAUtil
 

@@ -39,6 +39,7 @@ namespace Wormhole
 	class LogMessageListener
 	{
 		public:
+			virtual ~LogMessageListener();
 			virtual void onLogMessage(
 				const char* message,
 				const char* url) = 0;

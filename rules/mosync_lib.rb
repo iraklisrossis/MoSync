@@ -64,7 +64,7 @@ class MoSyncDllWork < DllWork
 		set_defaults
 		setup_native
 		modSetup
-		if(HOST == :win32)
+		if(TARGET == :win32)
 			@EXTRA_LINKFLAGS = @EXTRA_LINKFLAGS.to_s + " -Wl,--enable-auto-import"
 		end
 		@EXTRA_CFLAGS = @EXTRA_CFLAGS.to_s + " -D_POSIX_SOURCE"	#avoid silly bsd functions

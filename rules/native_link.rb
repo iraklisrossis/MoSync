@@ -59,7 +59,7 @@ class NativeGccLinkWork < NativeGccWork
 		@LIBRARIES.each { |l| @EXTRA_LINKFLAGS += " -l" + l }
 	end
 	def setup3(all_objects, have_cppfiles)
-		if(HOST == :darwin)
+		if(TARGET == :darwin)
 			@EXTRA_LINKFLAGS += " -L/opt/local/lib -framework Cocoa -framework IOBluetooth -framework Foundation"
 		end
 		if(PROFILING)

@@ -151,7 +151,7 @@ module GccVersion
 			@GCC_WNO_UNUSED_BUT_SET_VARIABLE = ' -Wno-unused-but-set-variable'
 			@GCC_WNO_POINTER_SIGN = ' -Wno-pointer-sign'
 		end
-		@GCC_IS_QCC = false
+		@GCC_IS_QCC = @gcc_version_info[:qcc]
 		super
 	end
 end
@@ -195,10 +195,10 @@ class GccWork < BuildWork
 
 	def setup2
 		define_cflags
-		@CFLAGS_MAP = { ".c" => @CFLAGS + host_flags,
-			".cpp" => @CPPFLAGS + host_flags + host_cppflags,
-			".cc" => @CPPFLAGS + host_flags + host_cppflags,
-			".C" => @CPPFLAGS + host_flags + host_cppflags,
+		@CFLAGS_MAP = { ".c" => @CFLAGS + target_flags,
+			".cpp" => @CPPFLAGS + target_flags + target_cppflags,
+			".cc" => @CPPFLAGS + target_flags + target_cppflags,
+			".C" => @CPPFLAGS + target_flags + target_cppflags,
 		}
 
 		#find source files
@@ -208,15 +208,15 @@ class GccWork < BuildWork
 		sExt = '.S' if(USE_ARM && @COLLECT_S_FILES)
 		sExt = '.s' if(USE_GNU_BINUTILS && @COLLECT_S_FILES)
 		if(sExt)
-			@CFLAGS_MAP[sExt] = @CFLAGS + host_flags if(USE_ARM)
+			@CFLAGS_MAP[sExt] = @CFLAGS + target_flags if(USE_ARM)
 			@CFLAGS_MAP[sExt] = ' -Wa,--gstabs' if(USE_GNU_BINUTILS)
 			#@CFLAGS_MAP[sExt] = '' if(USE_GNU_BINUTILS)
 			sfiles = collect_files(sExt)
 			cfiles += sfiles
 		end
 
-		if(HOST == :darwin)
-			@CFLAGS_MAP[".mm"] = @CPPFLAGS + host_flags + host_cppflags
+		if(TARGET == :darwin)
+			@CFLAGS_MAP[".mm"] = @CPPFLAGS + target_flags + target_cppflags
 			cppfiles += collect_files(".mm")
 		end
 

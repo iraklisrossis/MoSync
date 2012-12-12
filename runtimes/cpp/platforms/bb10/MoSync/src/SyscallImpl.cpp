@@ -170,12 +170,12 @@ SYSCALL(void, maWait(int timeout))
 {
 }
 
-SYSCALL(int, maTime())
+SYSCALL(longlong, maTime())
 {
 	return -1;
 }
 
-SYSCALL(int, maLocalTime())
+SYSCALL(longlong, maLocalTime())
 {
 	return -1;
 }

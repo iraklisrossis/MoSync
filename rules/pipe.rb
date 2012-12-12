@@ -148,14 +148,14 @@ class PipeGccWork < GccWork
 		return GCC_DRIVER_NAME
 	end
 
-	def host_flags;
+	def target_flags;
 		flags = ''
 		flags << GCC_PIPE_EXTRA_FLAGS
 		flags << mod_flags
 		flags += ' -DUSE_NEWLIB' if(USE_NEWLIB)
 		return flags
 	end
-	def host_cppflags
+	def target_cppflags
 		return ''#' -frtti'
 	end
 

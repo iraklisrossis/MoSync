@@ -1,4 +1,4 @@
-/* Copyright (C) 2009 Mobile Sorcery AB
+/* Copyright (C) 2012 Mobile Sorcery AB
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License, version 2, as published by
@@ -15,28 +15,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.
 */
 
-#ifndef HASH_MAP_H
-#define HASH_MAP_H
+#ifndef NETIMPL_H
+#define NETIMPL_H
 
-#ifdef __GNUC__
-#ifdef HAVE_TR1
-#include <unordered_map>
-#define hash_map std::unordered_map
-#else
-#ifdef __BB10__
-#include <hash_map>
-using namespace std;
-#else
-#include <ext/hash_map>
-using namespace __gnu_cxx;
-#include "hash_compare.h"
-#endif // __BB10__
-#endif	//HAVE_TR1
-#elif defined(_MSC_VER)
-#include <hash_map>
-using namespace stdext;
-#else
-#error Unsupported platform!
-#endif
-
-#endif	//HASH_MAP_H
+#endif	//NETIMPL_H

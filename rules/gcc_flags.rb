@@ -55,12 +55,16 @@ standard_warnings = " -Wall -Werror -Wextra -Wno-unused-parameter -Wwrite-string
 
 
 include_dirs = @EXTRA_INCLUDES
-include_flags = include_dirs.collect {|dir| " -I \""+File.expand_path_fix(dir)+'"'}.join
+include_flags = include_dirs.collect {|dir| " -I\""+File.expand_path_fix(dir)+'"'}.join
 
 #temp
 #flag_warnings = gcc4_warnings + gcc43_c_warnings + gcc43_warnings
 
-c_flags = " -std=gnu99"
+if(@GCC_IS_QCC)
+	c_flags = ''
+else
+	c_flags = ' -std=gnu99'
+end
 
 version_warnings = ""
 base_flags = ""
@@ -89,7 +93,10 @@ if(@GCC_IS_V4) then
 	version_warnings += gcc4_warnings
 	if(@GCC_V4_SUB >= 3) then
 		version_warnings += gcc43_c_warnings + gcc43_warnings
-		cpp_flags += " -std=gnu++0x -DHAVE_TR1"
+		if(!@GCC_IS_QCC)
+			cpp_flags << ' -std=gnu++0x'
+		end
+		cpp_flags << ' -DHAVE_TR1'
 	end
 end
 if(!(@GCC_IS_V4 && @GCC_V4_SUB >= 3)) then

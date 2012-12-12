@@ -31,6 +31,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #endif
 
+#ifdef __BB10__
+#include <ctype.h>
+#endif
+
 #include "types.h"
 #include "log.h"
 

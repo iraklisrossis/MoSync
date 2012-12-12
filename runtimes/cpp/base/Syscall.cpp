@@ -61,7 +61,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #endif	//WIN32
 #endif	//SYMBIAN && _WIN32_WCE
 
-#if defined(LINUX) || defined(__IPHONE__) || defined(DARWIN)
+#if defined(LINUX) || defined(__IPHONE__) || defined(DARWIN) || defined(__BB10__)
 #include <sys/statvfs.h>
 #define stricmp(x, y) strcasecmp(x, y)
 #endif
@@ -890,6 +890,7 @@ namespace Base {
 	}
 
 #if !defined(_android)
+#ifndef __BB10__
 	int Syscall::maBtGetNewDevice(MABtDevice* dst) {
 		MABtDeviceNative dn;
 		dn.nameBufSize = dst->nameBufSize;
@@ -913,6 +914,7 @@ namespace Base {
 		dst->port = sn.port;
 		return res;
 	}
+#endif	//__BB10__
 
 #define FILE_FAIL(val) do { LOGF(val); return val; } while(0)
 
@@ -1455,7 +1457,7 @@ namespace Base {
 		sFileList.files.clear();
 		if(path[0] == 0) {	//empty string
 			//list filesystem roots
-#if FILESYSTEM_CHROOT || defined(LINUX) || defined(__IPHONE__) || defined(_WIN32_WCE)
+#if FILESYSTEM_CHROOT || defined(LINUX) || defined(__IPHONE__) || defined(_WIN32_WCE) || defined(__BB10__)
 			FileListItem fli;
 			fli.name = "/";
 #ifdef _WIN32_WCE

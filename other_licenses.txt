@@ -142,6 +142,8 @@ build-one.rb
 /runtimes/cpp/platforms/winmobile/SoundServer.h
 /runtimes/cpp/platforms/winmobile/WifiPeek.h
 
+/runtimes/cpp/platforms/bb10/MoSync/bar-descriptor.xml
+
 /testPrograms/tlsf/tlsf.h
 /testPrograms/tlsf/tlsf.c
 

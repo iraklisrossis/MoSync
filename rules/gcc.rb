@@ -58,14 +58,14 @@ end
 # so that if the flags or any dependency have changed, this file will be recompiled.
 # Objects of this class are created by GccWork.
 class CompileGccTask < FileTask
-	def initialize(work, name, source, cflags)
+	def initialize(work, gcc, name, source, cflags)
 		super(work, name)
 		@SOURCE = source
 		@prerequisites << source
+		@gcc = gcc
 
 		@DEPFILE = @work.genfile(source, ".mf")
 		@TEMPDEPFILE = @work.genfile(source, ".mft")
-		depFlags = " -MMD -MF \"#{@TEMPDEPFILE}\""
 		@FLAGS = cflags + depFlags
 
 		initFlags
@@ -75,6 +75,8 @@ class CompileGccTask < FileTask
 			@prerequisites += MakeDependLoader.load(@DEPFILE, @NAME)
 		end
 	end
+
+	def depFlags; " -MMD -MF \"#{@TEMPDEPFILE}\""; end
 
 	def needed?(log = true)
 		return true if(super(log))
@@ -92,7 +94,7 @@ class CompileGccTask < FileTask
 	def execute
 		execFlags
 		begin
-			sh "#{@work.gcc} -o \"#{@NAME}\"#{cFlags}"
+			sh "#{@gcc} -o \"#{@NAME}\"#{cFlags}"
 		rescue => e
 			# in case gcc output a broken object file
 			FileUtils.rm_f(@NAME)
@@ -149,6 +151,7 @@ module GccVersion
 			@GCC_WNO_UNUSED_BUT_SET_VARIABLE = ' -Wno-unused-but-set-variable'
 			@GCC_WNO_POINTER_SIGN = ' -Wno-pointer-sign'
 		end
+		@GCC_IS_QCC = false
 		super
 	end
 end
@@ -256,9 +259,15 @@ class GccWork < BuildWork
 		return cflags
 	end
 
+	# Returns the command to invoke the compiler for the specified file type.
+	# Override this if you need different compiler commands for different languages.
+	def getGccInvoke(ending)
+		return gcc
+	end
+
 	def makeGccTask(source, ending)
 		objName = genfile(source, ending)
-		task = CompileGccTask.new(self, objName, source, getGccFlags(source))
+		task = CompileGccTask.new(self, getGccInvoke(source.to_s.getExt), objName, source, getGccFlags(source))
 		return task
 	end
 

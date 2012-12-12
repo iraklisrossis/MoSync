@@ -24,7 +24,11 @@
 # BLUETOOTH, boolean. True if Bluez is available.
 
 begin
-	UNAME = open("|uname").readline().strip()
+	if(defined?(UNAME_OVERRIDE))
+		UNAME = UNAME_OVERRIDE
+	else
+		UNAME = open("|uname").readline().strip()
+	end
 rescue SystemCallError
 	UNAME = "windows32"
 end
@@ -37,11 +41,15 @@ elsif(UNAME == "MINGW32_NT-6.0")
 	HOST = :win32
 elsif(UNAME == "MINGW32_NT-6.1")
 	HOST = :win32
+elsif(UNAME == "MINGW32_NT-6.2")
+	HOST = :win32
 elsif(UNAME == "windows32")
 	HOST = :win32
 elsif(UNAME == "CYGWIN_NT-5.1")
 	HOST = :win32
 elsif(UNAME == "CYGWIN_NT-6.1-WOW64")
+	HOST = :win32
+elsif(UNAME == "CYGWIN_NT-6.2-WOW64")
 	HOST = :win32
 elsif(UNAME == "Darwin")
 	HOST = :darwin

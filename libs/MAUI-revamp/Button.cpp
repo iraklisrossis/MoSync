@@ -25,7 +25,7 @@ namespace MAUI {
 Button::Button(int x, int y, int width, int height, const String& caption)
 	: Label(x, y, width, height, caption), mPressed(false),
 		mSkinFocusedPressed(NULL), mSkinFocusedReleased(NULL),
-		mSkinUnfocusedReleased(NULL), mListeners(false)
+		mSkinUnfocusedReleased(NULL)
 {
 	this->setHorizontalAlignment(Label::HA_CENTER);
 	this->setVerticalAlignment(Label::VA_CENTER);
@@ -116,7 +116,7 @@ void Button::drawWidget()
 		if(!mPressed)
 		{
 			if(mSkinUnfocusedReleased)
-				mSkinUnfocusedReleased->draw(0, 0, mBounds.width, 
+				mSkinUnfocusedReleased->draw(0, 0, mBounds.width,
 												mBounds.height);
 		}
 		else
@@ -139,10 +139,10 @@ void Button::restyle()
 
 	mSkinFocusedPressed = style->getSafe<DrawableProperty>
 									("skinFocusedPressed")->mDrawable;
-	
+
 	mSkinFocusedReleased = style->getSafe<DrawableProperty>
 									("skinFocusedReleased")->mDrawable;
-	
+
 	mSkinUnfocusedReleased = style->getSafe<DrawableProperty>
 									("skinUnfocusedReleased")->mDrawable;
 	Label::restyle();

@@ -79,7 +79,7 @@ class Targets
 		#puts args.inspect
 		args.each do |a| handle_arg(a) end
 		if(!defined?(CONFIG))
-			set_const(:CONFIG, 'debug')
+			set_const(:CONFIG, '')
 		end
 		default_const(:RELOAD, false)
 		default_const(:USE_NEWLIB, false)

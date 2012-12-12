@@ -76,7 +76,6 @@ NativeEditBox::NativeEditBox(
 		mTitleString(titleString),
 		mString(NULL),
 		mOptions(options),
-		mEditBoxListeners(false),
 		mListener(NULL)
 {
 	addNativeEditBoxListener(mainListener);

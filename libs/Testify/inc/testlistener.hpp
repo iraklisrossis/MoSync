@@ -37,6 +37,7 @@ NAMESPACE_BEGIN( Testify )
 class TestListener
 {
 public:
+	virtual ~TestListener();
 	/**
 	 * Notifies the listener that a test suite has started
 	 *

@@ -29,6 +29,7 @@ class HttpResponse {
 public:
 	HttpResponse(int code);
 	HttpResponse(int code, int dataSize, const byte* data);
+	virtual ~HttpResponse();
 
 	virtual int getCode() const;
 	virtual int getDataSize() const;

@@ -30,10 +30,10 @@ namespace MAUI {
 	marginY(0),
 	autoSizeX(false),
 	autoSizeY(false),
-	gridXSize(gridXSize),
-	gridYSize(gridYSize),
+	gridXSize(1),
+	gridYSize(1),
 	selectedIndex(0) {
-		setDrawBackground(false);	
+		setDrawBackground(false);
 		requestRepaint();
 	}
 
@@ -50,7 +50,7 @@ namespace MAUI {
 	gridYSize(gridYSize),
 	selectedIndex(0)
 	{
-		setDrawBackground(false);	
+		setDrawBackground(false);
 		requestRepaint();
 	}
 
@@ -101,14 +101,14 @@ namespace MAUI {
 				if(!autoSizeY) yOffsets[y] = highestY;
 			}
 		}
-		
+
 		int currentY = 0;
 		for(int y = 0; y < gridYSize; y++) {
 			int currentX = 0;
 			for(int x = 0; x < gridXSize; x++) {
 				int childIndex = y * gridXSize + x;
 				if(children.size() <= childIndex) break;
-				
+
 				int alignX = 0;
 				int alignY = 0;
 
@@ -155,7 +155,7 @@ namespace MAUI {
 
 		/*
 		switch(layoutType) {
-			case VERTICAL_STACKING: 
+			case VERTICAL_STACKING:
 				{
 					if(!autoSizeY) {
 						int size = children.size();
@@ -211,12 +211,12 @@ namespace MAUI {
 							children[i]->setPosition(x, y);
 							children[i]->setHeight(heightOfChildren);
 							y+=heightOfChildren;
-						}				
+						}
 					}
 				}
 				break;
 
-			case HORIZONTAL_STACKING: 
+			case HORIZONTAL_STACKING:
 				{
 					if(!autoSizeX) {
 						int size = children.size();
@@ -310,7 +310,7 @@ namespace MAUI {
 
 			Widget::add(child);
 			child->setPosition(x, 0);
-		//	child->setHeight(bounds.height);	
+		//	child->setHeight(bounds.height);
 		}
 		*/
 		Widget::add(child);
@@ -330,7 +330,7 @@ namespace MAUI {
 
 	void Layout::update() {
 		Widget::update();
-		if(mustRebuild) rebuild();		
+		if(mustRebuild) rebuild();
 	}
 
 
@@ -364,17 +364,17 @@ namespace MAUI {
 		}
 	}
 		*/
-	
+
 	void Layout::setPosition(int x, int y) {
 		Widget::setPosition(x, y);
 		mustRebuild = true;
 	}
-	
+
 	void Layout::setWidth(int width) {
 		Widget::setWidth(width);
 		mustRebuild = true;
 	}
-	
+
 	void Layout::setHeight(int height) {
 		Widget::setHeight(height);
 		mustRebuild = true;
@@ -399,7 +399,7 @@ namespace MAUI {
 		this->marginY = p;
 		mustRebuild = true;
 	}
-	
+
 	void Layout::setHorizontalAlignment(HorizontalAlignment alignment) {
 		this->alignmentX = alignment;
 		mustRebuild = true;
@@ -426,7 +426,7 @@ namespace MAUI {
 		if(selectedIndex - gridXSize >= 0) selectedIndex-=gridXSize;
 		if(selectedIndex < children.size()) children[selectedIndex]->setSelected(true);
 	}
-	
+
 	void Layout::goDown() {
 		if(selectedIndex < children.size()) children[selectedIndex]->setSelected(false);
 		if(selectedIndex + gridXSize < children.size()) selectedIndex+=gridXSize;

@@ -441,6 +441,10 @@ DownloaderReader::DownloaderReader(Downloader* downloader)
 {
 }
 
+DownloaderReader::~DownloaderReader()
+{
+}
+
 int DownloaderReader::getContentLength()
 {
 	return mContentLength;

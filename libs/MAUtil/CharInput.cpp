@@ -22,7 +22,7 @@ namespace MAUtil {
 	CharInput *CharInput::charInputSingleton = NULL;
 
 	CharInput::CharInput() :
-		enabled(false), charInputListeners(false)
+		enabled(false)
 		{
 		if(charInputSingleton) {
 			PANIC_MESSAGE("The application tried to instantiate more than one CharInput. There can be only one per application.");

@@ -78,10 +78,16 @@ void LogV(const char* fmt, va_list args) {
 		MoSyncErrorExit(ERR_INTERNAL);
 }
 
+#ifdef __BB10__
+#define PRItimet "i"
+#else
+#define PRItimet "li"
+#endif
+
 void LogTime() {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	Log(" @ %li\n", ((tv.tv_sec - sStartTime.tv_sec) * 1000) + ((tv.tv_usec - sStartTime.tv_usec) / 1000));
+	Log(" @ %" PRItimet "\n", ((tv.tv_sec - sStartTime.tv_sec) * 1000) + ((tv.tv_usec - sStartTime.tv_usec) / 1000));
 }
 
 void LogTime(const char* fmt, ...) {

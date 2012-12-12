@@ -1,6 +1,6 @@
 #include "core/Core.h"
 
-int main(int argn, char* argv)
+int main(int argc, const char** argv)
 {
 
 	return 0;

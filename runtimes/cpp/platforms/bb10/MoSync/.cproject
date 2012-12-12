@@ -14,7 +14,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" description="" id="com.qnx.qcc.configuration.exe.debug.646993845" name="Device-Debug" parent="com.qnx.qcc.configuration.exe.debug">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" description="" id="com.qnx.qcc.configuration.exe.debug.646993845" name="Device-Debug" parent="com.qnx.qcc.configuration.exe.debug" prebuildStep="env">
 					<folderInfo id="com.qnx.qcc.configuration.exe.debug.646993845." name="/" resourcePath="">
 						<toolChain id="com.qnx.qcc.toolChain.exe.debug.1972447732" name="QNX QCC" superClass="com.qnx.qcc.toolChain">
 							<option id="com.qnx.qcc.option.cpu.1253741024" name="Target CPU:" superClass="com.qnx.qcc.option.cpu" value="com.qnx.qcc.option.gen.cpu.armle-v7" valueType="enumerated"/>
@@ -26,10 +26,19 @@
 								<option id="com.qnx.qcc.option.compiler.includePath.422825864" name="Include Directories (-I)" superClass="com.qnx.qcc.option.compiler.includePath" valueType="includePath">
 									<listOptionValue builtIn="false" value="${QNX_TARGET}/usr/include/freetype2"/>
 									<listOptionValue builtIn="false" value="${QNX_TARGET}/../target-override/usr/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/intlibs}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/base}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/base}/..&quot;"/>
 								</option>
 								<option id="com.qnx.qcc.option.compiler.security.1106646296" name="Enhanced Security (-fstack-protector-all)" superClass="com.qnx.qcc.option.compiler.security" value="true" valueType="boolean"/>
 								<option id="com.qnx.qcc.option.compiler.defines.1475760224" name="Defines (-D)" superClass="com.qnx.qcc.option.compiler.defines" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_FORTIFY_SOURCE=2"/>
+									<listOptionValue builtIn="false" value="__BB10__"/>
+								</option>
+								<option id="com.qnx.qcc.option.compiler.qccoptions.1160909902" name="QCC Options" superClass="com.qnx.qcc.option.compiler.qccoptions" valueType="stringList">
+									<listOptionValue builtIn="false" value="-Wno-psabi"/>
 								</option>
 								<inputType id="com.qnx.qcc.inputType.compiler.612884637" superClass="com.qnx.qcc.inputType.compiler"/>
 							</tool>
@@ -54,7 +63,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="base/ThreadPool.cpp|base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="base/thread|core/GdbStub.cpp|base/ThreadPool.cpp|base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -418,15 +427,18 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="MoSync.null.904324191" name="MoSync"/>
 	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="1">
+		<resource resourceType="PROJECT" workspacePath="/MoSync"/>
+	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.qnx.tools.ide.qde.managedbuilder.core.qccScannerInfo"/>
 		<scannerConfigBuildInfo instanceId="com.qnx.qcc.configuration.exe.release.1233978087">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.qnx.tools.ide.qde.managedbuilder.core.qccScannerInfo"/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.qnx.qcc.configuration.exe.debug.1640464781">
+		<scannerConfigBuildInfo instanceId="com.qnx.qcc.configuration.exe.profile.coverage.2018649338">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.qnx.tools.ide.qde.managedbuilder.core.qccScannerInfo"/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.qnx.qcc.configuration.exe.profile.coverage.2018649338">
+		<scannerConfigBuildInfo instanceId="com.qnx.qcc.configuration.exe.debug.1640464781">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.qnx.tools.ide.qde.managedbuilder.core.qccScannerInfo"/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="com.qnx.qcc.configuration.exe.profile.181617909">
@@ -442,4 +454,5 @@
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.qnx.tools.ide.qde.managedbuilder.core.qccScannerInfo"/>
 		</scannerConfigBuildInfo>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cproject>

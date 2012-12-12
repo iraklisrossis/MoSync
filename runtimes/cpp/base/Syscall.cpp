@@ -61,7 +61,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #endif	//WIN32
 #endif	//SYMBIAN && _WIN32_WCE
 
-#if defined(LINUX) || defined(__IPHONE__) || defined(DARWIN)
+#if defined(LINUX) || defined(__IPHONE__) || defined(DARWIN) || defined(__BB10__)
 #include <sys/statvfs.h>
 #define stricmp(x, y) strcasecmp(x, y)
 #endif
@@ -986,7 +986,8 @@ namespace Base {
 		return MAIDL_HASH;
 	}
 
-#if !defined(_android) && !defined(__BB10__)
+#if !defined(_android)
+#ifndef __BB10__
 	int Syscall::maBtGetNewDevice(MABtDevice* dst) {
 		MABtDeviceNative dn;
 		dn.nameBufSize = dst->nameBufSize;
@@ -1010,6 +1011,7 @@ namespace Base {
 		dst->port = sn.port;
 		return res;
 	}
+#endif	//__BB10__
 
 #define FILE_FAIL(val) do { LOG_VAL(val); return val; } while(0)
 

@@ -134,6 +134,26 @@ class BB10ExeWork < ExeWork
 	end
 	def run
 		sh "blackberry-deploy -installApp -launchApp #{CONFIG_RUN_DEVICE} #{@barFile}"
+		#sh "blackberry-deploy -listInstalledApps #{CONFIG_RUN_DEVICE}"
+		#sh "blackberry-deploy -printExitCode #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
+
+		# wait until app exits. poll every second.
+		count = 0
+		puts 'Waiting for app to exit'
+		loop do
+			cmd = "|blackberry-deploy -isAppRunning #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
+			isRunning = nil
+			open(cmd).each do |line|
+				isRunning = false if(line.strip == 'result::false')
+				isRunning = true if(line.strip == 'result::true')
+			end
+			raise "error" if(isRunning == nil)
+			count += 1
+			break if(!isRunning)
+			sleep(1)
+		end
+		puts "App exited after #{count} iterations."
+		sh "blackberry-deploy -getFile logs/log.txt log.txt #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
 	end
 end
 

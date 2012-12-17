@@ -6,10 +6,6 @@
 #endif
 #define CONFIG_H
 
-#define __SDL__
-#define EMULATOR
-
-
 #define LOGGING_ENABLED
 
 //#define UPDATE_IP

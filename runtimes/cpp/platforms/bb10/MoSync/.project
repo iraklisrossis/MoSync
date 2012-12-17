@@ -27,7 +27,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildLocation</key>
-					<value>${workspace_loc:/MoSync/Simulator-Debug}</value>
+					<value>${workspace_loc:/MoSync/Device-Debug}</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.contents</key>
@@ -78,17 +78,17 @@
 		<link>
 			<name>src/base</name>
 			<type>2</type>
-			<location>/Users/andersmalm/Work/MoSync/runtimes/cpp/base</location>
+			<location>../../../base</location>
 		</link>
 		<link>
 			<name>src/core</name>
 			<type>2</type>
-			<location>/Users/andersmalm/Work/MoSync/runtimes/cpp/core</location>
+			<location>../../../core</location>
 		</link>
 		<link>
 			<name>src/intlibs</name>
 			<type>2</type>
-			<location>/Users/andersmalm/Work/MoSync/intlibs</location>
+			<location>../../../../../intlibs</location>
 		</link>
 	</linkedResources>
 </projectDescription>

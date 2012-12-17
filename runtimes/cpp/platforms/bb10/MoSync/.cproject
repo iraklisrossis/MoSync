@@ -14,7 +14,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" description="" id="com.qnx.qcc.configuration.exe.debug.646993845" name="Device-Debug" parent="com.qnx.qcc.configuration.exe.debug" prebuildStep="env">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" description="" id="com.qnx.qcc.configuration.exe.debug.646993845" name="Device-Debug" parent="com.qnx.qcc.configuration.exe.debug" prebuildStep="">
 					<folderInfo id="com.qnx.qcc.configuration.exe.debug.646993845." name="/" resourcePath="">
 						<toolChain id="com.qnx.qcc.toolChain.exe.debug.1972447732" name="QNX QCC" superClass="com.qnx.qcc.toolChain">
 							<option id="com.qnx.qcc.option.cpu.1253741024" name="Target CPU:" superClass="com.qnx.qcc.option.cpu" value="com.qnx.qcc.option.gen.cpu.armle-v7" valueType="enumerated"/>
@@ -36,6 +36,7 @@
 								<option id="com.qnx.qcc.option.compiler.defines.1475760224" name="Defines (-D)" superClass="com.qnx.qcc.option.compiler.defines" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_FORTIFY_SOURCE=2"/>
 									<listOptionValue builtIn="false" value="__BB10__"/>
+									<listOptionValue builtIn="false" value="HAVE_IOCTL_ELLIPSIS"/>
 								</option>
 								<option id="com.qnx.qcc.option.compiler.qccoptions.1160909902" name="QCC Options" superClass="com.qnx.qcc.option.compiler.qccoptions" valueType="stringList">
 									<listOptionValue builtIn="false" value="-Wno-psabi"/>
@@ -54,6 +55,9 @@
 									<listOptionValue builtIn="false" value="${QNX_TARGET}/../target-override/${CPUVARDIR}/usr/lib"/>
 								</option>
 								<option id="com.qnx.qcc.option.linker.security.368987109" name="Enhanced Security (-Wl,-z,relro -Wl,-z,now)" superClass="com.qnx.qcc.option.linker.security" value="true" valueType="boolean"/>
+								<option id="com.qnx.qcc.option.linker.libraries.2056132271" name="Libraries (-l)" superClass="com.qnx.qcc.option.linker.libraries" valueType="libs">
+									<listOptionValue builtIn="false" value="m"/>
+								</option>
 								<inputType id="com.qnx.qcc.inputType.linker.561009042" superClass="com.qnx.qcc.inputType.linker">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -63,7 +67,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="base/thread|core/GdbStub.cpp|base/ThreadPool.cpp|base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="intlibs/glew|base/thread|core/GdbStub.cpp|base/ThreadPool.cpp|base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -266,17 +270,20 @@
 								<option id="com.qnx.qcc.option.compiler.optlevel.1127132819" name="Optimization Level" superClass="com.qnx.qcc.option.compiler.optlevel" value="com.qnx.qcc.option.compiler.optlevel.0" valueType="enumerated"/>
 								<option id="com.qnx.qcc.option.compile.debug.1368733517" name="Debug (-g)" superClass="com.qnx.qcc.option.compile.debug" value="true" valueType="boolean"/>
 								<option id="com.qnx.qcc.option.compiler.includePath.1246736746" name="Include Directories (-I)" superClass="com.qnx.qcc.option.compiler.includePath" valueType="includePath">
-									<listOptionValue builtIn="false" value="/Users/andersmalm/Work/MoSync/intlibs"/>
-									<listOptionValue builtIn="false" value="/Users/andersmalm/Work/MoSync/runtimes/cpp"/>
-									<listOptionValue builtIn="false" value="/Users/andersmalm/Work/MoSync/runtimes/cpp/base"/>
 									<listOptionValue builtIn="false" value="${QNX_TARGET}/usr/include/freetype2"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src}&quot;"/>
 									<listOptionValue builtIn="false" value="${QNX_TARGET}/../target-override/usr/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/intlibs}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/base}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/base}/..&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;c:\code\mosync-bb10\runtimes\cpp\platforms\sdl\&quot;"/>
 								</option>
 								<option id="com.qnx.qcc.option.compiler.security.1373428941" name="Enhanced Security (-fstack-protector-all)" superClass="com.qnx.qcc.option.compiler.security" value="true" valueType="boolean"/>
 								<option id="com.qnx.qcc.option.compiler.defines.1263870948" name="Defines (-D)" superClass="com.qnx.qcc.option.compiler.defines" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_FORTIFY_SOURCE=2"/>
 									<listOptionValue builtIn="false" value="__BB10__"/>
+									<listOptionValue builtIn="false" value="HAVE_IOCTL_ELLIPSIS"/>
 								</option>
 								<inputType id="com.qnx.qcc.inputType.compiler.1353305600" superClass="com.qnx.qcc.inputType.compiler"/>
 							</tool>
@@ -292,6 +299,9 @@
 									<listOptionValue builtIn="false" value="${QNX_TARGET}/../target-override/${CPUVARDIR}/usr/lib"/>
 								</option>
 								<option id="com.qnx.qcc.option.linker.security.1629613010" name="Enhanced Security (-Wl,-z,relro -Wl,-z,now)" superClass="com.qnx.qcc.option.linker.security" value="true" valueType="boolean"/>
+								<option id="com.qnx.qcc.option.linker.libraries.72777200" name="Libraries (-l)" superClass="com.qnx.qcc.option.linker.libraries" valueType="libs">
+									<listOptionValue builtIn="false" value="m"/>
+								</option>
 								<inputType id="com.qnx.qcc.inputType.linker.1362419051" superClass="com.qnx.qcc.inputType.linker">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -301,7 +311,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="base/ThreadPool.cpp|base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="intlibs/glew|base/ThreadPool.cpp|base/MoSyncDB.cpp|core/sld.cpp|intlibs/net|core/extensions.cpp|intlibs/helpers/intutil.cpp|base/pim.cpp|base/networking.cpp|base/WaveAudioSource.cpp|base/BufferAudioSource.cpp|base/AudioSource.cpp|base/AudioInterface.cpp|base/AudioChannel.cpp|intlibs/stabs|intlibs/sqlite|intlibs/profiledb|intlibs/mostl|intlibs/idl-common|intlibs/helpers/platforms/windows|intlibs/helpers/platforms/stdout|intlibs/gsm_amr|intlibs/filelist/filelist-win32.c|intlibs/dll|intlibs/dgles-0.5|intlibs/bluetooth|intlibs/demangle|core/Recompiler/ashmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

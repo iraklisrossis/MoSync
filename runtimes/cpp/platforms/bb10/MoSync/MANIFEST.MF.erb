@@ -1,0 +1,29 @@
+Archive-Manifest-Version: 1.5
+Archive-Created-By: BlackBerry Elf BAR Packager 1.8
+
+Package-Type: application
+Package-Author: Example Inc.
+Package-Author-Id: testRXhhbXBsZSBJbmMuICAgICA
+Package-Name: com.example.MoSync
+Package-Id: testDev_mple_MoSyncdc14348e
+Package-Version: 1.0.0.1
+Package-Version-Id: testMS4wLjAuMSAgICAgICAgICA
+Package-Architecture: x86
+
+Application-Name: MoSync
+Application-Id: testDev_mple_MoSyncdc14348e
+Application-Description: The MoSync application
+Application-Version: 1.0.0.1
+Application-Version-Id: testMS4wLjAuMSAgICAgICAgICA
+Application-Category: core.games
+Application-Requires-System: BlackBerry 10/10.0.9.0
+Application-Development-Mode: true
+
+Entry-Point-Name: MoSync
+Entry-Point-Key: e1
+Entry-Point: LD_LIBRARY_PATH=app/native/lib app/native/<%=File.basename(@elf)%>
+Entry-Point-Type: Qnx/Elf
+Entry-Point-Icon: native/icon.png
+Entry-Point-System-Actions: run_native
+
+<%= assets %>

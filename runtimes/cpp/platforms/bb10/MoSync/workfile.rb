@@ -7,11 +7,15 @@ require './config.rb'
 TARGET = 'bb10'
 
 require File.expand_path('../../../../../rules/exe.rb')
+require 'zip/zip'
+require 'erb'
+require 'digest'
+require 'base64'
 
 # Override the GNU version; it seems impossible to determine qcc's version dynamically.
 def get_gcc_version_info(gcc)
 	v = {
-		:string => '4.6.3',
+		:string => "4.6.3_#{CONFIG_COMPILER}",
 		:ver => '4.6.3',
 		:arm => false,
 		:clang => false,
@@ -41,13 +45,58 @@ class CompileGccTask < FileTask
 	end
 end
 
+# zip-file-name, FileTask.
+Asset = Struct.new(:target, :source)
+
+class BarTask < FileTask
+	def initialize(work, name, elf, otherAssets)
+		super(work, name)
+		@elf = elf
+		@others = otherAssets
+		@prerequisites << @elf
+		@others.each do |a|
+			@prerequisites << a.source
+		end
+		@templateFile = 'MANIFEST.MF.erb'
+		@prerequisites << FileTask.new(work, @templateFile)
+		@prerequisites << FileTask.new(work, 'workfile.rb')
+	end
+
+	# Return string containing manifest lines for all assets.
+	def assets
+		s = ''
+		@others.each do |a|
+			s << "Archive-Asset-Name: #{a.target}\n"
+			s << "Archive-Asset-SHA-512-Digest: #{sha512digest(a.source)}\n"
+			s << "\n"
+		end
+		s << "Archive-Asset-Name: native/#{File.basename(@elf)}\n"
+		s << "Archive-Asset-SHA-512-Digest: #{sha512digest(@elf)}\n"
+		s << "Archive-Asset-Type: Qnx/Elf\n"
+		return s
+	end
+	def sha512digest(filename)
+		sha = Digest::SHA512.new
+		return Base64.urlsafe_encode64(sha.digest(open(filename, 'rb').read)).gsub('==','')
+	end
+	def execute
+		open('build/MANIFEST.MF', 'wb') do |file|
+			file.write(ERB.new(open(@templateFile).read).result(binding))
+		end
+		FileUtils.rm_f(@NAME)
+		zip = Zip::ZipFile.new(@NAME, true)
+		zip.add('META-INF/MANIFEST.MF', 'build/MANIFEST.MF')
+		zip.add("native/#{File.basename(@elf)}", @elf)
+		@others.each do |a|
+			zip.add(a.target, a.source)
+		end
+		zip.close
+	end
+end
+
 class BB10ExeWork < ExeWork
 	def getGccInvoke(ending)
-		case ending
-			when '.c'; return 'qcc -V4.6.3,gcc_ntoarmv7le'
-			when '.cpp'; return 'qcc -V4.6.3,gcc_ntoarmv7le_cpp'
-			else raise "Unsupported file type #{ending}"
-		end
+		return "qcc -V4.6.3,#{CONFIG_COMPILER}"
 	end
 	def initialize
 		super
@@ -68,10 +117,23 @@ class BB10ExeWork < ExeWork
 		need(:@NAME)
 		need(:@BUILDDIR)
 		need(:@TARGETDIR)
-		target = @BUILDDIR + @NAME + '.elf'
-		linker = have_cppfiles ? 'qcc -V4.6.3,gcc_ntoarmv7le' : 'qcc -V4.6.3,gcc_ntoarmv7le_cpp'
+		target = @BUILDDIR + @NAME
+		linker = "qcc -V4.6.3,#{CONFIG_COMPILER}"
 		@TARGET = link_task_class.new(self, target, all_objects, [], [], @EXTRA_LINKFLAGS, linker)
-		@prerequisites += [@TARGET]
+
+		# packaging
+		assets = [
+			Asset.new('native/bar-descriptor.xml', FileTask.new(self, 'bar-descriptor.xml')),
+			Asset.new('native/icon.png', FileTask.new(self, 'icon.png')),
+		]
+		Dir['assets/*'].each do |file|
+			assets << Asset.new("native/#{File.basename(file)}", FileTask.new(self, file))
+		end
+		@barFile = BarTask.new(self, @TARGET.to_s + '.bar', @TARGET, assets)
+		@prerequisites << @barFile
+	end
+	def run
+		sh "blackberry-deploy -installApp -launchApp #{CONFIG_RUN_DEVICE} #{@barFile}"
 	end
 end
 
@@ -97,6 +159,7 @@ work.instance_eval do
 	]
 	@EXTRA_SOURCEFILES = [
 		"#{BD}/runtimes/cpp/core/Core.cpp",
+		"#{BD}/runtimes/cpp/platforms/sdl/FileImpl.cpp",
 		"#{BD}/intlibs/filelist/filelist-linux.c",
 	]
 	@EXTRA_INCLUDES += [
@@ -105,6 +168,7 @@ work.instance_eval do
 		"#{BD}/runtimes/cpp",
 		"#{BD}/intlibs",
 		'src',
+		"#{BD}/runtimes/cpp/platforms/sdl",
 	]
 	@SPECIFIC_CFLAGS = {
 		'Core.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',

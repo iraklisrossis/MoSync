@@ -77,7 +77,7 @@ SAFUNC void debug_MAWString(wchar* SCDEBUG_ARG(str)) {
 #ifdef SYSCALL_DEBUGGING_MODE
 	LOGSC("(\"");
 	while(*str) {
-		LOGSC("%C", *str);
+		LOGSC("%C", (wint_t)*str);
 		str++;
 	}
 	LOGSC("\")");

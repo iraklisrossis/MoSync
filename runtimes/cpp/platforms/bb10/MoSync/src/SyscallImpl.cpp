@@ -13,6 +13,10 @@ namespace Base
 {
 	Syscall* gSyscall = NULL;
 
+	Syscall::Syscall() {
+		gSyscall = this;
+	}
+
 	void* Syscall::loadImage(MemStream& s)
 	{
 		return 0;
@@ -304,13 +308,9 @@ SYSCALL(void, maHttpFinish(MAHandle conn))
 {
 }
 
-SYSCALL(void,  maLoadProgram(MAHandle data, int reload))
-{
-
-}
-
 SYSCALL(void, maPanic(int result, const char* message))
 {
+	LOG("maPanic(%i, %s)\n", result, message);
 	exit(result);
 }
 
@@ -329,10 +329,12 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 
 void MoSyncExit(int exitCode)
 {
+	LOG("MoSyncExit(%i)\n", exitCode);
 	exit(exitCode);
 }
 
 void MoSyncErrorExit(int errorCode)
 {
+	LOG("MoSyncErrorExit(%i)\n", errorCode);
 	exit(errorCode);
 }

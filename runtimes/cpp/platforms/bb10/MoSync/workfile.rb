@@ -153,7 +153,8 @@ class BB10ExeWork < ExeWork
 			sleep(1)
 		end
 		puts "App exited after #{count} iterations."
-		sh "blackberry-deploy -getFile logs/log.txt log.txt #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
+		sh "blackberry-deploy -getFile logs/log log.txt #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
+		#sh "blackberry-deploy -getFile logs/MoSync.core core.bin #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
 	end
 end
 

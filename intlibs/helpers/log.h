@@ -48,6 +48,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #endif
 void InitLog(const char* filenameOverride = NULL);
 
+// Available only on linux.
+void LogOverrideFile(FILE*);
+
 void LogV(const char* fmt, VA_LIST vaList) PRINTF_ATTRIB(1, 0);
 void LogBin(const void* data, int size);
 void LogTime();

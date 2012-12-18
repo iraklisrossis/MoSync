@@ -33,9 +33,14 @@ using namespace MoSyncError;
 #if !defined(_android)
 
 static const char* sFilename = "log.txt";
+static FILE* sFileOverride = NULL;
 timeval sStartTime;
 
 CRITICAL_SECTION gLogCS;
+
+void LogOverrideFile(FILE* f) {
+	sFileOverride = f;
+}
 
 void InitLog(const char* filenameOverride) {
 	static bool done = false;
@@ -43,10 +48,13 @@ void InitLog(const char* filenameOverride) {
 		return;
 	done = true;
 
+	if(sFileOverride)
+		return;
+
 	if(filenameOverride != NULL) {
 		sFilename = filenameOverride;
 	}
-	
+
 	FILE* file = fopen(sFilename, "wb");
 	if(!file)
 		MoSyncErrorExit(ERR_INTERNAL);
@@ -60,9 +68,16 @@ void LogBin(const void* data, int size) {
 	int res;
 	InitLog();
 	CriticalSectionHandler csh(&gLogCS);
-	FILE* file = fopen(sFilename, "ab");
+	FILE* file;
+	if(sFileOverride)
+		file = sFileOverride;
+	else
+		file = fopen(sFilename, "ab");
 	res = fwrite(data, 1, size, file);
-	fclose(file);
+	if(sFileOverride)
+		fflush(file);
+	else
+		fclose(file);
 	if(res != size)
 		MoSyncErrorExit(ERR_INTERNAL);
 }
@@ -71,9 +86,16 @@ void LogV(const char* fmt, va_list args) {
 	int res;
 	InitLog();
 	CriticalSectionHandler csh(&gLogCS);
-	FILE* file = fopen(sFilename, "a");
+	FILE* file;
+	if(sFileOverride)
+		file = sFileOverride;
+	else
+		file = fopen(sFilename, "a");
 	res = vfprintf(file, fmt, args);
-	fclose(file);
+	if(sFileOverride)
+		fflush(file);
+	else
+		fclose(file);
 	if(res < 0)
 		MoSyncErrorExit(ERR_INTERNAL);
 }

@@ -6,15 +6,30 @@
 #include <string.h>
 #include <stdio.h>
 #include <helpers/log.h>
+#include <signal.h>
+#include <bps/bps.h>
 
 using namespace std;
 
 static MAHandle gReloadHandle = 0;
 bool gRunning = false;
 
+static void sigquit_handler(int) {
+	LOG("SIGQUIT received. Application will now shut down.\n");
+}
+
 int main() {
-	InitLog("logs/log.txt");
+	LogOverrideFile(stderr);
+	bps_set_verbosity(2);
 	LOG("Log initialized.\n");
+
+	{
+		struct sigaction act;
+		memset(&act, 0, sizeof(act));
+		act.sa_handler = sigquit_handler;
+		sigaction(SIGQUIT, &act, NULL);
+		LOG("SIGQUIT handler installed.\n");
+	}
 
 	Base::Syscall *syscall = 0;
 	syscall = new Base::Syscall();

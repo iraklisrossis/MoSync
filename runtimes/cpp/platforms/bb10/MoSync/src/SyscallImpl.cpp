@@ -6,23 +6,107 @@
  */
 #include "config_platform.h"
 
+// local includes
 #include "Syscall.h"
+#include "Image.h"
+#include "helpers/helpers.h"
+
+// libc includes
 #include <math.h>
+#include <assert.h>
+#include <errno.h>
+#include <unistd.h>
+
+// bb10 includes
+#include <screen/screen.h>
+
+// using
+using namespace Base;
+
+// macros
+#define ERRNO(func) do { int _res = (func); if(_res < 0) {\
+	LOG("Errno at %s:%i: %i(%s)\n", __FILE__, __LINE__, errno, strerror(errno));\
+	MoSyncErrorExit(errno); } } while(0)
+
+// static variables
+static screen_context_t sScreen;
+static screen_window_t sWindow;
+static Image *sCurrentDrawSurface = NULL;
+static Image *sBackBuffer = NULL;
+static int sCurrentColor = 0;
+static screen_buffer_t sScreenBuffer;
+static int sScreenRect[4] = { 0,0 };
 
 namespace Base
 {
 	Syscall* gSyscall = NULL;
 
 	Syscall::Syscall() {
+		LOG("Screen init...\n");
+		assert(gSyscall == NULL);
 		gSyscall = this;
+
+		ERRNO(screen_create_context(&sScreen, SCREEN_APPLICATION_CONTEXT));
+		ERRNO(screen_create_window(&sWindow, sScreen));
+
+		// define the screen usage
+		int param = SCREEN_USAGE_WRITE | SCREEN_USAGE_NATIVE;
+		ERRNO(screen_set_window_property_iv(sWindow, SCREEN_PROPERTY_USAGE, &param));
+
+		// create a the buffer required for rendering the window
+		ERRNO(screen_create_window_buffers(sWindow, 1));
+
+		// obtain the framebuffer context
+		ERRNO(screen_get_window_property_pv(sWindow, SCREEN_PROPERTY_RENDER_BUFFERS, (void**)&sScreenBuffer));
+
+		// optain window size
+		ERRNO(screen_get_window_property_iv(sWindow, SCREEN_PROPERTY_BUFFER_SIZE, sScreenRect + 2));
+		LOG("Screen size: %ix%i\n", sScreenRect[2], sScreenRect[3]);
+
+		// obtain window format
+		ERRNO(screen_get_window_property_iv(sWindow, SCREEN_PROPERTY_FORMAT, &param));
+		LOG("Screen format: %i\n", param);
+
+		Image::PixelFormat format;
+		switch(param) {
+		case SCREEN_FORMAT_RGBX5551: format = Image::PIXELFORMAT_RGB555; break;
+		case SCREEN_FORMAT_RGBX4444: format = Image::PIXELFORMAT_RGB444; break;
+		case SCREEN_FORMAT_RGB565: format = Image::PIXELFORMAT_RGB565; break;
+		case SCREEN_FORMAT_RGB888: format = Image::PIXELFORMAT_RGB888; break;
+		case SCREEN_FORMAT_RGBX8888: format = Image::PIXELFORMAT_ARGB8888; break;
+		default:
+			LOG("Unsupported screen format %i\n", param);
+			DEBIG_PHAT_ERROR;
+		}
+
+		// obtain stride
+		ERRNO(screen_get_buffer_property_iv(sScreenBuffer, SCREEN_PROPERTY_STRIDE, &param));
+		LOG("Screen stride: %i\n", param);
+
+		// obtain framebuffer pointer
+		byte* framebuffer;
+		ERRNO(screen_get_buffer_property_pv(sScreenBuffer, SCREEN_PROPERTY_POINTER, (void **)&framebuffer));
+
+		// initialize internal backbuffer
+		sBackBuffer = new Image(framebuffer, NULL, sScreenRect[2], sScreenRect[3], param, format, false, false);
+		sCurrentDrawSurface = sBackBuffer;
+		assert(sBackBuffer != NULL);
+
+		// fill with black
+		memset(framebuffer, 0, param * sScreenRect[3]);
+
+		// request the window be displayed
+		maUpdateScreen();
+
+		LOG("Screen init complete.\n");
 	}
 
-	void* Syscall::loadImage(MemStream& s)
+	Image* Syscall::loadImage(MemStream& s)
 	{
 		return 0;
 	}
 
-	void* Syscall::loadSprite(void* surface, ushort left, ushort top, ushort width, ushort height, ushort cx, ushort cy)
+	Image* Syscall::loadSprite(void* surface, ushort left, ushort top, ushort width, ushort height, ushort cx, ushort cy)
 	{
 		return 0;
 	}
@@ -67,29 +151,54 @@ SYSCALL(void, maGetClipRect(MARect *rect))
 {
 }
 
-SYSCALL(int, maSetColor(int argb))
-{
-	return -1;
+SYSCALL(int, maSetColor(int argb)) {
+	int oldColor = sCurrentColor;
+	sCurrentColor = argb;
+	return oldColor;
 }
 
-SYSCALL(void, maPlot(int posX, int posY))
-{
+SYSCALL(void, maPlot(int posX, int posY)) {
+	sCurrentDrawSurface->drawPoint(posX, posY, sCurrentColor);
 }
 
-SYSCALL(void, maLine(int startX, int startY, int endX, int endY))
-{
+SYSCALL(void, maLine(int x0, int y0, int x1, int y1)) {
+	sCurrentDrawSurface->drawLine(x0, y0, x1, y1, sCurrentColor);
 }
 
-SYSCALL(void, maFillRect(int left, int top, int width, int height))
-{
+SYSCALL(void, maFillRect(int left, int top, int width, int height)) {
+	sCurrentDrawSurface->drawFilledRect(left, top, width, height, sCurrentColor);
 }
 
-SYSCALL(void, maFillTriangleStrip(const MAPoint2d* points, int count))
-{
+SYSCALL(void, maFillTriangleStrip(const MAPoint2d *points, int count)) {
+	SYSCALL_THIS->ValidateMemRange(points, sizeof(MAPoint2d) * count);
+	CHECK_INT_ALIGNMENT(points);
+	MYASSERT(count >= 3, ERR_POLYGON_TOO_FEW_POINTS);
+	for(int i = 2; i < count; i++) {
+		sCurrentDrawSurface->drawTriangle(
+			points[i-2].x,
+			points[i-2].y,
+			points[i-1].x,
+			points[i-1].y,
+			points[i].x,
+			points[i].y,
+			sCurrentColor);
+	}
 }
 
-SYSCALL(void, maFillTriangleFan(const MAPoint2d* points, int count))
-{
+SYSCALL(void, maFillTriangleFan(const MAPoint2d *points, int count)) {
+	SYSCALL_THIS->ValidateMemRange(points, sizeof(MAPoint2d) * count);
+	CHECK_INT_ALIGNMENT(points);
+	MYASSERT(count >= 3, ERR_POLYGON_TOO_FEW_POINTS);
+	for(int i = 2; i < count; i++) {
+		sCurrentDrawSurface->drawTriangle(
+			points[0].x,
+			points[0].y,
+			points[i-1].x,
+			points[i-1].y,
+			points[i].x,
+			points[i].y,
+			sCurrentColor);
+	}
 }
 
 SYSCALL(MAExtent, maGetTextSize(const char* str))
@@ -112,6 +221,7 @@ SYSCALL(void, maDrawTextW(int left, int top, const wchar* str))
 
 SYSCALL(void, maUpdateScreen())
 {
+	ERRNO(screen_post_window(sWindow, sScreenBuffer, 1, sScreenRect, 0));
 }
 
 SYSCALL(void, maResetBacklight())
@@ -172,6 +282,7 @@ SYSCALL(int, maGetEvent(MAEvent* dst))
 
 SYSCALL(void, maWait(int timeout))
 {
+	sleep(100);	// placeholder
 }
 
 SYSCALL(longlong, maTime())

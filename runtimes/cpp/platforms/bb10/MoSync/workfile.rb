@@ -198,6 +198,8 @@ work.instance_eval do
 	}
 	@LIBRARIES = [
 		'm',
+		'screen',
+		'bps',
 	]
 
 	@NAME = "MoSync"

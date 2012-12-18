@@ -19,12 +19,13 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define _RESOURCE_DEFS_H_
 
 #include "Stream.h"
+#include "Image.h"
 
 #define TYPES(m)\
 	m(RT_BINARY, Base::Stream, delete)\
 	m(RT_PLACEHOLDER, void, NULA)\
 	m(RT_LABEL, Label, delete) \
-	m(RT_IMAGE, void, NULA)\
+	m(RT_IMAGE, Image, NULA)\
 	m(RT_FLUX, void, NULA)\
 
 #endif // _RESOURCE_DEFS_H_

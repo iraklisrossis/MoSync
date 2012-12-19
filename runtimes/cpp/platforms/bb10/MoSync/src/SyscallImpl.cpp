@@ -19,14 +19,17 @@
 
 // bb10 includes
 #include <screen/screen.h>
+#include <bps/event.h>
+#include <bps/navigator.h>
 
 // using
 using namespace Base;
 
 // macros
-#define ERRNO(func) do { int _res = (func); if(_res < 0) {\
-	LOG("Errno at %s:%i: %i(%s)\n", __FILE__, __LINE__, errno, strerror(errno));\
-	MoSyncErrorExit(errno); } } while(0)
+#define DO_ERRNO do { LOG("Errno at %s:%i: %i(%s)\n", __FILE__, __LINE__, errno, strerror(errno));\
+	MoSyncErrorExit(errno); } while(0)
+
+#define ERRNO(func) do { int _res = (func); if(_res < 0) DO_ERRNO; } while(0)
 
 // static variables
 static screen_context_t sScreen;
@@ -36,6 +39,26 @@ static Image *sBackBuffer = NULL;
 static int sCurrentColor = 0;
 static screen_buffer_t sScreenBuffer;
 static int sScreenRect[4] = { 0,0 };
+
+// operators
+
+static timespec operator-(const timespec& a, const timespec& b) {
+	static const int NANO = 1000000000;
+	timespec t = { a.tv_sec - b.tv_sec, a.tv_nsec - b.tv_nsec };
+	if(t.tv_nsec > NANO) {
+		int sec = t.tv_nsec / NANO;
+		int nsec = t.tv_nsec % NANO;
+		t.tv_sec += sec;
+		t.tv_nsec = nsec;
+	} else if(t.tv_nsec < 0) {
+		int sec = t.tv_nsec / NANO;
+		int nsec = (t.tv_nsec % NANO) + NANO * (1-sec);
+		t.tv_sec += sec;
+		t.tv_nsec = nsec;
+	}
+	return t;
+}
+
 
 namespace Base
 {
@@ -97,8 +120,10 @@ namespace Base
 
 		// request the window be displayed
 		maUpdateScreen();
-
 		LOG("Screen init complete.\n");
+
+		// initialize events
+		ERRNO(navigator_request_events(0));
 	}
 
 	Image* Syscall::loadImage(MemStream& s)
@@ -282,7 +307,58 @@ SYSCALL(int, maGetEvent(MAEvent* dst))
 
 SYSCALL(void, maWait(int timeout))
 {
-	sleep(100);	// placeholder
+	if(timeout == 0)
+		timeout = -1;
+	timespec endTime;
+	if(timeout > 0) {
+		ERRNO(clock_gettime(CLOCK_MONOTONIC, &endTime));
+		int sec = timeout / 1000;
+		int ms = timeout % 1000;
+		endTime.tv_sec += sec;
+		endTime.tv_nsec += ms * 1000000;
+	}
+	while(true) {
+		bps_event_t* event_bps = NULL;
+		LOG("bps_get_event(%i)...\n", timeout);
+		{
+			int res = bps_get_event(&event_bps, timeout);
+			if(res == BPS_FAILURE)
+				DO_ERRNO;
+			else if(res != BPS_SUCCESS)
+				DEBIG_PHAT_ERROR;
+		}
+		if(event_bps == NULL) {
+			LOG("bps_get_event timeout\n");
+			return;
+		}
+
+		// process the event accordingly
+		int event_domain = bps_event_get_domain(event_bps);
+		LOG("Event domain %i\n", event_domain);
+
+		// did we receive a navigator event?
+		if (event_domain == navigator_get_domain())
+		{
+			int event_id = bps_event_get_code(event_bps);
+			switch(event_id) {
+			case NAVIGATOR_EXIT:	// user has requested we exit the application
+				LOG("NAVIGATOR_EXIT\n");
+				MoSyncExit(0);
+				break;
+			}
+		}
+
+		if(timeout > 0) {
+			timespec t;
+			ERRNO(clock_gettime(CLOCK_MONOTONIC, &t));
+			t = endTime - t;
+			int ms = t.tv_sec * 1000 + t.tv_nsec / 1000000;
+			if(ms > 0)
+				timeout = ms;
+			else
+				timeout = 0;
+		}
+	}
 }
 
 SYSCALL(longlong, maTime())

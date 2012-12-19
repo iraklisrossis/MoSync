@@ -20,6 +20,7 @@ static void sigquit_handler(int) {
 
 int main() {
 	LogOverrideFile(stderr);
+	bps_initialize();
 	bps_set_verbosity(2);
 	LOG("Log initialized.\n");
 
@@ -52,6 +53,7 @@ int main() {
 		}
 	}
 
+	bps_shutdown();
 	LOG("main return 0\n");
 	return 0;
 }

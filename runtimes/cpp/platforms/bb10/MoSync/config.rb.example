@@ -8,3 +8,7 @@ ENV['PYTHONPATH'] = ''
 ENV['QDE'] = 'C:/Programs/bbndk/ide/win32/x86'
 
 UNAME_OVERRIDE = 'windows32'
+#CONFIG_RUN_DEVICE = '192.168.136.128'
+#CONFIG_COMPILER = 'gcc_ntox86'
+CONFIG_RUN_DEVICE = '169.254.0.1 -password password'
+CONFIG_COMPILER = 'gcc_ntoarmv7le'

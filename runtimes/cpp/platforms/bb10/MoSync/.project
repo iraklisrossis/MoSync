@@ -78,17 +78,17 @@
 		<link>
 			<name>src/base</name>
 			<type>2</type>
-			<location>../../../base</location>
+			<locationURI>PARENT-3-PROJECT_LOC/base</locationURI>
 		</link>
 		<link>
 			<name>src/core</name>
 			<type>2</type>
-			<location>../../../core</location>
+			<locationURI>PARENT-3-PROJECT_LOC/core</locationURI>
 		</link>
 		<link>
 			<name>src/intlibs</name>
 			<type>2</type>
-			<location>../../../../../intlibs</location>
+			<locationURI>PARENT-5-PROJECT_LOC/intlibs</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

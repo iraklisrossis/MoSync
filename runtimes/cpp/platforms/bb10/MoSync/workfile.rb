@@ -133,6 +133,7 @@ class BB10ExeWork < ExeWork
 		@prerequisites << @barFile
 	end
 	def run
+		#sh "blackberry-deploy -terminateApp #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
 		sh "blackberry-deploy -installApp -launchApp #{CONFIG_RUN_DEVICE} #{@barFile}"
 		#sh "blackberry-deploy -listInstalledApps #{CONFIG_RUN_DEVICE}"
 		#sh "blackberry-deploy -printExitCode #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
@@ -201,6 +202,7 @@ work.instance_eval do
 		'm',
 		'screen',
 		'bps',
+		'img',
 	]
 
 	@NAME = "MoSync"

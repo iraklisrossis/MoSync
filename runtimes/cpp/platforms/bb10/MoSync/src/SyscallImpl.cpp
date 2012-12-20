@@ -21,6 +21,7 @@
 #include <screen/screen.h>
 #include <bps/event.h>
 #include <bps/navigator.h>
+#include <img/img.h>
 
 // using
 using namespace Base;
@@ -31,14 +32,23 @@ using namespace Base;
 
 #define ERRNO(func) do { int _res = (func); if(_res < 0) DO_ERRNO; } while(0)
 
+#define IMGERR(func) do { int _res = (func); if(_res != IMG_ERR_OK) {\
+	LOG("IMGERR at %s:%i: %i\n", __FILE__, __LINE__, _res);\
+	MoSyncErrorExit(_res); } } while(0)
+
+
 // static variables
 static screen_context_t sScreen;
 static screen_window_t sWindow;
-static Image *sCurrentDrawSurface = NULL;
-static Image *sBackBuffer = NULL;
+static Image* sCurrentDrawSurface = NULL;
+static Image* sBackBuffer = NULL;
 static int sCurrentColor = 0;
 static screen_buffer_t sScreenBuffer;
 static int sScreenRect[4] = { 0,0 };
+static int sScreenFormat;
+
+static size_t sCodecCount = 0;
+static img_codec_t* sCodecs = NULL;
 
 // operators
 
@@ -87,18 +97,19 @@ namespace Base
 		LOG("Screen size: %ix%i\n", sScreenRect[2], sScreenRect[3]);
 
 		// obtain window format
-		ERRNO(screen_get_window_property_iv(sWindow, SCREEN_PROPERTY_FORMAT, &param));
-		LOG("Screen format: %i\n", param);
+		ERRNO(screen_get_window_property_iv(sWindow, SCREEN_PROPERTY_FORMAT, &sScreenFormat));
+		LOG("Screen format: %i\n", sScreenFormat);
 
 		Image::PixelFormat format;
-		switch(param) {
+		switch(sScreenFormat) {
 		case SCREEN_FORMAT_RGBX5551: format = Image::PIXELFORMAT_RGB555; break;
 		case SCREEN_FORMAT_RGBX4444: format = Image::PIXELFORMAT_RGB444; break;
 		case SCREEN_FORMAT_RGB565: format = Image::PIXELFORMAT_RGB565; break;
 		case SCREEN_FORMAT_RGB888: format = Image::PIXELFORMAT_RGB888; break;
 		case SCREEN_FORMAT_RGBX8888: format = Image::PIXELFORMAT_ARGB8888; break;
+		case SCREEN_FORMAT_RGBA8888: format = Image::PIXELFORMAT_ARGB8888; break;
 		default:
-			LOG("Unsupported screen format %i\n", param);
+			LOG("Unsupported screen format %i\n", sScreenFormat);
 			DEBIG_PHAT_ERROR;
 		}
 
@@ -124,11 +135,64 @@ namespace Base
 
 		// initialize events
 		ERRNO(navigator_request_events(0));
+
+		// initialize image decoder
+		{
+			img_lib_t ilib = NULL;
+			IMGERR(img_lib_attach(&ilib));
+			sCodecCount = img_codec_list(ilib, NULL, 0, NULL, 0);
+			LOG("%i codecs.\n", sCodecCount);
+			sCodecs = new img_codec_t[sCodecCount];
+			img_codec_list(ilib, sCodecs, sCodecCount, NULL, 0);
+			for(size_t i=0; i<sCodecCount; i++) {
+				const char* mime;
+				const char* ext;
+				img_codec_get_criteria(sCodecs[i], &ext, &mime);
+				LOG("codec %d: ext = %s: mime = %s\n", i, ext, mime);
+			}
+		}
 	}
 
 	Image* Syscall::loadImage(MemStream& s)
 	{
-		return 0;
+		LOG("loadImage...\n");
+		io_stream_t* io;
+		int length;
+		DUMPINT(length);
+		DEBUG_ASSERT(s.length(length));
+		io = io_open(IO_MEM, IO_READ, length, s.ptrc());
+		if(!io)
+			DO_ERRNO;
+
+		unsigned index;
+		IMGERR(img_decode_validate(sCodecs, sCodecCount, io, &index));
+		DUMPINT(index);
+
+		uintptr_t decode_data;
+		IMGERR(img_decode_begin(sCodecs[index], io, &decode_data));
+
+		img_t img;
+		img.flags = IMG_FORMAT;
+		switch(sBackBuffer->pixelFormat) {
+			case Image::PIXELFORMAT_RGB555: img.format = IMG_FMT_PKHE_ARGB1555; break;
+			case Image::PIXELFORMAT_RGB444: DEBIG_PHAT_ERROR; break;
+			case Image::PIXELFORMAT_RGB565: img.format = IMG_FMT_PKHE_RGB565; break;
+			case Image::PIXELFORMAT_RGB888: img.format = IMG_FMT_RGB888; break;
+			case Image::PIXELFORMAT_ARGB8888: img.format = IMG_FMT_PKHE_ARGB8888; break;
+			default: DEBIG_PHAT_ERROR;
+		}
+		IMGERR(img_decode_frame(sCodecs[index], io, NULL, &img, &decode_data));
+
+		IMGERR(img_decode_finish(sCodecs[index], io, &decode_data));
+		io_close(io);
+
+		static const int flags = IMG_DIRECT | IMG_FORMAT | IMG_W | IMG_H;
+		DEBUG_ASSERT((img.flags & flags) == flags);
+
+		LOG("loadImage complete!\n");
+
+		return new Image(img.access.direct.data, NULL, img.w, img.h,
+			img.access.direct.stride, sBackBuffer->pixelFormat, false, false);
 	}
 
 	Image* Syscall::loadSprite(void* surface, ushort left, ushort top, ushort width, ushort height, ushort cx, ushort cy)
@@ -255,25 +319,33 @@ SYSCALL(void, maResetBacklight())
 
 SYSCALL(MAExtent, maGetScrSize())
 {
-	return -1;
+	return EXTENT(sBackBuffer->width, sBackBuffer->height);
 }
 
 SYSCALL(void, maDrawImage(MAHandle image, int left, int top))
 {
+	Image* img = gSyscall->resources.get_RT_IMAGE(image);
+	sCurrentDrawSurface->drawImage(left, top, img);
 }
 
 SYSCALL(void, maDrawRGB(const MAPoint2d* dstPoint, const void* src,
-		const MARect* srcRect, int scanlength))
+	const MARect* srcRect, int scanlength))
 {
 }
 
 SYSCALL(void, maDrawImageRegion(MAHandle image, const MARect* src, const MAPoint2d* dstTopLeft, int transformMode))
 {
+	gSyscall->ValidateMemRange(dstTopLeft, sizeof(MAPoint2d));
+	gSyscall->ValidateMemRange(src, sizeof(MARect));
+	Image* img = gSyscall->resources.get_RT_IMAGE(image);
+	ClipRect srcRect = {src->left, src->top, src->width, src->height};
+	sCurrentDrawSurface->drawImageRegion(dstTopLeft->x, dstTopLeft->y, &srcRect, img, transformMode);
 }
 
 SYSCALL(MAExtent, maGetImageSize(MAHandle image))
 {
-	return -1;
+	Image* img = gSyscall->resources.get_RT_IMAGE(image);
+	return EXTENT(img->width, img->height);
 }
 
 SYSCALL(void, maGetImageData(MAHandle image, void* dst, const MARect* src, int scanlength))
@@ -302,7 +374,8 @@ SYSCALL(int, maCreateDrawableImage(MAHandle placeholder, int width, int height))
 
 SYSCALL(int, maGetEvent(MAEvent* dst))
 {
-	return -1;
+	maWait(100);
+	return 0;
 }
 
 SYSCALL(void, maWait(int timeout))
@@ -373,7 +446,10 @@ SYSCALL(longlong, maLocalTime())
 
 SYSCALL(int, maGetMilliSecondCount())
 {
-	return -1;
+	timespec t;
+	ERRNO(clock_gettime(CLOCK_MONOTONIC, &t));
+	int ms = t.tv_sec * 1000 + t.tv_nsec / 1000000;
+	return ms;
 }
 
 SYSCALL(int, maFreeObjectMemory())

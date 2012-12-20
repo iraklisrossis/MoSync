@@ -10,6 +10,7 @@
 #include "Syscall.h"
 #include "Image.h"
 #include "helpers/helpers.h"
+#include "helpers/fifo.h"
 
 // libc includes
 #include <math.h>
@@ -19,16 +20,19 @@
 
 // bb10 includes
 #include <screen/screen.h>
+#include <bps/button.h>
 #include <bps/event.h>
 #include <bps/navigator.h>
+#include <bps/vibration.h>
 #include <img/img.h>
 
 // using
 using namespace Base;
 
 // macros
-#define DO_ERRNO do { LOG("Errno at %s:%i: %i(%s)\n", __FILE__, __LINE__, errno, strerror(errno));\
-	MoSyncErrorExit(errno); } while(0)
+#define LOG_ERRNO LOG("Errno at %s:%i: %i(%s)\n", __FILE__, __LINE__, errno, strerror(errno))
+
+#define DO_ERRNO do { LOG_ERRNO; MoSyncErrorExit(errno); } while(0)
 
 #define ERRNO(func) do { int _res = (func); if(_res < 0) DO_ERRNO; } while(0)
 
@@ -36,6 +40,8 @@ using namespace Base;
 	LOG("IMGERR at %s:%i: %i\n", __FILE__, __LINE__, _res);\
 	MoSyncErrorExit(_res); } } while(0)
 
+#define BPSERR(func) do { int _res = (func);\
+	if(_res == BPS_FAILURE) DO_ERRNO; else if(_res != BPS_SUCCESS) {DEBIG_PHAT_ERROR;} } while(0)
 
 // static variables
 static screen_context_t sScreen;
@@ -50,8 +56,11 @@ static int sScreenFormat;
 static size_t sCodecCount = 0;
 static img_codec_t* sCodecs = NULL;
 
+static CircularFifo<MAEventNative, EVENT_BUFFER_SIZE> sEventFifo;
+
 // operators
 
+#if 0
 static timespec operator-(const timespec& a, const timespec& b) {
 	static const int NANO = 1000000000;
 	timespec t = { a.tv_sec - b.tv_sec, a.tv_nsec - b.tv_nsec };
@@ -68,7 +77,7 @@ static timespec operator-(const timespec& a, const timespec& b) {
 	}
 	return t;
 }
-
+#endif
 
 namespace Base
 {
@@ -135,6 +144,7 @@ namespace Base
 
 		// initialize events
 		ERRNO(navigator_request_events(0));
+		ERRNO(button_request_events(0));
 
 		// initialize image decoder
 		{
@@ -205,6 +215,73 @@ namespace Base
 	}
 }
 
+static void sigalrmHandler(int code) {
+	LOG("sigalrmHandler(%i)\n", code);
+	MoSyncErrorExit(code);
+}
+
+// event handler.
+// handles all events, then returns immediately, if timeout == 0.
+static void bpsWait(int timeout) {
+	bps_event_t* event_bps = NULL;
+	LOG("bps_get_event(%i)...\n", timeout);
+	BPSERR(bps_get_event(&event_bps, timeout));
+	if(event_bps == NULL) {
+		LOG("bps_get_event timeout\n");
+		return;
+	}
+
+	do {
+		int event_domain = bps_event_get_domain(event_bps);
+		int event_id = bps_event_get_code(event_bps);
+		LOG("Event domain %i id %i\n", event_domain, event_id);
+
+		MAEventNative event;
+		event.type = 0;
+		if(event_domain == navigator_get_domain()) {
+			switch(event_id) {
+			case NAVIGATOR_EXIT:	// user has requested we exit the application
+				event.type = EVENT_TYPE_CLOSE;
+				ERRNO(alarm(EVENT_CLOSE_TIMEOUT / 1000));
+				LOG("%i second alarm set.\n", EVENT_CLOSE_TIMEOUT / 1000);
+				if(SIG_ERR == std::signal(SIGALRM, sigalrmHandler)) {
+					LOG("sigalrmHandler could not be set. %s\n", strerror(errno));
+				}
+				break;
+			case NAVIGATOR_WINDOW_ACTIVE:
+				event.type = EVENT_TYPE_FOCUS_GAINED;
+				break;
+			case NAVIGATOR_WINDOW_INACTIVE:
+				event.type = EVENT_TYPE_FOCUS_LOST;
+				break;
+			}
+		} else if(event_domain == button_get_domain()) {
+			switch(event_id) {
+			case BUTTON_UP:
+			case BUTTON_DOWN:
+				event.type = (event_id == BUTTON_UP) ? EVENT_TYPE_KEY_RELEASED : EVENT_TYPE_KEY_PRESSED;
+				int res = button_event_get_button(event_bps);
+				if(res == BPS_FAILURE)
+					DO_ERRNO;
+				event.nativeKey = res;
+				switch(res) {
+					case BUTTON_POWER: event.key = MAK_ESCAPE; break;
+					case BUTTON_PLAYPAUSE: event.key = MAK_FIRE; break;
+					case BUTTON_PLUS: event.key = MAK_PLUS; break;
+					case BUTTON_MINUS: event.key = MAK_MINUS; break;
+					default: event.key = MAK_UNKNOWN;
+				}
+				break;
+			}
+		}
+		if(event.type != 0)
+			sEventFifo.put(event);
+
+		// fetch another event, if the queue isn't empty.
+		BPSERR(bps_get_event(&event_bps, 0));
+	} while(event_bps != NULL);
+}
+
 #if 0
 SYSCALL(double, sin(double x))
 {
@@ -229,15 +306,17 @@ SYSCALL(double, sqrt(double x))
 
 SYSCALL(int, maGetKeys())
 {
-		return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maSetClipRect(int left, int top, int width, int height))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maGetClipRect(MARect *rect))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(int, maSetColor(int argb)) {
@@ -292,20 +371,22 @@ SYSCALL(void, maFillTriangleFan(const MAPoint2d *points, int count)) {
 
 SYSCALL(MAExtent, maGetTextSize(const char* str))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(MAExtent, maGetTextSizeW(const wchar* str))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maDrawText(int left, int top, const char* str))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maDrawTextW(int left, int top, const wchar* str))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maUpdateScreen())
@@ -350,98 +431,64 @@ SYSCALL(MAExtent, maGetImageSize(MAHandle image))
 
 SYSCALL(void, maGetImageData(MAHandle image, void* dst, const MARect* src, int scanlength))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(MAHandle, maSetDrawTarget(MAHandle handle))
 {
-	return -1;
+	if(handle == HANDLE_SCREEN)
+		return HANDLE_SCREEN;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(int, maCreateImageFromData(MAHandle placeholder, MAHandle resource, int offset, int size))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(int, maCreateImageRaw(MAHandle placeholder, const void* src, MAExtent size, int alpha))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(int, maCreateDrawableImage(MAHandle placeholder, int width, int height))
 {
-	return -1;
+	MYASSERT(width > 0 && height > 0, ERR_IMAGE_SIZE_INVALID);
+	Image *i = new Image(width, height, width * sBackBuffer->bytesPerPixel, sBackBuffer->pixelFormat);
+	if(i==NULL) return RES_OUT_OF_MEMORY;
+	if(!(i->hasData())) { delete i; return RES_OUT_OF_MEMORY; }
+
+	return gSyscall->resources.add_RT_IMAGE(placeholder, i);
 }
 
 SYSCALL(int, maGetEvent(MAEvent* dst))
 {
-	maWait(100);
-	return 0;
+	bpsWait(0);
+	if(sEventFifo.empty())
+		return 0;
+	memcpy(dst, &sEventFifo.get(), sizeof(MAEvent));
+	return 1;
 }
 
 SYSCALL(void, maWait(int timeout))
 {
+	if(!sEventFifo.empty())
+		return;
 	if(timeout == 0)
 		timeout = -1;
-	timespec endTime;
-	if(timeout > 0) {
-		ERRNO(clock_gettime(CLOCK_MONOTONIC, &endTime));
-		int sec = timeout / 1000;
-		int ms = timeout % 1000;
-		endTime.tv_sec += sec;
-		endTime.tv_nsec += ms * 1000000;
-	}
-	while(true) {
-		bps_event_t* event_bps = NULL;
-		LOG("bps_get_event(%i)...\n", timeout);
-		{
-			int res = bps_get_event(&event_bps, timeout);
-			if(res == BPS_FAILURE)
-				DO_ERRNO;
-			else if(res != BPS_SUCCESS)
-				DEBIG_PHAT_ERROR;
-		}
-		if(event_bps == NULL) {
-			LOG("bps_get_event timeout\n");
-			return;
-		}
-
-		// process the event accordingly
-		int event_domain = bps_event_get_domain(event_bps);
-		LOG("Event domain %i\n", event_domain);
-
-		// did we receive a navigator event?
-		if (event_domain == navigator_get_domain())
-		{
-			int event_id = bps_event_get_code(event_bps);
-			switch(event_id) {
-			case NAVIGATOR_EXIT:	// user has requested we exit the application
-				LOG("NAVIGATOR_EXIT\n");
-				MoSyncExit(0);
-				break;
-			}
-		}
-
-		if(timeout > 0) {
-			timespec t;
-			ERRNO(clock_gettime(CLOCK_MONOTONIC, &t));
-			t = endTime - t;
-			int ms = t.tv_sec * 1000 + t.tv_nsec / 1000000;
-			if(ms > 0)
-				timeout = ms;
-			else
-				timeout = 0;
-		}
-	}
+	bpsWait(timeout);
 }
 
 SYSCALL(longlong, maTime())
 {
-	return -1;
+	return time(NULL);
 }
 
 SYSCALL(longlong, maLocalTime())
 {
-	return -1;
+	time_t t = time(NULL);
+	tm* lt = localtime(&t);
+	return t + lt->tm_gmtoff;
 }
 
 SYSCALL(int, maGetMilliSecondCount())
@@ -454,121 +501,120 @@ SYSCALL(int, maGetMilliSecondCount())
 
 SYSCALL(int, maFreeObjectMemory())
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(int, maTotalObjectMemory())
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
-SYSCALL(int, maVibrate(int))
+SYSCALL(int, maVibrate(int duration))
 {
-	return -1;
+	int res = vibration_request(VIBRATION_INTENSITY_MEDIUM, duration);
+	if(res == BPS_SUCCESS)
+		return 1;
+	DEBUG_ASSERT(res == BPS_FAILURE);
+	LOG_ERRNO;
+	return 0;
 }
 
 SYSCALL(int, maSoundPlay(MAHandle sound_res, int offset, int size))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maSoundStop())
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(int, maSoundIsPlaying())
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maSoundSetVolume(int vol))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(int, maSoundGetVolume())
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 #if 0
 SYSCALL(int, maFrameBufferGetInfo(MAFrameBufferInfo *info))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(int, maFrameBufferInit(void *data))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(int, maFrameBufferClose())
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 #endif
-/*
-SYSCALL(int, maAudioBufferInit(const MAAudioBufferInfo *ainfo))
-{
-	return -1;
-}
 
-SYSCALL(int, maAudioBufferReady())
-{
-	return -1;
-}
-
-SYSCALL(int, maAudioBufferClose())
-{
-	return -1;
-}
-*/
 SYSCALL(MAHandle, maConnect(const char* url))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maConnClose(MAHandle conn))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 
 SYSCALL(int, maConnGetAddr(MAHandle conn, MAConnAddr* addr))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maConnRead(MAHandle conn, void* dst, int size))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maConnWrite(MAHandle conn, const void* src, int size))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maConnReadToData(MAHandle conn, MAHandle data, int offset, int size))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maConnWriteFromData(MAHandle conn, MAHandle data, int offset, int size))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(MAHandle, maHttpCreate(const char* url, int method))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maHttpSetRequestHeader(MAHandle conn, const char* key, const char* value))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(int, maHttpGetResponseHeader(MAHandle conn, const char* key, char* buffer, int bufSize))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maHttpFinish(MAHandle conn))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maPanic(int result, const char* message))
@@ -579,7 +625,7 @@ SYSCALL(void, maPanic(int result, const char* message))
 
 SYSCALL(longlong, maExtensionFunctionInvoke(int, int, int, int, ...))
 {
-	return -1;
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))

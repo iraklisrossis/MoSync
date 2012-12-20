@@ -62,6 +62,9 @@ public:
 		CriticalSectionHandler ccect(&criticalSection);
 		mReadPos = mWritePos = 0;
 	}
+	bool empty() {
+		return count() == 0;
+	}
 private:
 	CRITICAL_SECTION criticalSection;
 

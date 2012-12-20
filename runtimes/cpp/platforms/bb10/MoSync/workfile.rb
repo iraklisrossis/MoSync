@@ -198,6 +198,7 @@ work.instance_eval do
 		'Syscall.cpp' => ' -Wno-float-equal',
 		'Image.cpp' => ' -Wno-shadow',
 	}
+	@SPECIFIC_CFLAGS['SyscallImpl.cpp'] << ' -Wno-missing-noreturn'	# temp hack until all syscalls are implemented.
 	@LIBRARIES = [
 		'm',
 		'screen',

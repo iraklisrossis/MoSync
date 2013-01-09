@@ -364,6 +364,53 @@ Image::~Image() {
 	}
 }
 
+void Image::drawBitmap(int left, int top, const byte* buf, int srcW, int srcH, int srcP, int color) {
+	int srcX = 0;
+	int srcY = 0;
+	if(clipRect.x > left) {
+		int diff = clipRect.x - left;
+		left = clipRect.x;
+		srcX += diff;
+		srcW -= diff;
+		if(srcW < 0)
+			return;
+	}
+	if(clipRect.width < srcW) {
+		srcW = clipRect.width;
+	}
+	if(clipRect.y > top) {
+		int diff = clipRect.y - top;
+		top = clipRect.y;
+		srcY += diff;
+		srcH -= diff;
+		if(srcH < 0)
+			return;
+	}
+	if(clipRect.height < srcH) {
+		srcH = clipRect.height;
+	}
+
+	MYASSERT(bytesPerPixel == 4, ERR_UNSUPPORTED_BPP);
+	byte* dst = (data + left*bytesPerPixel + top*pitch);
+	const byte* src = buf + srcY*srcP;
+	//LOG("%p.drawBitmap(%p) (data: %p)\n", this, buf, data);
+	//LOG("clip: %i %i w%i h%i\n", clipRect.x, clipRect.y, clipRect.width, clipRect.height);
+
+	while(srcH--) {
+		uint w = srcW;
+		uint x = srcX;
+		int* scan = (int*) dst;
+		while(w--) {
+			if((src[x / 8] & (0x80 >> (x & 7))) != 0)
+				*scan = color;
+			x++;
+			scan++;
+		}
+		dst += pitch;
+		src += srcP;
+	}
+}
+
 #ifndef SYMBIAN
 void Image::drawImage(int left, int top, Image *img) {
 	ClipRect srcRect = {0, 0, img->width, img->height};

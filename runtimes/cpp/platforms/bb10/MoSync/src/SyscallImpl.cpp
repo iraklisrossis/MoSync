@@ -20,11 +20,16 @@
 
 // bb10 includes
 #include <screen/screen.h>
+#include <input/event_types.h>
+#include <input/screen_helpers.h>
 #include <bps/button.h>
 #include <bps/event.h>
 #include <bps/navigator.h>
+#include <bps/screen.h>
 #include <bps/vibration.h>
 #include <img/img.h>
+#include <ft2build.h>
+#include <freetype/freetype.h>
 
 // using
 using namespace Base;
@@ -43,10 +48,14 @@ using namespace Base;
 #define BPSERR(func) do { int _res = (func);\
 	if(_res == BPS_FAILURE) DO_ERRNO; else if(_res != BPS_SUCCESS) {DEBIG_PHAT_ERROR;} } while(0)
 
+#define FTERR(func) do { int _res = (func); if(_res != 0) {DEBIG_PHAT_ERROR;} } while(0)
+
+
 // static variables
 static screen_context_t sScreen;
 static screen_window_t sWindow;
 static Image* sCurrentDrawSurface = NULL;
+static MAHandle sCurrentDrawHandle = HANDLE_SCREEN;
 static Image* sBackBuffer = NULL;
 static int sCurrentColor = 0;
 static screen_buffer_t sScreenBuffer;
@@ -55,6 +64,10 @@ static int sScreenFormat;
 
 static size_t sCodecCount = 0;
 static img_codec_t* sCodecs = NULL;
+
+static FT_Library sFtLib;
+static FT_Face sFontFace;
+static bool sFontLoaded = false;
 
 static CircularFifo<MAEventNative, EVENT_BUFFER_SIZE> sEventFifo;
 
@@ -143,8 +156,9 @@ namespace Base
 		LOG("Screen init complete.\n");
 
 		// initialize events
-		ERRNO(navigator_request_events(0));
-		ERRNO(button_request_events(0));
+		BPSERR(navigator_request_events(0));
+		BPSERR(button_request_events(0));
+		BPSERR(screen_request_events(sScreen));
 
 		// initialize image decoder
 		{
@@ -224,17 +238,17 @@ static void sigalrmHandler(int code) {
 // handles all events, then returns immediately, if timeout == 0.
 static void bpsWait(int timeout) {
 	bps_event_t* event_bps = NULL;
-	LOG("bps_get_event(%i)...\n", timeout);
+	//LOG("bps_get_event(%i)...\n", timeout);
 	BPSERR(bps_get_event(&event_bps, timeout));
 	if(event_bps == NULL) {
-		LOG("bps_get_event timeout\n");
+		//LOG("bps_get_event timeout\n");
 		return;
 	}
 
 	do {
 		int event_domain = bps_event_get_domain(event_bps);
 		int event_id = bps_event_get_code(event_bps);
-		LOG("Event domain %i id %i\n", event_domain, event_id);
+		//LOG("Event domain %i id %i\n", event_domain, event_id);
 
 		MAEventNative event;
 		event.type = 0;
@@ -255,7 +269,52 @@ static void bpsWait(int timeout) {
 				event.type = EVENT_TYPE_FOCUS_LOST;
 				break;
 			}
+		} else if(event_domain == screen_get_domain()) {
+			screen_event_t screen_event = screen_event_get_event(event_bps);
+			mtouch_event_t mtouch_event;
+			int screen_val;
+			ERRNO(screen_get_event_property_iv(screen_event, SCREEN_PROPERTY_TYPE, &screen_val));
+			//LOG("screen event %i\n", screen_val);
+			switch(screen_val) {
+			case SCREEN_EVENT_MTOUCH_TOUCH: event.type = EVENT_TYPE_POINTER_PRESSED; break;
+			case SCREEN_EVENT_MTOUCH_MOVE: event.type = EVENT_TYPE_POINTER_DRAGGED; break;
+			case SCREEN_EVENT_MTOUCH_RELEASE: event.type = EVENT_TYPE_POINTER_RELEASED; break;
+			case SCREEN_EVENT_POINTER:
+				{
+					static bool oldPressed = false;
+					int buttons;
+					int pair[2];
+					ERRNO(screen_get_event_property_iv(screen_event, SCREEN_PROPERTY_BUTTONS, &buttons));
+					ERRNO(screen_get_event_property_iv(screen_event, SCREEN_PROPERTY_SOURCE_POSITION, pair));
+
+					bool pressed = ((buttons & SCREEN_LEFT_MOUSE_BUTTON) != 0);
+					if(pressed && !oldPressed) {
+						event.type = EVENT_TYPE_POINTER_PRESSED;
+					} else if(!pressed && oldPressed) {
+						event.type = EVENT_TYPE_POINTER_RELEASED;
+					} else if(pressed) {
+						event.type = EVENT_TYPE_POINTER_DRAGGED;
+					}
+					oldPressed = pressed;
+
+					if(event.type) {
+						event.touchId = 0;
+						event.point.x = pair[0];
+						event.point.y = pair[1];
+						//LOG("pointer %i %i\n", event.point.x, event.point.y);
+					}
+				}
+				break;
+			}
+			if(event.type && screen_val != SCREEN_EVENT_POINTER) {
+				ERRNO(screen_get_mtouch_event(screen_event, &mtouch_event, 0));
+				event.touchId = mtouch_event.contact_id;
+				event.point.x = mtouch_event.x;
+				event.point.y = mtouch_event.y;
+				LOG("touch %i %i %i\n", event.touchId, event.point.x, event.point.y);
+			}
 		} else if(event_domain == button_get_domain()) {
+			LOG("Button event %i %i\n", event_id, button_event_get_button(event_bps));
 			switch(event_id) {
 			case BUTTON_UP:
 			case BUTTON_DOWN:
@@ -282,28 +341,6 @@ static void bpsWait(int timeout) {
 	} while(event_bps != NULL);
 }
 
-#if 0
-SYSCALL(double, sin(double x))
-{
-	return ::sin(x);
-}
-
-SYSCALL(double, cos(double x))
-{
-	return ::cos(x);
-}
-
-SYSCALL(double, tan(double x))
-{
-	return ::tan(x);
-}
-
-SYSCALL(double, sqrt(double x))
-{
-	return ::sqrt(x);
-}
-#endif
-
 SYSCALL(int, maGetKeys())
 {
 	DEBIG_PHAT_ERROR;
@@ -311,17 +348,24 @@ SYSCALL(int, maGetKeys())
 
 SYSCALL(void, maSetClipRect(int left, int top, int width, int height))
 {
-	DEBIG_PHAT_ERROR;
+	sCurrentDrawSurface->clipRect.x = left;
+	sCurrentDrawSurface->clipRect.y = top;
+	sCurrentDrawSurface->clipRect.width = width;
+	sCurrentDrawSurface->clipRect.height = height;
 }
 
-SYSCALL(void, maGetClipRect(MARect *rect))
+SYSCALL(void, maGetClipRect(MARect* rect))
 {
-	DEBIG_PHAT_ERROR;
+	gSyscall->ValidateMemRange(rect, sizeof(MARect));
+	rect->left = sCurrentDrawSurface->clipRect.x;
+	rect->top = sCurrentDrawSurface->clipRect.y;
+	rect->width = sCurrentDrawSurface->clipRect.width;
+	rect->height = sCurrentDrawSurface->clipRect.height;
 }
 
 SYSCALL(int, maSetColor(int argb)) {
 	int oldColor = sCurrentColor;
-	sCurrentColor = argb;
+	sCurrentColor = argb | 0xFF000000;
 	return oldColor;
 }
 
@@ -369,24 +413,99 @@ SYSCALL(void, maFillTriangleFan(const MAPoint2d *points, int count)) {
 	}
 }
 
+static void loadFont() {
+	if(sFontLoaded)
+		return;
+	//LOG("loading font...\n");
+	FTERR(FT_Init_FreeType(&sFtLib));
+	FTERR(FT_New_Face(sFtLib, "/usr/fonts/font_repository/monotype/arial.ttf", 0, &sFontFace));
+
+	static const int point_size = 12;
+	static const int dpi = 170;
+	FTERR(FT_Set_Char_Size(sFontFace, point_size * 64, point_size * 64, dpi, dpi));
+
+	sFontLoaded = true;
+	//LOG("font loaded.\n");
+}
+
+template<class Tchar>
+MAExtent maGetTextSizeT(const Tchar* str)
+{
+	loadFont();
+	FT_GlyphSlot slot = sFontFace->glyph;
+	const Tchar* ptr = str;
+	uint w = 0;
+	while(*ptr) {
+		FTERR(FT_Load_Char(sFontFace, *ptr, FT_LOAD_RENDER | FT_LOAD_MONOCHROME));
+		DEBUG_ASSERT(slot->format == FT_GLYPH_FORMAT_BITMAP);
+		const FT_Bitmap& b(slot->bitmap);
+		DEBUG_ASSERT(b.pixel_mode == FT_PIXEL_MODE_MONO);
+
+		w += slot->advance.x / 64;
+		ptr++;
+	}
+	//LOG("maGetTextSizeT %i %li\n", w, sFontFace->size->metrics.height / 64);
+	return EXTENT(w, sFontFace->size->metrics.height / 64);
+}
+
 SYSCALL(MAExtent, maGetTextSize(const char* str))
 {
-	DEBIG_PHAT_ERROR;
+	return maGetTextSizeT<char>(str);
 }
 
 SYSCALL(MAExtent, maGetTextSizeW(const wchar* str))
 {
-	DEBIG_PHAT_ERROR;
+	return maGetTextSizeT<wchar>(str);
+}
+
+template<class Tchar>
+void maDrawTextT(int left, int top, const Tchar* str)
+{
+	loadFont();
+	FT_GlyphSlot slot = sFontFace->glyph;
+	const Tchar* ptr = str;
+	while(*ptr) {
+		//LOG("FT_Load_Char(%c)\n", *ptr);
+		FTERR(FT_Load_Char(sFontFace, *ptr, FT_LOAD_RENDER | FT_LOAD_MONOCHROME));
+		DEBUG_ASSERT(slot->format == FT_GLYPH_FORMAT_BITMAP);
+		const FT_Bitmap& b(slot->bitmap);
+		DEBUG_ASSERT(b.pixel_mode == FT_PIXEL_MODE_MONO);
+
+#if 0
+		LOG("drawing bitmap of %c size %i %i at %i %i\n", *ptr, b.width, b.rows, left, top);
+		for(int i=0; i<b.rows; i++) {
+			for(int j=0; j<b.pitch; j++) {
+				LOG("%02X", b.buffer[i*b.pitch + j]);
+			}
+			LOG("\n");
+		}
+#endif
+		sCurrentDrawSurface->drawBitmap(left + slot->bitmap_left, top - slot->bitmap_top, b.buffer, b.width, b.rows, b.pitch, sCurrentColor);
+
+		left += slot->advance.x / 64;
+		ptr++;
+	}
 }
 
 SYSCALL(void, maDrawText(int left, int top, const char* str))
 {
-	DEBIG_PHAT_ERROR;
+	//LOG("maDrawText(%s)\n", str);
+	maDrawTextT<char>(left, top, str);
 }
 
 SYSCALL(void, maDrawTextW(int left, int top, const wchar* str))
 {
-	DEBIG_PHAT_ERROR;
+#if 0
+	wchar_t buf[2048];
+	const wchar* src = str;
+	wchar_t* dst = buf;
+	while(*src) {
+		*dst++ = *src++;
+	}
+	*dst = 0;
+	LOG("maDrawTextW(%S)\n", buf);
+#endif
+	maDrawTextT<wchar>(left, top, str);
 }
 
 SYSCALL(void, maUpdateScreen())
@@ -412,15 +531,20 @@ SYSCALL(void, maDrawImage(MAHandle image, int left, int top))
 SYSCALL(void, maDrawRGB(const MAPoint2d* dstPoint, const void* src,
 	const MARect* srcRect, int scanlength))
 {
+	DEBIG_PHAT_ERROR;
 }
 
 SYSCALL(void, maDrawImageRegion(MAHandle image, const MARect* src, const MAPoint2d* dstTopLeft, int transformMode))
 {
 	gSyscall->ValidateMemRange(dstTopLeft, sizeof(MAPoint2d));
+#if 1
+	maDrawImage(image, dstTopLeft->x, dstTopLeft->y);
+#else
 	gSyscall->ValidateMemRange(src, sizeof(MARect));
 	Image* img = gSyscall->resources.get_RT_IMAGE(image);
 	ClipRect srcRect = {src->left, src->top, src->width, src->height};
 	sCurrentDrawSurface->drawImageRegion(dstTopLeft->x, dstTopLeft->y, &srcRect, img, transformMode);
+#endif
 }
 
 SYSCALL(MAExtent, maGetImageSize(MAHandle image))
@@ -436,9 +560,22 @@ SYSCALL(void, maGetImageData(MAHandle image, void* dst, const MARect* src, int s
 
 SYSCALL(MAHandle, maSetDrawTarget(MAHandle handle))
 {
-	if(handle == HANDLE_SCREEN)
-		return HANDLE_SCREEN;
-	DEBIG_PHAT_ERROR;
+	MAHandle old = sCurrentDrawHandle;
+	if(sCurrentDrawHandle != HANDLE_SCREEN) {
+		// restore image
+		SYSCALL_THIS->resources.extract_RT_FLUX(sCurrentDrawHandle);
+		ROOM(SYSCALL_THIS->resources.add_RT_IMAGE(sCurrentDrawHandle, sCurrentDrawSurface));
+	}
+	if(handle == HANDLE_SCREEN) {
+		sCurrentDrawSurface = sBackBuffer;
+	} else {
+		// put image into flux
+		Image* img = SYSCALL_THIS->resources.extract_RT_IMAGE(handle);
+		sCurrentDrawSurface = img;
+		ROOM(SYSCALL_THIS->resources.add_RT_FLUX(handle, NULL));
+	}
+	sCurrentDrawHandle = handle;
+	return old;
 }
 
 SYSCALL(int, maCreateImageFromData(MAHandle placeholder, MAHandle resource, int offset, int size))
@@ -453,8 +590,9 @@ SYSCALL(int, maCreateImageRaw(MAHandle placeholder, const void* src, MAExtent si
 
 SYSCALL(int, maCreateDrawableImage(MAHandle placeholder, int width, int height))
 {
+	Image::PixelFormat f = sBackBuffer->pixelFormat;
 	MYASSERT(width > 0 && height > 0, ERR_IMAGE_SIZE_INVALID);
-	Image *i = new Image(width, height, width * sBackBuffer->bytesPerPixel, sBackBuffer->pixelFormat);
+	Image *i = new Image(width, height, width * sBackBuffer->bytesPerPixel, f);
 	if(i==NULL) return RES_OUT_OF_MEMORY;
 	if(!(i->hasData())) { delete i; return RES_OUT_OF_MEMORY; }
 

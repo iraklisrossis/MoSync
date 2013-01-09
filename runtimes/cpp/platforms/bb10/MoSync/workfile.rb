@@ -204,6 +204,7 @@ work.instance_eval do
 		'screen',
 		'bps',
 		'img',
+		'freetype',
 	]
 
 	@NAME = "MoSync"

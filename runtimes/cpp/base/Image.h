@@ -100,6 +100,9 @@ public:
 	void drawImageRegion(int left, int top, ClipRect *srcRect, Image *src, int transformMode);
 	void drawImage(int left, int top, Image *src);
 
+	// buf has one pixel per bit, MSB first. 0 bits are not drawn. pitch is measured in bytes.
+	void drawBitmap(int left, int top, const byte* buf, int width, int height, int pitch, int color);
+
 	ClipRect		clipRect;
 
 #ifdef SYMBIAN

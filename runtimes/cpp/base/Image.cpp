@@ -367,27 +367,36 @@ Image::~Image() {
 void Image::drawBitmap(int left, int top, const byte* buf, int srcW, int srcH, int srcP, int color) {
 	int srcX = 0;
 	int srcY = 0;
-	if(clipRect.x > left) {
-		int diff = clipRect.x - left;
+	int diff = clipRect.x - left;
+	if(diff > 0) {
 		left = clipRect.x;
 		srcX += diff;
 		srcW -= diff;
 		if(srcW < 0)
 			return;
 	}
-	if(clipRect.width < srcW) {
-		srcW = clipRect.width;
+	diff = (left + srcW) - (clipRect.x + clipRect.width);
+	if(diff > 0) {
+		srcW -= diff;
+		if(srcW < 0)
+			return;
 	}
-	if(clipRect.y > top) {
-		int diff = clipRect.y - top;
+
+	diff = clipRect.y - top;
+	if(diff > 0) {
 		top = clipRect.y;
 		srcY += diff;
 		srcH -= diff;
+		LOG("diffY: %i\n", diff);
 		if(srcH < 0)
 			return;
 	}
-	if(clipRect.height < srcH) {
-		srcH = clipRect.height;
+	diff = (top + srcH) - (clipRect.y + clipRect.height);
+	if(diff > 0) {
+		LOG("diffYH: %i\n", diff);
+		srcH -= diff;
+		if(srcH < 0)
+			return;
 	}
 
 	MYASSERT(bytesPerPixel == 4, ERR_UNSUPPORTED_BPP);
@@ -1218,6 +1227,7 @@ void initRecipLut() {
 }
 
 void Image::drawTriangleWithoutClipping(int x1, int y1, int x2, int y2, int x3, int y3, int color) {
+	//LOG("drawTriangleWithoutClipping %i.%i %i.%i %i.%i, %08x\n", x1, y1, x2, y2, x3, y3, color);
 	int temp,
 		longest,
 		height,
@@ -1292,6 +1302,10 @@ void Image::drawTriangleWithoutClipping(int x1, int y1, int x2, int y2, int x3, 
 		x_mid_right = x_right + dxdy_right1*(y2-y1);
 	}
 
+	//LOG("dxdylr12: %i %i %i %i\n", dxdy_left1, dxdy_right1, dxdy_left2, dxdy_right2);
+	//DUMPHEX(longest);
+	//LOG("y: %i %i %i\n", y1, y2, y3);
+
 	unsigned char *dst = &data[y1*pitch];
 	switch(bytesPerPixel) {
 		case 2:
@@ -1363,6 +1377,7 @@ void Image::drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, int col
     return;
     */
 
+	//LOG("drawTriangle %i.%i %i.%i %i.%i, %08x\n", x1, y1, x2, y2, x3, y3, color);
 	clippedPoints[0][0].x = x1<<FP_RESOLUTION;
 	clippedPoints[0][0].y = y1<<FP_RESOLUTION;
 	clippedPoints[0][1].x = x2<<FP_RESOLUTION;
@@ -1374,7 +1389,7 @@ void Image::drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, int col
 
 	if(!clipPolygon()) return;
 
-	for(int i = 0; i < numPoints[currentList]-1; i++) {
+	for(int i = 1; i < numPoints[currentList]-1; i++) {
          drawTriangleWithoutClipping(
 			fp_ceil(clippedPoints[currentList][0].x),
 			fp_ceil(clippedPoints[currentList][0].y),

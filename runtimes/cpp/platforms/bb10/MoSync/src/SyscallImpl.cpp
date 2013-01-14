@@ -143,6 +143,10 @@ namespace Base
 		byte* framebuffer;
 		ERRNO(screen_get_buffer_property_pv(sScreenBuffer, SCREEN_PROPERTY_POINTER, (void **)&framebuffer));
 
+		// initialize Image system
+		initMulTable();
+		initRecipLut();
+
 		// initialize internal backbuffer
 		sBackBuffer = new Image(framebuffer, NULL, sScreenRect[2], sScreenRect[3], param, format, false, false);
 		sCurrentDrawSurface = sBackBuffer;
@@ -281,19 +285,21 @@ static void bpsWait(int timeout) {
 			case SCREEN_EVENT_MTOUCH_RELEASE: event.type = EVENT_TYPE_POINTER_RELEASED; break;
 			case SCREEN_EVENT_POINTER:
 				{
-					static bool oldPressed = false;
+					static int oldPressed = -1;
 					int buttons;
 					int pair[2];
 					ERRNO(screen_get_event_property_iv(screen_event, SCREEN_PROPERTY_BUTTONS, &buttons));
 					ERRNO(screen_get_event_property_iv(screen_event, SCREEN_PROPERTY_SOURCE_POSITION, pair));
 
 					bool pressed = ((buttons & SCREEN_LEFT_MOUSE_BUTTON) != 0);
-					if(pressed && !oldPressed) {
-						event.type = EVENT_TYPE_POINTER_PRESSED;
-					} else if(!pressed && oldPressed) {
-						event.type = EVENT_TYPE_POINTER_RELEASED;
-					} else if(pressed) {
-						event.type = EVENT_TYPE_POINTER_DRAGGED;
+					if(oldPressed >= 0) {
+						if(pressed && !oldPressed) {
+							event.type = EVENT_TYPE_POINTER_PRESSED;
+						} else if(!pressed && oldPressed) {
+							event.type = EVENT_TYPE_POINTER_RELEASED;
+						} else if(pressed) {
+							event.type = EVENT_TYPE_POINTER_DRAGGED;
+						}
 					}
 					oldPressed = pressed;
 
@@ -436,6 +442,7 @@ MAExtent maGetTextSizeT(const Tchar* str)
 	const Tchar* ptr = str;
 	uint w = 0;
 	while(*ptr) {
+		// todo: find a faster way to get width.
 		FTERR(FT_Load_Char(sFontFace, *ptr, FT_LOAD_RENDER | FT_LOAD_MONOCHROME));
 		DEBUG_ASSERT(slot->format == FT_GLYPH_FORMAT_BITMAP);
 		const FT_Bitmap& b(slot->bitmap);
@@ -445,7 +452,7 @@ MAExtent maGetTextSizeT(const Tchar* str)
 		ptr++;
 	}
 	//LOG("maGetTextSizeT %i %li\n", w, sFontFace->size->metrics.height / 64);
-	return EXTENT(w, sFontFace->size->metrics.height / 64);
+	return EXTENT(w, sFontFace->height / 64);
 }
 
 SYSCALL(MAExtent, maGetTextSize(const char* str))
@@ -464,6 +471,10 @@ void maDrawTextT(int left, int top, const Tchar* str)
 	loadFont();
 	FT_GlyphSlot slot = sFontFace->glyph;
 	const Tchar* ptr = str;
+
+	// probably not perfect, but it will work.
+	top += (sFontFace->bbox.yMax + sFontFace->bbox.yMin) >> 6;
+
 	while(*ptr) {
 		//LOG("FT_Load_Char(%c)\n", *ptr);
 		FTERR(FT_Load_Char(sFontFace, *ptr, FT_LOAD_RENDER | FT_LOAD_MONOCHROME));
@@ -473,6 +484,7 @@ void maDrawTextT(int left, int top, const Tchar* str)
 
 #if 0
 		LOG("drawing bitmap of %c size %i %i at %i %i\n", *ptr, b.width, b.rows, left, top);
+#if 0
 		for(int i=0; i<b.rows; i++) {
 			for(int j=0; j<b.pitch; j++) {
 				LOG("%02X", b.buffer[i*b.pitch + j]);
@@ -480,7 +492,9 @@ void maDrawTextT(int left, int top, const Tchar* str)
 			LOG("\n");
 		}
 #endif
-		sCurrentDrawSurface->drawBitmap(left + slot->bitmap_left, top - slot->bitmap_top, b.buffer, b.width, b.rows, b.pitch, sCurrentColor);
+#endif
+		sCurrentDrawSurface->drawBitmap(left + slot->bitmap_left, top - slot->bitmap_top,
+			b.buffer, b.width, b.rows, b.pitch, sCurrentColor);
 
 		left += slot->advance.x / 64;
 		ptr++;
@@ -531,13 +545,15 @@ SYSCALL(void, maDrawImage(MAHandle image, int left, int top))
 SYSCALL(void, maDrawRGB(const MAPoint2d* dstPoint, const void* src,
 	const MARect* srcRect, int scanlength))
 {
-	DEBIG_PHAT_ERROR;
+	Image srcImg((byte*)src, NULL, scanlength, srcRect->top + srcRect->height, scanlength*4, Image::PIXELFORMAT_ARGB8888, false, false);
+	ClipRect cr = {srcRect->left, srcRect->top, srcRect->width, srcRect->height};
+	sCurrentDrawSurface->drawImageRegion(dstPoint->x, dstPoint->y, &cr, &srcImg, TRANS_NONE);
 }
 
 SYSCALL(void, maDrawImageRegion(MAHandle image, const MARect* src, const MAPoint2d* dstTopLeft, int transformMode))
 {
 	gSyscall->ValidateMemRange(dstTopLeft, sizeof(MAPoint2d));
-#if 1
+#if 0
 	maDrawImage(image, dstTopLeft->x, dstTopLeft->y);
 #else
 	gSyscall->ValidateMemRange(src, sizeof(MARect));

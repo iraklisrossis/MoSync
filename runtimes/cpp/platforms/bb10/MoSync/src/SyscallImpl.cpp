@@ -186,8 +186,8 @@ namespace Base
 		LOG("loadImage...\n");
 		io_stream_t* io;
 		int length;
-		DUMPINT(length);
 		DEBUG_ASSERT(s.length(length));
+		DUMPINT(length);
 		io = io_open(IO_MEM, IO_READ, length, s.ptrc());
 		if(!io)
 			DO_ERRNO;
@@ -215,7 +215,10 @@ namespace Base
 		io_close(io);
 
 		static const int flags = IMG_DIRECT | IMG_FORMAT | IMG_W | IMG_H;
-		DEBUG_ASSERT((img.flags & flags) == flags);
+		if((img.flags & flags) != flags) {
+			LOG("Bad flags: %X (expected %X)\n", img.flags, flags);
+			return NULL;
+		}
 
 		LOG("loadImage complete!\n");
 
@@ -571,7 +574,35 @@ SYSCALL(MAExtent, maGetImageSize(MAHandle image))
 
 SYSCALL(void, maGetImageData(MAHandle image, void* dst, const MARect* src, int scanlength))
 {
-	DEBIG_PHAT_ERROR;
+	gSyscall->ValidateMemRange(src, sizeof(MARect));
+	gSyscall->ValidateMemRange(dst, src->height*scanlength);
+	Image* img = gSyscall->resources.get_RT_IMAGE(image);
+
+	int x = src->left;
+	int y = src->top;
+	int width = src->width;
+	int height = src->height;
+
+	if(width < 0 || height < 0 || x < 0 || y < 0) { DEBIG_PHAT_ERROR; }
+	if(x > img->width) { DEBIG_PHAT_ERROR; }
+	if(y > img->height) { DEBIG_PHAT_ERROR; }
+	if(x + width > img->width) { DEBIG_PHAT_ERROR; }
+	if(y+height > img->height) { DEBIG_PHAT_ERROR; }
+	if(scanlength < 0) { DEBIG_PHAT_ERROR; }
+
+	if(width > scanlength)
+		width = scanlength;
+
+#if 0	// doesn't copy alpha
+	Image dstImg((byte*)dst, NULL, scanlength, height, scanlength*4, Image::PIXELFORMAT_ARGB8888, false, false);
+	ClipRect srcRect = {src->left, src->top, src->width, src->height};
+	dstImg.drawImageRegion(0, 0, &srcRect, img, TRANS_NONE);
+#else
+	for(int i=0; i<height; i++) {
+		DEBUG_ASSERT(img->pixelFormat == Image::PIXELFORMAT_ARGB8888);
+		memcpy((byte*)dst + i*scanlength*4, img->data + (i+y) * img->pitch + x*4, width*4);
+	}
+#endif
 }
 
 SYSCALL(MAHandle, maSetDrawTarget(MAHandle handle))
@@ -594,14 +625,35 @@ SYSCALL(MAHandle, maSetDrawTarget(MAHandle handle))
 	return old;
 }
 
-SYSCALL(int, maCreateImageFromData(MAHandle placeholder, MAHandle resource, int offset, int size))
+SYSCALL(int, maCreateImageFromData(MAHandle placeholder, MAHandle src, int offset, int size))
 {
-	DEBIG_PHAT_ERROR;
+	MYASSERT(size>0, ERR_DATA_OOB);
+	Stream* stream = gSyscall->resources.get_RT_BINARY(src);
+	Image* image = 0;
+
+	if(!stream->ptrc()) {
+		// is not a memstream, create a memstream and load it.
+		MYASSERT(stream->seek(Seek::Start, offset), ERR_DATA_OOB);
+		MemStream b(size);
+		MYASSERT(stream->readFully(b), ERR_DATA_ACCESS_FAILED);
+		image = gSyscall->loadImage(b);
+	} else {
+		image = gSyscall->loadImage(*(MemStream*)stream);
+	}
+	if(image == NULL)
+		return RES_OUT_OF_MEMORY;
+
+	return gSyscall->resources.add_RT_IMAGE(placeholder, image);
 }
 
 SYSCALL(int, maCreateImageRaw(MAHandle placeholder, const void* src, MAExtent size, int alpha))
 {
-	DEBIG_PHAT_ERROR;
+	int width = EXTENT_X(size), height = EXTENT_Y(size);
+	Image* image = new Image((byte*)src, NULL, width, height,
+		width*4, Image::PIXELFORMAT_ARGB8888, true);
+	if(image == NULL)
+		return RES_OUT_OF_MEMORY;
+	return SYSCALL_THIS->resources.add_RT_IMAGE(placeholder, image);
 }
 
 SYSCALL(int, maCreateDrawableImage(MAHandle placeholder, int width, int height))

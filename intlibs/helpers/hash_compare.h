@@ -18,6 +18,43 @@ MA 02110-1301, USA.
 #ifndef HASH_COMPARE_H
 #define HASH_COMPARE_H
 
+#ifdef __BB10__
+namespace std {
+	template<> struct hash<string>
+	{
+		size_t operator()(const string& __s) const
+		{ return hash_value(__s); }
+	};
+
+template<>
+	class hash_compare<string, less<string> >
+	{	// traits class for hash containers
+public:
+	enum
+		{	// parameters for hash table
+		bucket_size = 4,	// 0 < bucket_size
+		min_buckets = 8};	// min_buckets = 2 ^^ N, 0 < N
+
+	hash_compare()
+		: comp()
+		{	// construct with default comparator
+		}
+
+	size_t operator()(const string& _Keyval) const
+		{	// hash _Keyval to size_t value by pseudorandomizing transform
+		return hash_value(_Keyval);
+		}
+
+	bool operator()(const string& _Keyval1, const string& _Keyval2) const
+		{	// test if _Keyval1 ordered before _Keyval2
+		return (comp(_Keyval1, _Keyval2));
+		}
+
+protected:
+	less<string> comp;	// the comparator object
+	};
+}
+#else
 namespace __gnu_cxx {
         template<> struct hash<std::string>
         {
@@ -33,5 +70,6 @@ namespace __gnu_cxx {
 #endif	//DARWIN
 }
 template<class T> class hash_compare : public hash<T> {};
+#endif
 
 #endif	//HASH_COMPARE_H

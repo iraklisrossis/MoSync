@@ -19,24 +19,23 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define HASH_MAP_H
 
 #ifdef __GNUC__
-#ifdef HAVE_TR1
-#include <unordered_map>
-#define hash_map std::unordered_map
-#else
-#ifdef __BB10__
-#include <hash_map>
+# ifdef __BB10__
+#  include <hash_map>
 using namespace std;
-#else
-#include <ext/hash_map>
+#  include "hash_compare.h"
+# elif defined(HAVE_TR1)
+#  include <unordered_map>
+#  define hash_map std::unordered_map
+# else
+#  include <ext/hash_map>
 using namespace __gnu_cxx;
-#include "hash_compare.h"
-#endif // __BB10__
-#endif	//HAVE_TR1
+#  include "hash_compare.h"
+# endif	//HAVE_TR1
 #elif defined(_MSC_VER)
-#include <hash_map>
+# include <hash_map>
 using namespace stdext;
 #else
-#error Unsupported platform!
+# error Unsupported platform!
 #endif
 
 #endif	//HASH_MAP_H

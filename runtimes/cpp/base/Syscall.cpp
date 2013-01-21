@@ -667,6 +667,8 @@ namespace Base {
 
 #if !defined(_android)
 #ifdef SYMBIAN
+#elif defined(__BB10__)
+#define STORE_PATH "data/stores/"
 #else
 #define STORE_PATH "stores/"
 #endif
@@ -714,6 +716,14 @@ namespace Base {
 		std::string newPath = STORE_PATH + std::string(name);
 		path = newPath.c_str();
 		len = newPath.length();
+#endif
+
+#if 0
+LOG("cwd: %s\n", getcwd(NULL, 0));
+#define LOG_ERRNO LOG("Errno at %s:%i: %i(%s)\n", __FILE__, __LINE__, errno, strerror(errno))
+		int res = _mkdir(STORE_PATH);
+		if(res != 0)
+			LOG_ERRNO;
 #endif
 
 		FileStream readFile(path);

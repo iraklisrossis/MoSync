@@ -1,4 +1,4 @@
-/* Copyright (C) 2012 Mobile Sorcery AB
+/* Copyright (C) 2013 Mobile Sorcery AB
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License, version 2, as published by
@@ -15,7 +15,31 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.
 */
 
-#ifndef NETIMPL_H
-#define NETIMPL_H
+#ifndef THREADPOOLIMPL_H
+#define THREADPOOLIMPL_H
 
-#endif	//NETIMPL_H
+#include <pthread.h>
+#include <semaphore.h>
+
+class MoSyncThread {
+public:
+	MoSyncThread();
+	void start(int (*func)(void*), void* arg);
+	int join();
+	static void sleep(unsigned int ms);
+	bool isCurrent();	//returns true if this thread is the current thread.
+private:
+	pthread_t mThread;
+};
+
+class MoSyncSemaphore {
+public:
+	MoSyncSemaphore();
+	~MoSyncSemaphore();
+	void wait();
+	void post();
+private:
+	sem_t mSem;
+};
+
+#endif	//THREADPOOLIMPL_H

@@ -135,7 +135,7 @@ protected:
 		{
 			gConnMutex.lock();
 		}
-        if(result < 0 && mac.cancel) {
+		if(result < 0 && mac.cancel) {
 			result = CONNERR_CANCELED;
 		}
 		DEBUG_ASSERT(mac.state & opcode);
@@ -168,7 +168,7 @@ public:
 	Connect(MAStreamConn& m) : ConnStreamOp(m) {}
 	void run() {
 		LOGST("Connect %i", mac.handle);
-        handleResult(CONNOP_CONNECT, masc.conn->connect());
+		handleResult(CONNOP_CONNECT, masc.conn->connect());
 	}
 };
 
@@ -177,7 +177,7 @@ public:
 	ConnRead(MAStreamConn& m, void* d, int s) : ConnStreamOp(m), dst(d), size(s) {}
 	void run() {
 		LOGST("ConnRead %i", mac.handle);
-        handleResult(CONNOP_READ, masc.conn->read(dst, size));
+		handleResult(CONNOP_READ, masc.conn->read(dst, size));
 	}
 private:
 	void* dst;
@@ -189,7 +189,7 @@ public:
 	ConnWrite(MAStreamConn& m, const void* sr, int si) : ConnStreamOp(m), src(sr), size(si) {}
 	void run() {
 		LOGST("ConnWrite %i", mac.handle);
-        handleResult(CONNOP_WRITE, masc.conn->write(src, size));
+		handleResult(CONNOP_WRITE, masc.conn->write(src, size));
 	}
 private:
 	const void* src;
@@ -203,13 +203,13 @@ public:
 	void run() {
 		LOGST("ConnReadToData %i", mac.handle);
 		int result = masc.conn->read((byte*)dst.ptr() + offset, size);
-        gConnMutex.lock();
-        {
-            DefluxBinPushEvent(handle, dst);
+		gConnMutex.lock();
+		{
+			DefluxBinPushEvent(handle, dst);
 
-            handleResult(CONNOP_READ, result, false);
-        }
-        gConnMutex.unlock();
+			handleResult(CONNOP_READ, result, false);
+		}
+		gConnMutex.unlock();
 	}
 private:
 	MemStream& dst;
@@ -225,26 +225,25 @@ public:
 	void run() {
 		LOGST("ConnWriteFromData %i", mac.handle);
 
-        int result;
-        if(src.ptrc() != NULL) {
-            result = masc.conn->write((byte*)src.ptrc() + offset, size);
-        } else {
-            Smartie<byte> temp(new byte[size]);
-            if(!src.read(temp(), size)) {
-                LOG("Stream error in ConnWriteFromData!\n");
-                result = CONNERR_GENERIC;
-            } else {
-                result = masc.conn->write(temp(), size);
-            }
-        }
+		int result;
+		if(src.ptrc() != NULL) {
+			result = masc.conn->write((byte*)src.ptrc() + offset, size);
+		} else {
+			Smartie<byte> temp(new byte[size]);
+			if(!src.read(temp(), size)) {
+				LOG("Stream error in ConnWriteFromData!\n");
+				result = CONNERR_GENERIC;
+			} else {
+				result = masc.conn->write(temp(), size);
+			}
+		}
 		gConnMutex.lock();
-        {
-            DefluxBinPushEvent(handle, src);
+		{
+			DefluxBinPushEvent(handle, src);
 
-            handleResult(CONNOP_WRITE, result, false);
-        }
-        gConnMutex.unlock();
-
+			handleResult(CONNOP_WRITE, result, false);
+		}
+		gConnMutex.unlock();
 	}
 private:
 	Stream& src;
@@ -258,7 +257,7 @@ public:
 	HttpFinish(MAConn& m, HttpConnection& h) : ConnOp(m), http(h) {}
 	void run() {
 		LOGST("HttpFinish %i", mac.handle);
-        handleResult(CONNOP_FINISH, http.finish());
+		handleResult(CONNOP_FINISH, http.finish());
 	}
 private:
 	HttpConnection& http;
@@ -269,14 +268,14 @@ public:
 	Accept(MAServerConn& m) : ConnOp(m), masc(m) {}
 	void run() {
 		LOGST("Accept %i\n", mac.handle);
-        BtSppConnection* conn;
+		BtSppConnection* conn;
 
 		int res = masc.serv->accept(conn);
 		if(res < 0) {
 			handleResult(CONNOP_ACCEPT, res);
 			return;
-        }
-            //success. let's store our new connection.
+		}
+		//success. let's store our new connection.
 		MAConn* newMac = new MAStreamConn(gConnNextHandle, conn);
 		gConnections.insert(ConnPair(gConnNextHandle, newMac));
 		handleResult(CONNOP_ACCEPT, gConnNextHandle++);

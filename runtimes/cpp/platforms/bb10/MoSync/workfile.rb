@@ -167,12 +167,11 @@ work.instance_eval do
 		"#{BD}/runtimes/cpp/base",
 		"#{BD}/intlibs/helpers/platforms/linux",
 		"#{BD}/intlibs/hashmap",
+		"#{BD}/intlibs/net",
 	]
 	@IGNORED_FILES = [
-		'ThreadPool.cpp',
 		'MoSyncDB.cpp',
 		'pim.cpp',
-		'networking.cpp',
 		'WaveAudioSource.cpp',
 		'BufferAudioSource.cpp',
 		'AudioSource.cpp',
@@ -182,6 +181,7 @@ work.instance_eval do
 	@EXTRA_SOURCEFILES = [
 		"#{BD}/runtimes/cpp/core/Core.cpp",
 		"#{BD}/runtimes/cpp/platforms/sdl/FileImpl.cpp",
+		"#{BD}/runtimes/cpp/platforms/sdl/netImpl.cpp",
 		"#{BD}/intlibs/filelist/filelist-linux.c",
 	]
 	@EXTRA_INCLUDES += [
@@ -205,6 +205,9 @@ work.instance_eval do
 		'bps',
 		'img',
 		'freetype',
+		'socket',
+		'ssl',
+		'crypto',
 	]
 
 	@NAME = "MoSync"

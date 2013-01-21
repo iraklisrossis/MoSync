@@ -11,11 +11,14 @@
 #include "Image.h"
 #include "helpers/helpers.h"
 #include "helpers/fifo.h"
+#include "bb10err.h"
+
+#define NETWORKING_H
+#include "networking.h"
 
 // libc includes
 #include <math.h>
 #include <assert.h>
-#include <errno.h>
 #include <unistd.h>
 
 // bb10 includes
@@ -35,21 +38,15 @@
 using namespace Base;
 
 // macros
-#define LOG_ERRNO LOG("Errno at %s:%i: %i(%s)\n", __FILE__, __LINE__, errno, strerror(errno))
 
-#define DO_ERRNO do { LOG_ERRNO; MoSyncErrorExit(errno); } while(0)
+// enums
+enum EventCode {
+	EVENT_CODE_MA,
+	EVENT_CODE_DEFLUX,
+};
 
-#define ERRNO(func) do { int _res = (func); if(_res < 0) DO_ERRNO; } while(0)
-
-#define IMGERR(func) do { int _res = (func); if(_res != IMG_ERR_OK) {\
-	LOG("IMGERR at %s:%i: %i\n", __FILE__, __LINE__, _res);\
-	MoSyncErrorExit(_res); } } while(0)
-
-#define BPSERR(func) do { int _res = (func);\
-	if(_res == BPS_FAILURE) DO_ERRNO; else if(_res != BPS_SUCCESS) {DEBIG_PHAT_ERROR;} } while(0)
-
-#define FTERR(func) do { int _res = (func); if(_res != 0) {DEBIG_PHAT_ERROR;} } while(0)
-
+// functions
+static void bpsWait(int timeout);
 
 // static variables
 static screen_context_t sScreen;
@@ -70,6 +67,9 @@ static FT_Face sFontFace;
 static bool sFontLoaded = false;
 
 static CircularFifo<MAEventNative, EVENT_BUFFER_SIZE> sEventFifo;
+
+static int sMyEventDomain;
+static int sMainEventChannel;
 
 // operators
 
@@ -100,6 +100,9 @@ namespace Base
 		LOG("Screen init...\n");
 		assert(gSyscall == NULL);
 		gSyscall = this;
+
+		Syscall::init();
+		MANetworkInit();
 
 		ERRNO(screen_create_context(&sScreen, SCREEN_APPLICATION_CONTEXT));
 		ERRNO(screen_create_window(&sWindow, sScreen));
@@ -179,6 +182,9 @@ namespace Base
 				LOG("codec %d: ext = %s: mime = %s\n", i, ext, mime);
 			}
 		}
+
+		ERRNO(sMyEventDomain = bps_register_domain());
+		sMainEventChannel = bps_channel_get_active();
 	}
 
 	Image* Syscall::loadImage(MemStream& s)
@@ -234,6 +240,11 @@ namespace Base
 	void Syscall::platformDestruct()
 	{
 	}
+
+	bool MAProcessEvents() {
+		bpsWait(0);
+		return true;
+	}
 }
 
 static void sigalrmHandler(int code) {
@@ -241,8 +252,45 @@ static void sigalrmHandler(int code) {
 	MoSyncErrorExit(code);
 }
 
+void ConnWaitEvent() {
+	bpsWait(-1);
+}
+void ConnPushEvent(MAEvent* ep) {
+	bps_event_t* be;
+	bps_event_payload_t payload = { (uintptr_t)ep, 0, 0 };
+	BPSERR(bps_event_create(&be, sMyEventDomain, EVENT_CODE_MA, &payload, NULL));
+	BPSERR(bps_channel_push_event(sMainEventChannel, be));
+}
+void DefluxBinPushEvent(MAHandle handle, Stream& s) {
+	bps_event_t* be;
+	bps_event_payload_t payload = { handle, (uintptr_t)&s, 0 };
+	BPSERR(bps_event_create(&be, sMyEventDomain, EVENT_CODE_DEFLUX, &payload, NULL));
+	BPSERR(bps_channel_push_event(sMainEventChannel, be));
+}
+
+BtSppConnection* createBtSppConnection(MABtAddr const*, unsigned int) {
+	DEBIG_PHAT_ERROR;
+}
+int BtSppServer::open(MAUUID const&, char const*, int) {
+	DEBIG_PHAT_ERROR;
+}
+int BtSppServer::getAddr(MAConnAddr& addr) {
+	DEBIG_PHAT_ERROR;
+}
+int BtSppServer::accept(BtSppConnection*&) {
+	DEBIG_PHAT_ERROR;
+}
+void BtSppServer::close() {
+	DEBIG_PHAT_ERROR;
+}
+int Bluetooth::getLocalAddress(MABtAddr&) {
+	DEBIG_PHAT_ERROR;
+}
+
+
 // event handler.
-// handles all events, then returns immediately, if timeout == 0.
+// waits up to timeout milliseconds, then handles all events.
+// negative timeout means waiting forever.
 static void bpsWait(int timeout) {
 	bps_event_t* event_bps = NULL;
 	//LOG("bps_get_event(%i)...\n", timeout);
@@ -341,6 +389,24 @@ static void bpsWait(int timeout) {
 				}
 				break;
 			}
+		} else if(event_domain == sMyEventDomain) {
+			LOG("MyEvent %i\n", event_id);
+			const bps_event_payload_t* payload = bps_event_get_payload(event_bps);
+			switch(event_id) {
+			case EVENT_CODE_MA:
+				event = *(MAEventNative*)payload->data1;
+				break;
+			case EVENT_CODE_DEFLUX:
+				SYSCALL_THIS->resources.extract_RT_FLUX(payload->data1);
+				ROOM(SYSCALL_THIS->resources.add_RT_BINARY(payload->data1,
+					(Stream*)payload->data2));
+				break;
+			default:
+				DEBIG_PHAT_ERROR;
+			}
+		} else {
+			LOG("Unknown event domain %i\n", event_domain);
+			DEBIG_PHAT_ERROR;
 		}
 		if(event.type != 0)
 			sEventFifo.put(event);
@@ -767,62 +833,6 @@ SYSCALL(int, maFrameBufferClose())
 }
 #endif
 
-SYSCALL(MAHandle, maConnect(const char* url))
-{
-	DEBIG_PHAT_ERROR;
-}
-
-SYSCALL(void, maConnClose(MAHandle conn))
-{
-	DEBIG_PHAT_ERROR;
-}
-
-
-SYSCALL(int, maConnGetAddr(MAHandle conn, MAConnAddr* addr))
-{
-	DEBIG_PHAT_ERROR;
-}
-
-SYSCALL(void, maConnRead(MAHandle conn, void* dst, int size))
-{
-	DEBIG_PHAT_ERROR;
-}
-
-SYSCALL(void, maConnWrite(MAHandle conn, const void* src, int size))
-{
-	DEBIG_PHAT_ERROR;
-}
-
-SYSCALL(void, maConnReadToData(MAHandle conn, MAHandle data, int offset, int size))
-{
-	DEBIG_PHAT_ERROR;
-}
-
-SYSCALL(void, maConnWriteFromData(MAHandle conn, MAHandle data, int offset, int size))
-{
-	DEBIG_PHAT_ERROR;
-}
-
-SYSCALL(MAHandle, maHttpCreate(const char* url, int method))
-{
-	DEBIG_PHAT_ERROR;
-}
-
-SYSCALL(void, maHttpSetRequestHeader(MAHandle conn, const char* key, const char* value))
-{
-	DEBIG_PHAT_ERROR;
-}
-
-SYSCALL(int, maHttpGetResponseHeader(MAHandle conn, const char* key, char* buffer, int bufSize))
-{
-	DEBIG_PHAT_ERROR;
-}
-
-SYSCALL(void, maHttpFinish(MAHandle conn))
-{
-	DEBIG_PHAT_ERROR;
-}
-
 SYSCALL(void, maPanic(int result, const char* message))
 {
 	LOG("maPanic(%i, %s)\n", result, message);
@@ -838,8 +848,181 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 {
 	va_list argptr;
 	va_start(argptr, c);
+	switch(function) {
 
-	return -1;
+#ifdef FAKE_CALL_STACK
+	case maIOCtl_maReportCallStack:
+		reportCallStack();
+		return 0;
+
+		maIOCtl_case(maDumpCallStackEx);
+#endif
+
+#ifdef MEMORY_PROTECTION
+	case maIOCtl_maProtectMemory:
+		SYSCALL_THIS->protectMemory(a, b);
+		return 0;
+	case maIOCtl_maUnprotectMemory:
+		SYSCALL_THIS->unprotectMemory(a, b);
+		return 0;
+	case maIOCtl_maSetMemoryProtection:
+		SYSCALL_THIS->setMemoryProtection(a);
+		return 0;
+	case maIOCtl_maGetMemoryProtection:
+		return SYSCALL_THIS->getMemoryProtection();
+#endif
+
+#ifdef LOGGING_ENABLED
+	case maIOCtl_maWriteLog:
+		{
+			const char* ptr = (const char*)gSyscall->GetValidatedMemRange(a, b);
+			LogBin(ptr, b);
+			if(ptr[b-1] == '\n')	//hack to get rid of EOL
+				b--;
+		}
+		return 0;
+#endif	//LOGGING_ENABLED
+
+#if 0
+
+#ifdef SUPPORT_OPENGL_ES
+#define glGetPointerv maGlGetPointerv
+#define GL2_CASE(i) case maIOCtl_##i:
+	maIOCtl_IX_OPENGL_ES_caselist;
+	maIOCtl_IX_GL1_caselist;
+	maIOCtl_IX_GL2_m_caselist(GL2_CASE)
+		return gles2ioctl(function, a, b, c, argptr);
+	//maIOCtl_IX_GL_OES_FRAMEBUFFER_OBJECT_caselist;
+#undef glGetPointerv
+#endif	//SUPPORT_OPENGL_ES
+
+	maIOCtl_case(maAccept);
+
+	case maIOCtl_maBtStartDeviceDiscovery:
+		return BLUETOOTH(maBtStartDeviceDiscovery)(BtWaitTrigger, a != 0);
+
+	case maIOCtl_maBtStartServiceDiscovery:
+		return BLUETOOTH(maBtStartServiceDiscovery)(GVMRA(MABtAddr), GVMR(b, MAUUID), BtWaitTrigger);
+
+		maIOCtl_syscall_case(maBtGetNewDevice);
+		maIOCtl_syscall_case(maBtGetNewService);
+		maIOCtl_maBtGetNextServiceSize_case(BLUETOOTH(maBtGetNextServiceSize));
+		maIOCtl_maBtCancelDiscovery_case(BLUETOOTH(maBtCancelDiscovery));
+
+	case maIOCtl_maPlatformRequest:
+		{
+			const char* url = SYSCALL_THIS->GetValidatedStr(a);
+#if 0
+			if(sstrcmp(url, "http://") == 0 || sstrcmp(url, "https://") == 0) {
+				return 0;
+			} else
+#endif
+			{
+				return CONNERR_UNAVAILABLE;
+			}
+		}
+
+		maIOCtl_case(maSendTextSMS);
+
+		//maIOCtl_case(maStartVideoStream);
+
+		maIOCtl_case(maSendToBackground);
+		maIOCtl_case(maBringToForeground);
+
+		maIOCtl_case(maFrameBufferGetInfo);
+	case maIOCtl_maFrameBufferInit:
+		return maFrameBufferInit(SYSCALL_THIS->GetValidatedMemRange(a,
+			gBackBuffer->pitch*gBackBuffer->h));
+		maIOCtl_case(maFrameBufferClose);
+
+		maIOCtl_case(maAudioBufferInit);
+		maIOCtl_case(maAudioBufferReady);
+		maIOCtl_case(maAudioBufferClose);
+
+#ifdef MA_PROF_SUPPORT_VIDEO_STREAMING
+		maIOCtl_case(maStreamVideoStart);
+		maIOCtl_case(maStreamClose);
+		maIOCtl_case(maStreamPause);
+		maIOCtl_case(maStreamResume);
+		maIOCtl_case(maStreamVideoSize);
+		maIOCtl_case(maStreamVideoSetFrame);
+		maIOCtl_case(maStreamLength);
+		maIOCtl_case(maStreamPos);
+		maIOCtl_case(maStreamSetPos);
+#endif	//MA_PROF_SUPPORT_VIDEO_STREAMING
+
+		maIOCtl_syscall_case(maFileOpen);
+		maIOCtl_syscall_case(maFileExists);
+		maIOCtl_syscall_case(maFileClose);
+		maIOCtl_syscall_case(maFileCreate);
+		maIOCtl_syscall_case(maFileDelete);
+		maIOCtl_syscall_case(maFileSize);
+		maIOCtl_syscall_case(maFileAvailableSpace);
+		maIOCtl_syscall_case(maFileTotalSpace);
+		maIOCtl_syscall_case(maFileDate);
+		maIOCtl_syscall_case(maFileRename);
+		maIOCtl_syscall_case(maFileTruncate);
+
+	case maIOCtl_maFileWrite:
+		return SYSCALL_THIS->maFileWrite(a, SYSCALL_THIS->GetValidatedMemRange(b, c), c);
+	case maIOCtl_maFileRead:
+		return SYSCALL_THIS->maFileRead(a, SYSCALL_THIS->GetValidatedMemRange(b, c), c);
+
+		maIOCtl_syscall_case(maFileWriteFromData);
+		maIOCtl_syscall_case(maFileReadToData);
+
+		maIOCtl_syscall_case(maFileTell);
+		maIOCtl_syscall_case(maFileSeek);
+
+		maIOCtl_syscall_case(maFileListStart);
+	case maIOCtl_maFileListNext:
+		return SYSCALL_THIS->maFileListNext(a, (char*)SYSCALL_THIS->GetValidatedMemRange(b, c), c);
+		maIOCtl_syscall_case(maFileListClose);
+
+		maIOCtl_case(maCameraFormatNumber);
+		maIOCtl_case(maCameraFormat);
+		maIOCtl_case(maCameraStart);
+		maIOCtl_case(maCameraStop);
+		maIOCtl_case(maCameraSnapshot);
+
+		maIOCtl_case(maDBOpen);
+		maIOCtl_case(maDBClose);
+		maIOCtl_case(maDBExecSQL);
+		maIOCtl_case(maDBExecSQLParams);
+		maIOCtl_case(maDBCursorDestroy);
+		maIOCtl_case(maDBCursorNext);
+		maIOCtl_case(maDBCursorGetColumnData);
+		maIOCtl_case(maDBCursorGetColumnText);
+		maIOCtl_case(maDBCursorGetColumnInt);
+		maIOCtl_case(maDBCursorGetColumnDouble);
+#ifdef EMULATOR
+	maIOCtl_syscall_case(maPimListOpen);
+	maIOCtl_syscall_case(maPimListNext);
+	maIOCtl_syscall_case(maPimListClose);
+	maIOCtl_syscall_case(maPimItemCount);
+	maIOCtl_syscall_case(maPimItemGetField);
+	maIOCtl_syscall_case(maPimItemFieldCount);
+	maIOCtl_syscall_case(maPimItemGetAttributes);
+	maIOCtl_syscall_case(maPimFieldType);
+	maIOCtl_syscall_case(maPimItemGetValue);
+	maIOCtl_syscall_case(maPimItemSetValue);
+	maIOCtl_syscall_case(maPimItemAddValue);
+	maIOCtl_syscall_case(maPimItemRemoveValue);
+	maIOCtl_syscall_case(maPimItemClose);
+	maIOCtl_syscall_case(maPimItemCreate);
+	maIOCtl_syscall_case(maPimItemRemove);
+#endif	//EMULATOR
+
+	case maIOCtl_maGetSystemProperty:
+		return maGetSystemProperty(SYSCALL_THIS->GetValidatedStr(a),
+			(char*)SYSCALL_THIS->GetValidatedMemRange(b, c), c);
+
+#endif	//0
+
+	default:
+		LOG("maIOCtl(%i) unimplemented.\n", function);
+		return IOCTL_UNAVAILABLE;
+	}
 }
 
 void MoSyncExit(int exitCode)

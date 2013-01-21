@@ -18,7 +18,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef NETIMPL_H
 #define NETIMPL_H
 
+#ifndef __BB10__
 #include <SDL/SDL.h>
+#endif
 
 #include "net/net.h"
 
@@ -31,7 +33,12 @@ public:
 	void unlock();
 	void close();
 private:
+#ifdef __BB10__
+	bool mInited;
+	pthread_mutex_t mMutex;
+#else
 	SDL_mutex* mMutex;
+#endif
 };
 
 typedef unsigned short Uint16;

@@ -19,20 +19,22 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define HASH_SET_H
 
 #ifdef __GNUC__
-#ifdef HAVE_TR1
-#include <unordered_set>
-#define hash_set std::unordered_set
-#define hash_compare std::hash
-#else
-#include <ext/hash_set>
+# ifdef __BB10__
+#  include <hash_set>
+using namespace std;
+# elif defined(HAVE_TR1)
+#  include <unordered_set>
+#  define hash_set std::unordered_set
+# else
+#  include <ext/hash_set>
 using namespace __gnu_cxx;
-#include "hash_compare.h"
-#endif	//HAVE_TR1
+#  include "hash_compare.h"
+# endif	//HAVE_TR1
 #elif defined(_MSC_VER)
-#include <hash_set>
+# include <hash_set>
 using namespace stdext;
 #else
-#error Unsupported platform!
+# error Unsupported platform!
 #endif
 
 #endif	//HASH_SET_H

@@ -24,8 +24,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "Syscall.h"
 
+#ifndef __BB10__
 #include "fastevents.h"
 #include "sdl_syscall.h"
+#endif
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -35,6 +37,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 //Helpers
 //***************************************************************************
 
+#ifndef __BB10__
 void ConnWaitEvent() {
 	if(FE_WaitEvent(NULL) != 1) {
 		LOGT("FE_WaitEvent failed");
@@ -49,6 +52,7 @@ void DefluxBinPushEvent(MAHandle handle, Stream& s) {
 	SDL_UserEvent event = { FE_DEFLUX_BINARY, handle, &s, NULL };
 	FE_PushEvent((SDL_Event*)&event);
 }
+#endif
 
 //***************************************************************************
 //SslConnection

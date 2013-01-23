@@ -20,6 +20,8 @@
 #include <math.h>
 #include <assert.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 // bb10 includes
 #include <screen/screen.h>
@@ -33,6 +35,7 @@
 #include <img/img.h>
 #include <ft2build.h>
 #include <freetype/freetype.h>
+#include <mm/renderer.h>
 
 // using
 using namespace Base;
@@ -791,14 +794,159 @@ SYSCALL(int, maVibrate(int duration))
 	return 0;
 }
 
+
+#define USE_FIFO 0
+
+static mmr_connection_t* sMmrConnection;
+static mmr_context_t* sMmrContext;
+static char sCwd[PATH_MAX];
+static char sAudioUrl[PATH_MAX];
+static const char* const AUDIO_PATH = "data/maSound.mp3";
+
+extern ThreadPool* gpThreadPool;
+#define gThreadPool (*gpThreadPool)
+
+static class AudioFifoWriter : public Runnable {
+public:
+	int fifo;
+	int end;
+	Stream* src;
+
+	void run() {
+		DEBUG_ASSERT(end > 0);
+		DEBUG_ASSERT(fifo < 0);
+#if USE_FIFO
+		LOGT("open(fifo)");
+		ERRNO(fifo = open(AUDIO_PATH, O_WRONLY));
+		LOGT("open(fifo) compleat");
+#else
+		ERRNO(fifo = open(AUDIO_PATH, O_CREAT | O_WRONLY, 0644));
+#endif
+		int pos;
+		DEBUG_ASSERT(src->tell(pos));
+		while(pos < end) {
+			int res;
+			const void* ptrc = src->ptrc();
+			if(ptrc) {
+				res = write(fifo, (byte*)ptrc + pos, end - pos);
+			} else {
+				char buf[4*1024];
+				int todo = MIN(sizeof(buf), end - pos);
+				// inefficient if write returns less than todo.
+				DEBUG_ASSERT(src->seek(Seek::Start, pos));
+				DEBUG_ASSERT(src->read(buf, todo));
+				res = write(fifo, buf, todo);
+			}
+			LOG("write: %i\n", res);
+			if(res < 0 && errno == EPIPE) {
+				LOGT("broken pipe");
+				break;
+			}
+			ERRNO(res);
+			pos += res;
+		}
+	}
+	AudioFifoWriter() : fifo(-1) {
+	}
+	virtual ~AudioFifoWriter() {
+	}
+} sAudioFifoWriter;
+
+static void soundInit() {
+	if(sMmrConnection)
+		return;
+	LOG("soundInit...\n");
+	NULL_ERRNO(sMmrConnection = mmr_connect(NULL));
+	NULL_ERRNO(sMmrContext = mmr_context_create(sMmrConnection, "maSound", 0, S_IRUSR | S_IXUSR));
+	NULL_ERRNO(getcwd(sCwd, PATH_MAX));
+	snprintf(sAudioUrl, PATH_MAX, "file://%s/%s", sCwd, AUDIO_PATH);
+
+	// remove the fifo file, just in case.
+	int res = unlink(AUDIO_PATH);
+	if(res != 0 && errno != ENOENT) {
+		DO_ERRNO;
+	} else if(res >= 0) {
+		LOG("%s removed.\n", sAudioUrl);
+	}
+
+#if USE_FIFO
+	ERRNO(mkfifo(AUDIO_PATH, 0644));
+#endif
+	LOG("soundInit complete.\n");
+}
+
+void logMmrError() {
+	const mmr_error_info_t* e = mmr_error_info(sMmrContext);
+	DEBUG_ASSERT(e != NULL);
+	LOG("MMR: %i %s %lli %s\n", e->error_code, e->extra_type, e->extra_value, e->extra_text);
+}
+
 SYSCALL(int, maSoundPlay(MAHandle sound_res, int offset, int size))
 {
-	DEBIG_PHAT_ERROR;
+	soundInit();
+	maSoundStop();
+
+	// open the resource.
+	LOG("Opening sound resource...\n");
+	sAudioFifoWriter.src = gSyscall->resources.get_RT_BINARY(sound_res);
+	MYASSERT(sAudioFifoWriter.src->seek(Seek::Start, offset), ERR_DATA_ACCESS_FAILED);
+	sAudioFifoWriter.end = offset + size;
+	int length;
+	MYASSERT(sAudioFifoWriter.src->length(length), ERR_DATA_ACCESS_FAILED);
+	MYASSERT(sAudioFifoWriter.end <= length, ERR_DATA_ACCESS_FAILED);
+
+	//read the MIME type
+	char mime[1024];
+	size_t i=0;
+	byte b;
+	do {
+		if(!sAudioFifoWriter.src->readByte(b) || i >= sizeof(mime)) {
+			BIG_PHAT_ERROR(ERR_MIME_READ_FAILED);
+		}
+		mime[i++] = b;
+	} while(b);
+	LOG("MIME: %s\n", mime);
+
+	// start writing from sound_res to the fifo.
+	LOG("starting sAudioFifoWriter...\n");
+#if USE_FIFO
+	gThreadPool.execute(&sAudioFifoWriter);
+#else
+	// it's just a regular file now.
+	sAudioFifoWriter.run();
+	ERRNO(close(sAudioFifoWriter.fifo));
+#endif
+
+	// start the renderer.
+	int audio_oid;
+	LOG("mmr_output_attach...\n");
+	MMR(audio_oid = mmr_output_attach(sMmrContext, "audio:default", "audio"));
+	//LOG("mmr_output_parameters...\n");
+	//MMR(mmr_output_parameters(sMmrContext, audio_oid, NULL));
+	LOG("mmr_input_attach...\n");
+	MMR(mmr_input_attach(sMmrContext, sAudioUrl, "track"));
+	LOG("mmr_play...\n");
+	MMR(mmr_play(sMmrContext));
+	LOG("mmr_play done.\n");
+
+	return 1;
 }
 
 SYSCALL(void, maSoundStop())
 {
-	DEBIG_PHAT_ERROR;
+	LOGT("maSoundStop");
+	MMR(mmr_stop(sMmrContext));
+	MMR(mmr_input_detach(sMmrContext));
+#if USE_FIFO
+	if(sAudioFifoWriter.fifo >= 0) {
+		ERRNO(close(sAudioFifoWriter.fifo));	// this should stop the writing thread.
+		sAudioFifoWriter.fifo = -1;
+	}
+#endif
+/*
+	mmr_context_destroy(ctxt);
+	mmr_disconnect(connection);
+*/
 }
 
 SYSCALL(int, maSoundIsPlaying())

@@ -155,7 +155,7 @@ class BB10ExeWork < ExeWork
 		end
 		puts "App exited after #{count} iterations."
 		sh "blackberry-deploy -getFile logs/log log.txt #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
-		sh "blackberry-deploy -getFile data/maSound.mp3 maSound.mp3 #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
+		#sh "blackberry-deploy -getFile data/maSound.mp3 maSound.mp3 #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
 		#sh "blackberry-deploy -getFile logs/MoSync.core core.bin #{CONFIG_RUN_DEVICE} -package-fullname com.example.MoSync.testDev_mple_MoSyncdc14348e"
 	end
 end
@@ -211,6 +211,9 @@ work.instance_eval do
 		'crypto',
 		'mmrndclient',
 		'strm',
+		'EGL',
+		'GLESv1_CM',
+		'GLESv2',
 	]
 
 	@NAME = "MoSync"

@@ -1,0 +1,10 @@
+Bluetooth - btdevice.h, btspp.h
+OpenGL - egl.h
+NFC - nfc.h
+Location - geolocation.h
+Sensors - sensor.h, wmm.h, accelerometer.h
+Battery - battery.h
+Notifications - notification.h
+maPlatformRequest - ???
+maVibrate - ???
+maGetSystemProperty - ???

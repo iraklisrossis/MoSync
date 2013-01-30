@@ -12,6 +12,10 @@
 #include "helpers/helpers.h"
 #include "helpers/fifo.h"
 #include "bb10err.h"
+#include "helpers/CPP_IX_OPENGL_ES.h"
+#include "helpers/CPP_IX_GL1.h"
+#include "helpers/CPP_IX_GL2.h"
+#include "bbutil.h"
 
 #define NETWORKING_H
 #include "networking.h"
@@ -37,6 +41,13 @@
 #include <freetype/freetype.h>
 #include <mm/renderer.h>
 
+// OpenGL ES includes
+#include <GLES/gl.h>
+#include <GLES2/gl2.h>
+#include "base/GLFixes.h"
+#include "generated/gl.h.cpp"
+#include <EGL/egl.h>
+
 // using
 using namespace Base;
 
@@ -61,6 +72,7 @@ static int sCurrentColor = 0;
 static screen_buffer_t sScreenBuffer;
 static int sScreenRect[4] = { 0,0 };
 static int sScreenFormat;
+static bool sOpenGLActive = false;
 
 static size_t sCodecCount = 0;
 static img_codec_t* sCodecs = NULL;
@@ -258,7 +270,8 @@ static void sigalrmHandler(int code) {
 void ConnWaitEvent() {
 	bpsWait(-1);
 }
-void ConnPushEvent(MAEvent* ep) {
+void ConnPushEvent(MAEventNative* ep) {
+	LOG("ConnPushEvent %p\n", ep);
 	bps_event_t* be;
 	bps_event_payload_t payload = { (uintptr_t)ep, 0, 0 };
 	BPSERR(bps_event_create(&be, sMyEventDomain, EVENT_CODE_MA, &payload, NULL));
@@ -398,6 +411,8 @@ static void bpsWait(int timeout) {
 			switch(event_id) {
 			case EVENT_CODE_MA:
 				event = *(MAEventNative*)payload->data1;
+				LOG("event %p type %i\n", (void*)payload->data1, event.type);
+				DEBUG_ASSERT(event.type < 100);
 				break;
 			case EVENT_CODE_DEFLUX:
 				SYSCALL_THIS->resources.extract_RT_FLUX(payload->data1);
@@ -411,8 +426,15 @@ static void bpsWait(int timeout) {
 			LOG("Unknown event domain %i\n", event_domain);
 			DEBIG_PHAT_ERROR;
 		}
-		if(event.type != 0)
+		if(event.type != 0) {
+			if(event.type == EVENT_TYPE_WIDGET) {
+				LOG("sEventFifo.put(EVENT_TYPE_WIDGET)\n");
+				if(((MAWidgetEventData*)event.data)->eventType == MAW_EVENT_GL_VIEW_READY) {
+					LOG("sEventFifo.put(MAW_EVENT_GL_VIEW_READY)\n");
+				}
+			}
 			sEventFifo.put(event);
+		}
 
 		// fetch another event, if the queue isn't empty.
 		BPSERR(bps_get_event(&event_bps, 0));
@@ -596,7 +618,10 @@ SYSCALL(void, maDrawTextW(int left, int top, const wchar* str))
 
 SYSCALL(void, maUpdateScreen())
 {
-	ERRNO(screen_post_window(sWindow, sScreenBuffer, 1, sScreenRect, 0));
+	if(sOpenGLActive)
+		bbutil_swap();
+	else
+		ERRNO(screen_post_window(sWindow, sScreenBuffer, 1, sScreenRect, 0));
 }
 
 SYSCALL(void, maResetBacklight())
@@ -741,7 +766,31 @@ SYSCALL(int, maGetEvent(MAEvent* dst))
 	bpsWait(0);
 	if(sEventFifo.empty())
 		return 0;
-	memcpy(dst, &sEventFifo.get(), sizeof(MAEvent));
+
+	//memcpy(dst, &sEventFifo.get(), sizeof(MAEvent));
+
+	const MAEventNative& e(sEventFifo.get());
+	dst->type = e.type;
+	// copy data separately, because there can be padding in MAEventNative on 64-bit systems.
+	// compare offsetof(MAEventNative, data)) and offsetof(MAEvent, data))
+	memcpy(&dst->data, &e.data, sizeof(dst->data));
+
+	if(e.type == EVENT_TYPE_WIDGET) {
+		LOG("maGetEvent(EVENT_TYPE_WIDGET)\n");
+		if(((MAWidgetEventData*)e.data)->eventType == MAW_EVENT_GL_VIEW_READY) {
+			LOG("maGetEvent(MAW_EVENT_GL_VIEW_READY)\n");
+		}
+	}
+
+	void* cep = SYSCALL_THIS->GetCustomEventPointer();
+
+#define HANDLE_CUSTOM_EVENT(eventType, dataType) if(dst->type == eventType) {\
+	memcpy(cep, e.data, sizeof(dataType));\
+	delete (dataType*)e.data;\
+	dst->data = SYSCALL_THIS->TranslateNativePointerToMoSyncPointer(cep); }
+
+	CUSTOM_EVENTS(HANDLE_CUSTOM_EVENT);
+
 	return 1;
 }
 
@@ -794,6 +843,13 @@ SYSCALL(int, maVibrate(int duration))
 	return 0;
 }
 
+#define USE_ASOUND 0
+
+#if USE_ASOUND
+
+
+
+#else	// use MMR
 
 #define USE_FIFO 0
 
@@ -801,7 +857,7 @@ static mmr_connection_t* sMmrConnection;
 static mmr_context_t* sMmrContext;
 static char sCwd[PATH_MAX];
 static char sAudioUrl[PATH_MAX];
-static const char* const AUDIO_PATH = "data/maSound.mp3";
+static const char* const AUDIO_PATH = "tmp/maSound.mp3";
 
 extern ThreadPool* gpThreadPool;
 #define gThreadPool (*gpThreadPool)
@@ -949,6 +1005,8 @@ SYSCALL(void, maSoundStop())
 */
 }
 
+#endif	//USE_ASOUND
+
 SYSCALL(int, maSoundIsPlaying())
 {
 	DEBIG_PHAT_ERROR;
@@ -980,6 +1038,78 @@ SYSCALL(int, maFrameBufferClose())
 	DEBIG_PHAT_ERROR;
 }
 #endif
+
+#define USING_GLVIEW 0
+#if USING_GLVIEW
+static void my_frame_callback(void *) {
+}
+
+static int maOpenGLInitFullscreen(int glApi) {
+	glview_api_t glvApi;
+	switch(glApi) {
+	case MA_GL_API_GL1: glvApi = GLVIEW_API_OPENGLES_11; break;
+	case MA_GL_API_GL2: glvApi = GLVIEW_API_OPENGLES_20; break;
+	default: return MA_GL_INIT_RES_UNAVAILABLE_API;
+	}
+	DUAL_ERRNO(GLVIEW_FAILURE, GLVIEW_SUCCESS, glview_initialize(glvApi, my_frame_callback));
+	return 0;
+}
+#else	// use eGL.
+static int maOpenGLInitFullscreen(int glApi) {
+	int gl2;
+	if (glApi == MA_GL_API_GL1) {
+		gl2 = 0;
+	} else if (glApi == MA_GL_API_GL2) {
+		gl2 = 1;
+	} else {
+		return MA_GL_INIT_RES_UNAVAILABLE_API;
+	}
+	DEBUG_ASSERT(bbutil_init_egl(sWindow, gl2) == EXIT_SUCCESS);
+	sOpenGLActive = true;
+
+	MAEventNative event;
+	event.type = EVENT_TYPE_WIDGET;
+	MAWidgetEventData *eventData = new MAWidgetEventData;
+	eventData->eventType = MAW_EVENT_GL_VIEW_READY;
+	eventData->widgetHandle = 0;
+	event.data = eventData;
+	sEventFifo.put(event);
+	LOG("PushEvent(EVENT_TYPE_WIDGET)\n");
+
+	return MA_GL_INIT_RES_OK;
+}
+#endif
+
+static int maOpenGLCloseFullscreen() {
+	sOpenGLActive = false;
+	return 0;
+}
+
+
+static int gles2ioctl(int function, int a, int b, int c, va_list argptr) {
+	switch(function) {
+		maIOCtl_IX_GL2_caselist;
+	default:
+		return IOCTL_UNAVAILABLE;
+	}
+};
+
+
+static int maOpenGLTexImage2D(MAHandle image) {
+	Image* img = gSyscall->resources.get_RT_IMAGE(image);
+	DEBUG_ASSERT(img->pixelFormat == Image::PIXELFORMAT_ARGB8888);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->width, img->height, 0,
+		GL_RGBA, GL_UNSIGNED_BYTE, img->data);
+	return MA_GL_TEX_IMAGE_2D_OK;
+}
+
+static int maOpenGLTexSubImage2D(MAHandle image) {
+	Image* img = gSyscall->resources.get_RT_IMAGE(image);
+	DEBUG_ASSERT(img->pixelFormat == Image::PIXELFORMAT_ARGB8888);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->width, img->height, 0,
+		GL_RGBA, GL_UNSIGNED_BYTE, img->data);
+	return MA_GL_TEX_IMAGE_2D_OK;
+}
 
 SYSCALL(void, maPanic(int result, const char* message))
 {
@@ -1031,8 +1161,6 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 		return 0;
 #endif	//LOGGING_ENABLED
 
-#if 0
-
 #ifdef SUPPORT_OPENGL_ES
 #define glGetPointerv maGlGetPointerv
 #define GL2_CASE(i) case maIOCtl_##i:
@@ -1043,6 +1171,8 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 	//maIOCtl_IX_GL_OES_FRAMEBUFFER_OBJECT_caselist;
 #undef glGetPointerv
 #endif	//SUPPORT_OPENGL_ES
+
+#if 0
 
 	maIOCtl_case(maAccept);
 

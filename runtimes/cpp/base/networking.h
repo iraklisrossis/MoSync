@@ -43,7 +43,7 @@ using namespace MoSyncError;
 //***************************************************************************
 
 void ConnWaitEvent();
-void ConnPushEvent(MAEvent* ep);
+void ConnPushEvent(MAEventNative* ep);
 void DefluxBinPushEvent(MAHandle handle, Stream& s);
 namespace Base {
 	bool MAProcessEvents();
@@ -140,7 +140,7 @@ protected:
 		}
 		DEBUG_ASSERT(mac.state & opcode);
 
-		MAEvent* ep = new MAEvent;
+		MAEventNative* ep = new MAEventNative;
 		ep->type = EVENT_TYPE_CONN;
 		ep->conn.handle = mac.handle;
 		ep->conn.opType = opcode;

@@ -24,3 +24,4 @@ default_const(:LD_EXTRA_DEPENDENCIES, [
 ])
 default_const(:EXIT_ON_ERROR, true)
 default_const(:PRINT_WORKING_DIRECTORY, false)
+default_const(:INSTALL_DIR, false)

@@ -19,6 +19,9 @@
 
 #define FILESYSTEM_CHROOT 0
 
+#define SUPPORT_OPENGL_ES
+#define MA_PROF_SUPPORT_WIDGETAPI	// required by OpenGL.
+
 
 namespace Core {
 	class VMCore;

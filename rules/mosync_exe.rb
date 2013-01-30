@@ -362,6 +362,13 @@ module MoSyncExeModule
 				:extraParameters => @PACK_PARAMETERS
 				)
 		end
+
+		if(INSTALL_DIR)
+			@prerequisites << CopyFileTask.new(self, "#{INSTALL_DIR}/#{File.basename(@TARGET.to_s)}", @TARGET)
+			if(!defined?(PACK) && @resourceTask)
+				@prerequisites << CopyFileTask.new(self, "#{INSTALL_DIR}/#{File.basename(@resourceTask.to_s)}", @resourceTask)
+			end
+		end
 	end
 
 	def emuCommandLine

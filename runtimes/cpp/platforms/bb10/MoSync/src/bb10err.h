@@ -12,8 +12,10 @@
 	LOG("IMGERR at %s:%i: %i\n", __FILE__, __LINE__, _res);\
 	MoSyncErrorExit(_res); } } while(0)
 
-#define BPSERR(func) do { int _res = (func);\
-	if(_res == BPS_FAILURE) DO_ERRNO; else if(_res != BPS_SUCCESS) {DEBIG_PHAT_ERROR;} } while(0)
+#define DUAL_ERRNO(fail, success, func) do { int _res = (func);\
+	if(_res == fail) DO_ERRNO; else if(_res != success) {DEBIG_PHAT_ERROR;} } while(0)
+
+#define BPSERR(func) DUAL_ERRNO(BPS_FAILURE,  BPS_SUCCESS, func)
 
 #define FTERR(func) do { int _res = (func); if(_res != 0) {DEBIG_PHAT_ERROR;} } while(0)
 

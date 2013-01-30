@@ -31,18 +31,13 @@ MA 02110-1301, USA.
 // Include MoSync syscalls.
 #include <maapi.h>
 
-// Include NativeUI so that we can create an OpenGL view.
-#include <IX_WIDGET.h>
+#include <mavsprintf.h>
 
 // Include header file for Moblets.
-#include <MAUtil/Moblet.h>
+#include <MAUtil/GLMoblet.h>
 
 // Include header file for OpenGL.
 #include <GLES/gl.h>
-
-// Include widget utility functions. These functions simplify
-// getting and setting widget properties.
-#include "WidgetUtil.h"
 
 // Include resource identifiers (in this case the texture to be
 // used as the surface of the spinning box).
@@ -53,7 +48,7 @@ MA 02110-1301, USA.
  * we manage the application and handle events.
  */
 class HelloGLMoblet :
-	public MAUtil::Moblet,
+	public MAUtil::GLMoblet,
 	public MAUtil::TimerListener
 {
 
@@ -65,45 +60,12 @@ public:
 	/**
 	 * In the constructor we create the user interface.
 	 */
-	HelloGLMoblet() :
+	HelloGLMoblet() : GLMoblet(GLMoblet::GL1),
 		mGLViewInitialized(false),
 		mXRotation(0.0f),
 		mYRotation(0.0f),
 		mZRotation(0.0f)
 	{
-		// Create a screen widget that will hold the OpenGL view.
-		int screen = maWidgetCreate(MAW_SCREEN);
-
-		// Check if NativeUI is supported by the runtime platform.
-		// For example, MoRE does not support NativeUI at the time
-		// of writing this program.
-		if (IOCTL_UNAVAILABLE == screen)
-		{
-			maPanic(0, "NativeUI is not available.");
-		}
-
-		// Create a GL_VIEW widget and add it to the screen.
-		// widgetSetPropertyInt is a helper function defined
-		// in WidgetUtil.cpp.
-		mGLView = maWidgetCreate(MAW_GL_VIEW);
-		if (MAW_RES_INVALID_TYPE_NAME == mGLView)
-		{
-			maPanic(1, "OpenGL|ES unavailable. OpenGL|ES is only available on Android and iOS. Also, please check that the device is able to run the version of OpenGL|ES you requested.");
-		}
-
-		widgetSetPropertyInt(
-			mGLView,
-			MAW_WIDGET_WIDTH,
-			MAW_CONSTANT_FILL_AVAILABLE_SPACE);
-		widgetSetPropertyInt(
-			mGLView,
-			MAW_WIDGET_HEIGHT,
-			MAW_CONSTANT_FILL_AVAILABLE_SPACE);
-		maWidgetAddChild(screen, mGLView);
-
-		// Show the screen.
-		maWidgetScreenShow(screen);
-
 		// Make the Moblet listen to custom events, so that we
 		// know when the GLView widget is ready to be drawn.
 		MAUtil::Environment::getEnvironment().addCustomEventListener(this);
@@ -129,43 +91,28 @@ public:
 	 * Method that implements the custom event listener interface.
 	 * Widget events are sent as custom events.
 	 */
-	void customEvent(const MAEvent& event)
+	void init()
 	{
-		// Check if this is a widget event.
-		if (EVENT_TYPE_WIDGET == event.type)
-		{
-			// Get the widget event data structure.
-			MAWidgetEventData* eventData = (MAWidgetEventData*) event.data;
+		// Create the texture we will use for rendering.
+		createTexture();
 
-			// MAW_EVENT_GL_VIEW_READY is sent when the GL view is
-			// ready for drawing.
-			if (MAW_EVENT_GL_VIEW_READY == eventData->eventType)
-			{
-				// Associate the OpenGL context with the GLView.
-				maWidgetSetProperty(mGLView, MAW_GL_VIEW_BIND, "");
+		// Set the GL viewport.
+		int viewWidth = EXTENT_X(maGetScrSize());
+		int viewHeight = EXTENT_Y(maGetScrSize());
+		setViewport(viewWidth, viewHeight);
 
-				// Create the texture we will use for rendering.
-				createTexture();
+		// Initialize OpenGL.
+		initGL();
 
-				// Set the GL viewport.
-				int viewWidth = widgetGetPropertyInt(mGLView, MAW_WIDGET_WIDTH);
-				int viewHeight = widgetGetPropertyInt(mGLView, MAW_WIDGET_HEIGHT);
-				setViewport(viewWidth, viewHeight);
+		// Flag that the GLView has been initialized.
+		mGLViewInitialized = true;
 
-				// Initialize OpenGL.
-				initGL();
+		// Draw the initial scene.
+		draw();
 
-				// Flag that the GLView has been initialized.
-				mGLViewInitialized = true;
-
-				// Draw the initial scene.
-				draw();
-
-				// Start timer that will redraw the scene.
-				// This calls runTimerEvent each 20 ms.
-				MAUtil::Environment::getEnvironment().addTimer(this, 20, -1);
-			}
-		}
+		// Start timer that will redraw the scene.
+		// This calls runTimerEvent each 20 ms.
+		MAUtil::Environment::getEnvironment().addTimer(this, 20, -1);
 	}
 
 	/**
@@ -391,9 +338,6 @@ private:
 
 	    // Wait (blocks) until all GL drawing commands to finish.
 	    glFinish();
-
-		// Update the GLView.
-	    maWidgetSetProperty(mGLView, MAW_GL_VIEW_INVALIDATE, "");
 	}
 
 	/**

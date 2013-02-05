@@ -46,6 +46,7 @@ import static com.mosync.internal.generated.MAAPI_consts.TRANS_ROT180;
 import static com.mosync.internal.generated.MAAPI_consts.TRANS_ROT270;
 import static com.mosync.internal.generated.MAAPI_consts.TRANS_ROT90;
 import static com.mosync.internal.generated.MAAPI_consts.EVENT_TYPE_ALERT;
+import static com.mosync.internal.generated.MAAPI_consts.MA_IMAGE_PICKER_EVENT_RETURN_TYPE_IMAGE_HANDLE;
 
 import static com.mosync.internal.generated.MAAPI_consts.MA_RESOURCE_OPEN;
 import static com.mosync.internal.generated.MAAPI_consts.MA_RESOURCE_CLOSE;
@@ -657,7 +658,10 @@ public class MoSyncThread extends Thread
 	 */
 	public void threadPanic(int errorCode, String message)
 	{
-		//new Exception("STACKTRACE: threadPanic").printStackTrace();
+		// Print debug data to the logcat console.
+		Log.e("@@@ MoSync",
+			"threadPanic errorCode: " + errorCode + " message: " + message);
+		new Exception("STACKTRACE: threadPanic").printStackTrace();
 
 		mHasDied = true;
 
@@ -1329,8 +1333,8 @@ public class MoSyncThread extends Thread
 
 			if(i >= count*2)
 				break;
-			xa = vertices[i++];
-			ya = vertices[i++];
+			xb = vertices[i++];
+			yb = vertices[i++];
 			path.moveTo(xa,ya);
 			path.lineTo(xc,yc);
 			path.lineTo(xb,yb);
@@ -3279,7 +3283,18 @@ public class MoSyncThread extends Thread
 	 */
 	int maImagePickerOpen()
 	{
-		return mMoSyncNativeUI.maImagePickerOpen();
+		return mMoSyncNativeUI.maImagePickerOpen(MA_IMAGE_PICKER_EVENT_RETURN_TYPE_IMAGE_HANDLE);
+	}
+
+	/**
+	 * Displays an image picker to the user and sets the event return type.
+	 * @param eventReturnType One of the next constants:
+	 * - #MA_IMAGE_PICKER_EVENT_RETURN_TYPE_IMAGE_HANDLE
+	 * - #MA_IMAGE_PICKER_EVENT_RETURN_TYPE_IMAGE_DATA
+	 */
+	int maImagePickerOpenWithEventReturnType(int eventReturnType)
+	{
+		return mMoSyncNativeUI.maImagePickerOpen(eventReturnType);
 	}
 
 	/**
@@ -5101,6 +5116,11 @@ public class MoSyncThread extends Thread
 	int maPimListNext(int list)
 	{
 		return mMoSyncPIM.maPimListNext(list);
+	}
+
+	int maPimListNextSummary(int list)
+	{
+		return mMoSyncPIM.maPimListNextSummary(list);
 	}
 
 	int maPimListClose(int list)

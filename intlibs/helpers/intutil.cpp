@@ -38,6 +38,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #ifdef _WIN32
 #include <helpers/platforms/windows/HandleCloser.h>
+#else
+#include <unistd.h>
 #endif
 
 //originally copied from Ptah::BuildThread::execute().

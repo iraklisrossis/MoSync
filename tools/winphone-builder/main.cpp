@@ -368,7 +368,7 @@ int main(int argc, char **argv) {
 				copyCmd.append(outputDirPath);
 				copyCmd.append("\"");
 				printf("%s\n", copyCmd.c_str());
-				r = system(copyCmd.c_str());
+				int r = system(copyCmd.c_str());
 				if(r) {
 					printf("Command failed: %i\n", r);
 					exit(r);

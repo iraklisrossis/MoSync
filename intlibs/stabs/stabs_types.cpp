@@ -33,7 +33,7 @@ using namespace std;
 //struct type_name_less : public binary_function<Type, Type, bool> {
 class type_name_hash {
 private:
-	hash_compare<string> mHC;
+	hash<string> mHC;
 public:
 	enum {	//arbitrary
 		bucket_size = 4,
@@ -49,7 +49,7 @@ public:
 
 struct type_tuple_hash {
 private:
-	hash_compare<int> mHC;
+	hash<int> mHC;
 public:
 	enum {
 		bucket_size = 4,

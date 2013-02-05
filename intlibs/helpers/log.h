@@ -43,6 +43,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 //******************************************************************************
 
 #ifdef LOGGING_ENABLED
+#include <stdio.h>
 #ifndef NULL
 #define NULL 0
 #endif

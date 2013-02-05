@@ -44,7 +44,7 @@ void ConnWaitEvent() {
 		DEBIG_PHAT_ERROR;
 	}
 }
-void ConnPushEvent(MAEvent* ep) {
+void ConnPushEvent(MAEventNative* ep) {
 	SDL_UserEvent event = { FE_ADD_EVENT, 0, ep, NULL };
 	FE_PushEvent((SDL_Event*)&event);
 }

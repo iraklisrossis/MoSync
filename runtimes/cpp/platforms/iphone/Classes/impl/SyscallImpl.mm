@@ -38,6 +38,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <CoreMedia/CoreMedia.h>
 #include <sys/types.h> //
 #include <sys/sysctl.h>//to retrieve device model
+#include <sys/xattr.h>
 
 #include <helpers/CPP_IX_GUIDO.h>
 //#include <helpers/CPP_IX_ACCELEROMETER.h>
@@ -1182,6 +1183,46 @@ namespace Base {
 		return 0;
 	}
 
+    SYSCALL(int, maFileSetProperty(const char* path, int property, int value))
+    {
+        NSURL *url = [NSURL fileURLWithPath:[NSString stringWithCString:path encoding:NSASCIIStringEncoding] isDirectory:NO];
+        if(!url || ![[NSFileManager defaultManager] fileExistsAtPath:[url path]])
+        {
+            return MA_FERR_NOTFOUND;
+        }
+
+        int returnValue = 0;
+        switch (property) {
+            case MA_FPROP_IS_BACKED_UP:
+            {
+                if (&NSURLIsExcludedFromBackupKey == nil)
+                {
+                    // For iOS <= 5.0.1.
+                    const char* filePath = [[url path] fileSystemRepresentation];
+                    const char* attrName = "com.apple.MobileBackup";
+                    u_int8_t attrValue = 1;
+                    int result = setxattr(filePath, attrName, &attrValue, sizeof(attrValue), 0, 0);
+                    returnValue = (result == 0) ? 0 : MA_FERR_GENERIC;
+                }
+                else
+                {
+                    // For iOS >= 5.1
+                    NSNumber* value = [NSNumber numberWithBool:(value == 0)];
+                    BOOL set = [url setResourceValue:value forKey:NSURLIsExcludedFromBackupKey error:NULL];
+                    returnValue = set ? 0 : MA_FERR_GENERIC;
+                }
+            }
+            break;
+
+            default:
+            {
+                returnValue = MA_FERR_NO_SUCH_PROPERTY;
+            }
+            break;
+        }
+        return returnValue;
+    }
+
 	static AVAudioPlayer* sSoundPlayer = NULL;
 
 	SYSCALL(int, maSoundPlay(MAHandle sound_res, int offset, int size))
@@ -1554,6 +1595,11 @@ namespace Base {
 		MoSync_ShowImagePicker();
 	}
 
+    SYSCALL(void, maImagePickerOpenWithEventReturnType(int returnType))
+	{
+		MoSync_ShowImagePicker(returnType);
+	}
+
 	//This struct holds information about what resources are connected
 	//to a single camera. Each device camera has it's own instance
 	//(So, one for most phones, and two for iPhone 4, for example)
@@ -1787,7 +1833,11 @@ namespace Base {
 			UIView *newView = widget.view;
 
 			CameraInfo *info = getCurrentCameraInfo();
-
+            if (!info)
+            {
+                // Camera is not available.
+                return MA_CAMERA_RES_FAILED;
+            }
 			if( !info->previewLayer )
 			{
 				info->previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:info->captureSession];
@@ -1863,6 +1913,11 @@ namespace Base {
 	{
 		@try {
 			CameraInfo *info = getCurrentCameraInfo();
+            if (!info)
+            {
+                // Camera is not available.
+                return MA_CAMERA_RES_FAILED;
+            }
 
 			AVCaptureConnection *videoConnection =	[info->stillImageOutput.connections objectAtIndex:0];
 			if ([videoConnection isVideoOrientationSupported])
@@ -1898,11 +1953,17 @@ namespace Base {
 		@try {
 			int result = 0;
 			CameraInfo *info = getCurrentCameraInfo();
-			NSString *propertyString = [NSString stringWithUTF8String:property];
-			NSString *valueString = [NSString stringWithUTF8String:value];
-			result = [gCameraConfigurator	setCameraProperty: info->device
-										withProperty: propertyString
-										   withValue: valueString];
+            if (!info)
+            {
+                // Camera is not available.
+                return MA_CAMERA_RES_FAILED;
+            }
+
+			NSString *propertyString = [[NSString alloc] initWithUTF8String:property];
+			NSString *valueString = [[NSString alloc] initWithUTF8String:value];
+			result = [gCameraConfigurator setCameraProperty: info->device
+                                               withProperty: propertyString
+                                                  withValue: valueString];
 			[propertyString release];
 			[valueString release];
 			return result;
@@ -1915,13 +1976,20 @@ namespace Base {
 	SYSCALL(int, maCameraGetProperty(const char *property, char *value, int maxSize)) //@property the property to get (string), @value will contain the value of the property when the func returns, @maxSize the size of the value buffer
 	{
 		@try {
-			NSString *propertyString = [NSString stringWithUTF8String:property];
+			NSString *propertyString = [[NSString alloc ] initWithUTF8String:property];
 			CameraConfirgurator *configurator = [[CameraConfirgurator alloc] init];
 			CameraInfo *info = getCurrentCameraInfo();
-			NSString* retval = [configurator	getCameraProperty:info->device
-												  withProperty:propertyString];
+            if (!info)
+            {
+                // Camera is not available.
+                return MA_CAMERA_RES_FAILED;
+            }
 
-			if(retval == nil) return -2;
+			NSString* retval = [[configurator getCameraProperty:info->device withProperty:propertyString] retain];
+			if(!retval)
+            {
+                return MA_CAMERA_RES_FAILED;
+            }
 			int length = maxSize;
 			int realLength = [retval length];
 			if(realLength > length) {
@@ -2263,6 +2331,7 @@ namespace Base {
 		maIOCtl_case(maFrameBufferInit);
 		maIOCtl_case(maFrameBufferClose);
         maIOCtl_syscall_case(maPimListOpen);
+        maIOCtl_syscall_case(maPimListNextSummary);
         maIOCtl_syscall_case(maPimListNext);
         maIOCtl_syscall_case(maPimItemCount);
         maIOCtl_syscall_case(maPimItemGetValue);
@@ -2305,6 +2374,7 @@ namespace Base {
         maIOCtl_syscall_case(maFileListStart);
         maIOCtl_syscall_case(maFileListNext);
         maIOCtl_syscall_case(maFileListClose);
+        maIOCtl_case(maFileSetProperty);
 		maIOCtl_case(maTextBox);
 		maIOCtl_case(maGetSystemProperty);
 		maIOCtl_case(maReportResourceInformation);
@@ -2328,6 +2398,7 @@ namespace Base {
         maIOCtl_case(maSensorStart);
         maIOCtl_case(maSensorStop);
 		maIOCtl_case(maImagePickerOpen);
+        maIOCtl_case(maImagePickerOpenWithEventReturnType);
 		maIOCtl_case(maSendTextSMS);
 		maIOCtl_case(maSyscallPanicsEnable);
 		maIOCtl_case(maSyscallPanicsDisable);

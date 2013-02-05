@@ -32,6 +32,9 @@ HttpResponse::HttpResponse(int code, int dataSize, const byte* data) :
 {
 }
 
+HttpResponse::~HttpResponse() {
+}
+
 int HttpResponse::getCode() const {
 	return mCode;
 }

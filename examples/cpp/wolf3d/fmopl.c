@@ -27,7 +27,7 @@
 
 #include "fmopl.h"
 
-#define INLINE inline //static /* inline */
+#define INLINE //inline //static /* inline */
 
 void logerror(const char *text, ...);
 

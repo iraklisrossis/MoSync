@@ -1228,16 +1228,18 @@ void InitGame()
 =====================
 */
 
+void DemoLoop() __attribute__((noreturn));
 void DemoLoop()
 {
-	static int LastDemo;
+	maExit(0);
+	//static int LastDemo;
 
-	int i;
+	//int i;
 //
 // main game cycle
 //
 
-	LastDemo = 0;
+	//LastDemo = 0;
 
 	/*
 	StartCPMusic(INTROSONG);
@@ -1361,6 +1363,7 @@ void DemoLoop()
 ==========================
 */
 
+int WolfMain(int argc, char *argv[]) __attribute__((noreturn));
 int WolfMain(int argc, char *argv[])
 {
 	_argc = argc;
@@ -1381,5 +1384,5 @@ int WolfMain(int argc, char *argv[])
 
 	Quit("Demo loop exited???");
 
-	return 0;
+	//return 0;
 }

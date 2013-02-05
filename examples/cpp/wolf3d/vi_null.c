@@ -27,6 +27,7 @@ static int sHeight;
 ==========================
 */
 
+void Quit(const char *error) __attribute__((noreturn));
 void Quit(const char *error)
 {
 	memptr screen = NULL;

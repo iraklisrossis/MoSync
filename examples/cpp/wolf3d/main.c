@@ -12,6 +12,7 @@ int strcasecmp(const char *s1, const char *s2) {
 	return stricmp(s1, s2);
 }
 
+void perror(const char *str) __attribute__((noreturn));
 void perror(const char *str) {
 	maPanic(0, str);
 }

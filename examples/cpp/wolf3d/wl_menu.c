@@ -158,8 +158,8 @@ static const int color_norml[] = { DEACTIVE, TEXTCOLOR, READCOLOR, 0x6b };
 static int EpisodeSelect[6] = { 1 };
 #endif
 
-static int SaveGamesAvail[10],StartGame,SoundStatus=1,pickquick;
-static char SaveGameNames[10][32],SaveName[13]="savegam?.";
+int SaveGamesAvail[10],StartGame,SoundStatus=1,pickquick;
+char SaveGameNames[10][32],SaveName[13]="savegam?.";
 
 
 ////////////////////////////////////////////////////////////////////
@@ -2495,7 +2495,7 @@ void DrawOutline(int x,int y,int w,int h,int color1,int color2)
 ////////////////////////////////////////////////////////////////////
 void SetupControlPanel()
 {
-	int which;
+	//int which;
 
 	//
 	// CACHE GRAPHICS & SOUNDS
@@ -2521,7 +2521,7 @@ void SetupControlPanel()
 	//
 {
 #if defined(HAVE_FFBLK)
-	struct ffblk f;
+	//struct ffblk f;
 
 	// todo: fix
 	/*

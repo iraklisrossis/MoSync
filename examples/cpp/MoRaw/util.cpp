@@ -22,7 +22,7 @@
 
 uint16 g_debugMask;
 
-void debug(uint16 cm, const char *msg, ...) {	
+void debug(uint16 cm, const char *msg, ...) {
 	char buf[1024];
 	if (cm & g_debugMask) {
 		va_list va;
@@ -44,6 +44,7 @@ void debug(uint16 cm, const char *msg, ...) {
 	*/
 }
 
+void error(const char *msg, ...) __attribute((noreturn));
 void error(const char *msg, ...) {
 	char buf[1024];
 	va_list va;
@@ -52,7 +53,7 @@ void error(const char *msg, ...) {
 	//lprintfln(msg, va);
 	vsprintf(buf, msg, va);
 	va_end(va);
-	
+
 	maPanic(0, buf);
 
 	/*

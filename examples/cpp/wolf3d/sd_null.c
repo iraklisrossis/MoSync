@@ -9,7 +9,7 @@
 //#include <sys/stat.h>
 //#include <fcntl.h>
 //#include <unistd.h>
-                     
+
 #include "fmopl.h"
 
 #define PACKED __attribute__((packed))
@@ -43,7 +43,7 @@ typedef	struct {
 MAAudioBufferInfo abInfo;
 
 boolean AdLibPresent, SoundBlasterPresent;
-	
+
 SDMode SoundMode;
 SMMode MusicMode;
 SDSMode DigiMode;
@@ -79,7 +79,7 @@ static volatile int NewAdlib;
 static volatile int AdlibPlaying;
 
 typedef struct pthread_t_ *pthread_t;
-static pthread_t hSoundThread;
+//static pthread_t hSoundThread;
 
 static int CurDigi;
 static int CurAdlib;
@@ -174,7 +174,7 @@ static void *SoundThread(void *data)
 	Instrument *inst;
 
 /* Yeah, one day I'll rewrite this... */
-	
+
 //	while (SD_Started) {
 		if (audiofd != -1) {
 			if (NewAdlib != -1) {
@@ -200,7 +200,7 @@ static void *SoundThread(void *data)
 				OPLWrite(OPL, 3 + alWave, 0);
 				OPLWrite(OPL, 0xA0, 0);
 				OPLWrite(OPL, 0xB0, 0);
-				
+
 				OPLWrite(OPL, 0 + alChar, inst->mChar);
 				OPLWrite(OPL, 0 + alScale, inst->mScale);
 				OPLWrite(OPL, 0 + alAttack, inst->mAttack);
@@ -214,14 +214,14 @@ static void *SoundThread(void *data)
 
 				//OPLWrite(OPL, alFeedCon, inst->nConn);
 				OPLWrite(OPL, alFeedCon, 0);
-				
+
 				AdlibBlock = ((AdlibSnd->block & 7) << 2) | 0x20;
 				AdlibData = (byte *)&AdlibSnd->data;
 				AdlibLength = AdlibSnd->common.length*5;
 				//OPLWrite(OPL, 0xB0, AdlibBlock);
 				NewAdlib = -1;
 			}
-			
+
 			if (NewMusic != -1) {
 				NewMusic = -1;
 				MusicLength = Music->length;
@@ -343,7 +343,7 @@ static void Blah()
         MM_GetPtr(&list,PMPageSize);
         p = PM_GetPage(ChunksInFile - 1);
         memcpy((void *)list,(void *)p,PMPageSize);
-        
+
         pg = PMSoundStart;
         for (i = 0;i < PMPageSize / (sizeof(word) * 2);i++,p += 2)
         {
@@ -353,21 +353,21 @@ static void Blah()
         }
         MM_GetPtr((memptr *)&DigiList, i * sizeof(word) * 2);
         memcpy((void *)DigiList, (void *)list, i * sizeof(word) * 2);
-        MM_FreePtr(&list);        
+        MM_FreePtr(&list);
 }
 
 void SD_Startup()
 {
 	//audio_buf_info info;
-	int want, set;
-	
+	//int want, set;
+
 	if (SD_Started)
 		return;
 
 	Blah();
 
 	InitDigiMap();
-	
+
 	OPL = OPLCreate(OPL_TYPE_YM3812, 3579545, SAMPLERATE);
 
 	//audiofd = open("/dev/dsp", O_WRONLY);
@@ -407,7 +407,7 @@ void SD_Startup()
 
   	audiofd = 0;
 
-	set = (8 << 16) | 10;
+	//set = (8 << 16) | 10;
 	//if (ioctl(audiofd, SNDCTL_DSP_SETFRAGMENT, &set) == -1) {
 	//	perror("ioctl SNDCTL_DSP_SETFRAGMENT");
 	//	return;
@@ -423,7 +423,7 @@ void SD_Startup()
 	//	return;
 	//}
 
-	want = set = 1;
+	//want = set = 1;
 	//if (ioctl(audiofd, SNDCTL_DSP_STEREO, &set) == -1) {
 	//	perror("ioctl SNDCTL_DSP_STEREO");
 	//	return;
@@ -460,9 +460,9 @@ void SD_Startup()
 	NewMusic = -1;
 	AdlibPlaying = -1;
 	sqActive = false;
-	
+
 	SD_Started = true;
-	
+
 	/*
 	if (pthread_create(&hSoundThread, NULL, SoundThread, NULL) != 0) {
 		SD_Started = false;
@@ -486,7 +486,7 @@ void SD_Shutdown()
 	SD_StopSound();
 
 	SD_Started = false;
-	
+
 	if (audiofd != -1) {
 //		SDL_PauseAudio (1);
 //		SDL_CloseAudio();
@@ -505,11 +505,11 @@ void SD_Shutdown()
 boolean SD_PlaySound(soundnames sound)
 {
 	SoundCommon *s;
-	
+
 	s = (SoundCommon *)audiosegs[STARTADLIBSOUNDS + sound];
 
 	if (DigiMap[sound] != -1) {
-		if ((SoundPlaying == -1) || (CurDigi == -1) || 
+		if ((SoundPlaying == -1) || (CurDigi == -1) ||
 		(s->priority >= ((SoundCommon *)audiosegs[STARTADLIBSOUNDS+CurDigi])->priority) ) {
 			if (SPHack) {
 				SPHack = false;
@@ -522,8 +522,8 @@ boolean SD_PlaySound(soundnames sound)
 		}
 		return false;
 	}
-	
-	if ((AdlibPlaying == -1) || (CurAdlib == -1) || 
+
+	if ((AdlibPlaying == -1) || (CurAdlib == -1) ||
 	(s->priority >= ((SoundCommon *)audiosegs[STARTADLIBSOUNDS+CurAdlib])->priority) ) {
 		CurAdlib = sound;
 		NewAdlib = sound;
@@ -667,7 +667,7 @@ static void SetSoundLoc(fixed gx, fixed gy)
 void PlaySoundLocGlobal(word s, int id, fixed gx, fixed gy)
 {
 	SetSoundLoc(gx, gy);
-	
+
 	SPHack = true;
 	if (SD_PlaySound(s)) {
 		SoundPositioned = true;
@@ -716,9 +716,9 @@ void SD_MusicOff()
 void SD_StartMusic(int music)
 {
 	music += STARTMUSIC;
-	
+
 	CA_CacheAudioChunk(music);
-	
+
 	SD_MusicOff();
 	SD_MusicOn();
 	Music = (MusicGroup *)audiosegs[music];

@@ -27,7 +27,9 @@ end
 
 # This should always be used instead of the ENV.
 def mosyncdir
-	return switchPathSlashes(ENV['MOSYNCDIR'])
+	m = ENV['MOSYNCDIR']
+	raise "Environment variable MOSYNCDIR is not set" if(!m)
+	return switchPathSlashes(m)
 end
 
 require "#{File.dirname(__FILE__)}/host.rb"

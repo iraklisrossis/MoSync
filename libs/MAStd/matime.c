@@ -36,7 +36,7 @@ static const int _DAYS_BEFORE_MONTH[12] =
 
 #define _ISLEAP(y) (((y) % 4) == 0 && (((y) % 100) != 0 || (((y)+1900) % 400) == 0))
 #define _DAYS_IN_YEAR(year) (_ISLEAP(year) ? 366 : 365)
- 
+
 static const int mon_lengths[2][MONSPERYEAR] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
@@ -61,7 +61,7 @@ struct tm* split_time(time_t timer, struct tm* res)
 
 	days = ((long)lcltime) / SECSPERDAY;
 	rem = ((long)lcltime) % SECSPERDAY;
-	while (rem < 0) 
+	while (rem < 0)
 	{
 		rem += SECSPERDAY;
 		--days;
@@ -88,8 +88,8 @@ struct tm* split_time(time_t timer, struct tm* res)
 	{
 		for (;;)
 		{
-			yleap = _ISLEAP(y);
-			if (days <= year_lengths[yleap])
+			yleap = _ISLEAP(y-1900);
+			if (days < year_lengths[yleap])
 				break;
 			y++;
 			days -= year_lengths[yleap];
@@ -100,7 +100,7 @@ struct tm* split_time(time_t timer, struct tm* res)
 		do
 		{
 			--y;
-			yleap = _ISLEAP(y);
+			yleap = _ISLEAP(y-1900);
 			days += year_lengths[yleap];
 		} while (days < 0);
 	}
@@ -108,9 +108,9 @@ struct tm* split_time(time_t timer, struct tm* res)
 	res->tm_year = y - YEAR_BASE;
 	res->tm_yday = days;
 	ip = mon_lengths[yleap];
-	for (res->tm_mon = 0; days > ip[res->tm_mon]; ++res->tm_mon)
+	for (res->tm_mon = 0; days >= ip[res->tm_mon]; ++res->tm_mon)
 		days -= ip[res->tm_mon];
-	res->tm_mday = days;
+	res->tm_mday = days + 1;
 
 	return res;
 }
@@ -126,7 +126,7 @@ char* sprint_tm(const struct tm *tim_p, char* buf)
 	};
 
 	sprintf(buf, "%.3s %.3s%3d %.2d:%.2d:%.2d %d",
-		day_name[tim_p->tm_wday], 
+		day_name[tim_p->tm_wday],
 		mon_name[tim_p->tm_mon],
 		tim_p->tm_mday, tim_p->tm_hour, tim_p->tm_min,
 		tim_p->tm_sec, 1900 + tim_p->tm_year);

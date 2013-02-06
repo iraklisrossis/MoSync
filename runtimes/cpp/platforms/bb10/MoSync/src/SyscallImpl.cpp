@@ -31,6 +31,7 @@
 #include <screen/screen.h>
 #include <input/event_types.h>
 #include <input/screen_helpers.h>
+#include <bps/battery.h>
 #include <bps/button.h>
 #include <bps/event.h>
 #include <bps/navigator.h>
@@ -1111,6 +1112,12 @@ static int maOpenGLTexSubImage2D(MAHandle image) {
 	return MA_GL_TEX_IMAGE_2D_OK;
 }
 
+static int maGetBatteryCharge() {
+	battery_info_t* info;
+	BPSERR(battery_get_info(&info));
+	return battery_info_get_state_of_charge(info);
+}
+
 SYSCALL(void, maPanic(int result, const char* message))
 {
 	LOG("maPanic(%i, %s)\n", result, message);
@@ -1171,6 +1178,8 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 	//maIOCtl_IX_GL_OES_FRAMEBUFFER_OBJECT_caselist;
 #undef glGetPointerv
 #endif	//SUPPORT_OPENGL_ES
+
+	maIOCtl_case(maGetBatteryCharge);
 
 #if 0
 

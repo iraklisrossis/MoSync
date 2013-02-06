@@ -19,12 +19,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <conprint.h>
 #include <maassert.h>
 
-
-int MAMain() {
+int MAMain(void) __attribute((noreturn));
+int MAMain(void) {
 	InitConsole();
 
 	printf("Battery Status: %i\n", maGetBatteryCharge());
 
 	FREEZE;
-	return 0;
 }

@@ -91,6 +91,7 @@ class BarTask < FileTask
 			zip.add(a.target, a.source)
 		end
 		zip.close
+		puts "Wrote #{@NAME}."
 	end
 end
 

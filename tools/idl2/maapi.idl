@@ -2436,9 +2436,6 @@ interface MAAPI {
 		* MA_LPS_OUT_OF_SERVICE if the location provider is out of service, or
 		* \< 0 on error.
 		*
-		* \note <b>The location API is experimental, not fully tested.
-		* It may not work as advertised.</b>
-		*
 		* In particular, it is unsupported on the MoSync Emulator.
 		* Implementation details are likely to change in the future.
 		*/

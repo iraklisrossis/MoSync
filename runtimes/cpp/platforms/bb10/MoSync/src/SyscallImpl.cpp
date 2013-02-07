@@ -34,6 +34,7 @@
 #include <bps/battery.h>
 #include <bps/button.h>
 #include <bps/event.h>
+#include <bps/geolocation.h>
 #include <bps/navigator.h>
 #include <bps/screen.h>
 #include <bps/vibration.h>
@@ -81,6 +82,8 @@ static img_codec_t* sCodecs = NULL;
 static FT_Library sFtLib;
 static FT_Face sFontFace;
 static bool sFontLoaded = false;
+
+static bool sLocationActive = false;
 
 static CircularFifo<MAEventNative, EVENT_BUFFER_SIZE> sEventFifo;
 
@@ -346,7 +349,7 @@ static void bpsWait(int timeout) {
 			mtouch_event_t mtouch_event;
 			int screen_val;
 			ERRNO(screen_get_event_property_iv(screen_event, SCREEN_PROPERTY_TYPE, &screen_val));
-			//LOG("screen event %i\n", screen_val);
+			LOG("screen event %i\n", screen_val);
 			switch(screen_val) {
 			case SCREEN_EVENT_MTOUCH_TOUCH: event.type = EVENT_TYPE_POINTER_PRESSED; break;
 			case SCREEN_EVENT_MTOUCH_MOVE: event.type = EVENT_TYPE_POINTER_DRAGGED; break;
@@ -405,6 +408,34 @@ static void bpsWait(int timeout) {
 					default: event.key = MAK_UNKNOWN;
 				}
 				break;
+			}
+		} else if(event_domain == geolocation_get_domain()) {
+			switch(event_id) {
+			case GEOLOCATION_CANCEL:
+				LOG("GEOLOCATION_CANCEL\n");
+				event.type = EVENT_TYPE_LOCATION_PROVIDER;
+				event.state = MA_LPS_OUT_OF_SERVICE;
+				break;
+			case GEOLOCATION_ERROR:
+				LOG("GEOLOCATION_ERROR %s\n", geolocation_event_get_error_message(event_bps));
+				event.type = EVENT_TYPE_LOCATION_PROVIDER;
+				event.state = MA_LPS_OUT_OF_SERVICE;
+				break;
+			case GEOLOCATION_INFO:
+				{
+					event.type = EVENT_TYPE_LOCATION;
+					MALocation* loc = new MALocation;
+					loc->state = MA_LOC_QUALIFIED;
+					loc->alt = (float)geolocation_event_get_altitude(event_bps);
+					loc->lat = geolocation_event_get_latitude(event_bps);
+					loc->lon = geolocation_event_get_longitude(event_bps);
+					loc->horzAcc = geolocation_event_get_accuracy(event_bps);
+					loc->vertAcc = geolocation_event_get_altitude_accuracy(event_bps);
+					event.data = loc;
+				}
+				break;
+			default:
+				LOG("GEOLOCATION unknown event %i\n", event_id);
 			}
 		} else if(event_domain == sMyEventDomain) {
 			LOG("MyEvent %i\n", event_id);
@@ -773,15 +804,17 @@ SYSCALL(int, maGetEvent(MAEvent* dst))
 	const MAEventNative& e(sEventFifo.get());
 	dst->type = e.type;
 	// copy data separately, because there can be padding in MAEventNative on 64-bit systems.
-	// compare offsetof(MAEventNative, data)) and offsetof(MAEvent, data))
+	// compare offsetof(MAEventNative, data) and offsetof(MAEvent, data)
 	memcpy(&dst->data, &e.data, sizeof(dst->data));
 
+#if 0	//debug log
 	if(e.type == EVENT_TYPE_WIDGET) {
 		LOG("maGetEvent(EVENT_TYPE_WIDGET)\n");
 		if(((MAWidgetEventData*)e.data)->eventType == MAW_EVENT_GL_VIEW_READY) {
 			LOG("maGetEvent(MAW_EVENT_GL_VIEW_READY)\n");
 		}
 	}
+#endif
 
 	void* cep = SYSCALL_THIS->GetCustomEventPointer();
 
@@ -1118,6 +1151,24 @@ static int maGetBatteryCharge() {
 	return battery_info_get_state_of_charge(info);
 }
 
+static int maLocationStart() {
+	if(sLocationActive)
+		return 0;
+	BPSERR(geolocation_request_events(0));
+	geolocation_set_period(1);
+	sLocationActive = true;
+	return MA_LPS_AVAILABLE;
+}
+
+static int maLocationStop() {
+	if(sLocationActive) {
+		BPSERR(geolocation_stop_events(0));
+		sLocationActive = false;
+	}
+	return 0;
+}
+
+
 SYSCALL(void, maPanic(int result, const char* message))
 {
 	LOG("maPanic(%i, %s)\n", result, message);
@@ -1180,6 +1231,9 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 #endif	//SUPPORT_OPENGL_ES
 
 	maIOCtl_case(maGetBatteryCharge);
+
+	maIOCtl_case(maLocationStart);
+	maIOCtl_case(maLocationStop);
 
 #if 0
 

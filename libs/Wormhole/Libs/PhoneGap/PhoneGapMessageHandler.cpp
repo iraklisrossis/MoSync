@@ -391,11 +391,11 @@ namespace Wormhole
 	{
 		if (mSensorEventToManager[sensorData.type] == false)
 		{
-			if (sensorData.type == SENSOR_TYPE_ACCELEROMETER)
+			if (sensorData.type == MA_SENSOR_TYPE_ACCELEROMETER)
 			{
 				mPhoneGapSensors->sendAccelerometerData(sensorData);
 			}
-			else if (sensorData.type == SENSOR_TYPE_COMPASS)
+			else if (sensorData.type == MA_SENSOR_TYPE_COMPASS)
 			{
 				mPhoneGapSensors->sendCompassData(sensorData);
 			}

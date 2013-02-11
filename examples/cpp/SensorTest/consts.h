@@ -25,7 +25,7 @@ MA 02110-1301, USA.
 #define CONSTS_H_
 
 // the number of sensors in MoSync
-#define SENSOR_TYPES					5
+#define SENSOR_TYPES					6
 // maximum number of values returned by a sensor
 #define SENSOR_VALUES					3
 
@@ -37,27 +37,19 @@ MA 02110-1301, USA.
 #define SCALE_FACTOR 					(gScreenWidth / BASE_SCREEN_WIDTH)
 #define TEXT_SIZE						(10 * SCALE_FACTOR)
 #define OFFSET_X						(10 * SCALE_FACTOR)
-#define OFFSET_Y						20
+#define OFFSET_Y						sFontHeight
 
 // useful texts
-#define TXT_NONE						""
+#define TXT_NONE						"None"
 #define TXT_SENSOR_ACCELEROMETER		"Accelerometer"
 #define TXT_SENSOR_MAG_FIELD			"Magnetic field"
-#define TXT_SENSOR_ORIENTATION			"Orientation"
 #define TXT_SENSOR_GYROSCOPE			"Gyroscope"
 #define TXT_SENSOR_PROXIMITY			"Proximity"
+#define TXT_SENSOR_COMPASS			"Compass"
 
 #define TXT_AVAILABLE					"Available"
 #define TXT_NOT_AVAILABLE				"Not available"
 #define TXT_INTERVAL					"Interval not set"
 #define TXT_ENABLED						"Already enabled"
-
-#define TXT_UNKNOWN						"Unknown"
-#define TXT_PORTRAIT					"Portrait"
-#define TXT_UPSIDE_DOWN					"Portrait upside down"
-#define TXT_LANDSCAPE_LEFT				"Landscape left"
-#define TXT_LANDSCAPE_RIGHT				"Landscape right"
-#define TXT_FACE_UP						"Face up"
-#define TXT_FACE_DOWN					"Face down"
 
 #endif //CONSTS_H_

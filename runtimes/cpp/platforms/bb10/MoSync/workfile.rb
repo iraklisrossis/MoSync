@@ -196,7 +196,7 @@ work.instance_eval do
 	]
 	@SPECIFIC_CFLAGS = {
 		'Core.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',
-		'SyscallImpl.cpp' => ' -DHAVE_IOCTL_ELLIPSIS',
+		'SyscallImpl.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',
 		'Syscall.cpp' => ' -Wno-float-equal',
 		'Image.cpp' => ' -Wno-shadow',
 	}

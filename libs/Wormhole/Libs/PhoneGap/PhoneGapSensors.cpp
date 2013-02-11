@@ -71,7 +71,7 @@ namespace Wormhole
 			}
 			else if (message.getParam("action") == "stopWatch")
 			{
-				maSensorStop(SENSOR_TYPE_ACCELEROMETER);
+				maSensorStop(MA_SENSOR_TYPE_ACCELEROMETER);
 				mAccelerometerWatchStarted = false;
 			}
 		}
@@ -113,7 +113,7 @@ namespace Wormhole
 			}
 			else if (message.getParam("action") == "stopWatch")
 			{
-				maSensorStop(SENSOR_TYPE_COMPASS);
+				maSensorStop(MA_SENSOR_TYPE_COMPASS);
 				mAccelerometerWatchStarted = false;
 			}
 		}
@@ -177,7 +177,7 @@ namespace Wormhole
 		{
 			sendAccelerometerData(mAccelerometerWatchCallBack, sensorData);
 			// Stop the sensor since it was a one time call.
-			maSensorStop(SENSOR_TYPE_ACCELEROMETER);
+			maSensorStop(MA_SENSOR_TYPE_ACCELEROMETER);
 		}
 	}
 
@@ -192,7 +192,7 @@ namespace Wormhole
 		{
 			sendCompassData(mCompassWatchCallBack, sensorData);
 			// Stop the sensor since it was a one time call.
-			maSensorStop(SENSOR_TYPE_COMPASS);
+			maSensorStop(MA_SENSOR_TYPE_COMPASS);
 		}
 	}
 
@@ -285,7 +285,7 @@ namespace Wormhole
 			bool isWatched)
 	{
 		//Enable accelerometer which is supported in PhoneGap
-		int res = maSensorStart(SENSOR_TYPE_ACCELEROMETER, SENSOR_RATE_NORMAL);
+		int res = maSensorStart(MA_SENSOR_TYPE_ACCELEROMETER, MA_SENSOR_RATE_NORMAL);
 		if(res < 0)
 		{
 			mMessageHandler->callError(
@@ -326,7 +326,7 @@ namespace Wormhole
 			MAUtil::String callbackID,
 			bool isWatched)
 	{
-		int res = maSensorStart(SENSOR_TYPE_COMPASS, SENSOR_RATE_NORMAL);
+		int res = maSensorStart(MA_SENSOR_TYPE_COMPASS, MA_SENSOR_RATE_NORMAL);
 		if (res < 0)
 		{
 			mMessageHandler->callError(

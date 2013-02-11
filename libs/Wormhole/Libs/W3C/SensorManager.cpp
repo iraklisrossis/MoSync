@@ -69,23 +69,19 @@ namespace Wormhole
 			int maType = 0;
 			if(type == "Accelerometer")
 			{
-				maType = SENSOR_TYPE_ACCELEROMETER;
+				maType = MA_SENSOR_TYPE_ACCELEROMETER;
 			}
 			else if(type == "MagneticField")
 			{
-				maType = SENSOR_TYPE_MAGNETIC_FIELD;
-			}
-			else if(type == "Orientation")
-			{
-				maType = SENSOR_TYPE_ORIENTATION;
+				maType = MA_SENSOR_TYPE_MAGNETIC_FIELD;
 			}
 			else if(type == "Gyroscope")
 			{
-				maType = SENSOR_TYPE_GYROSCOPE;
+				maType = MA_SENSOR_TYPE_GYROSCOPE;
 			}
 			else if(type == "Proximity")
 			{
-				maType = SENSOR_TYPE_PROXIMITY;
+				maType = MA_SENSOR_TYPE_PROXIMITY;
 			}
 
 			if(maType != 0)
@@ -99,8 +95,8 @@ namespace Wormhole
 						mSensorSingleReadFlag[maType] = true;
 					}
 
-					int result = maSensorStart(maType,SENSOR_RATE_NORMAL);
-					if(result == SENSOR_ERROR_NONE)
+					int result = maSensorStart(maType,MA_SENSOR_RATE_NORMAL);
+					if(result == MA_SENSOR_ERROR_NONE)
 					{
 						//The the message handler to send sensor events to this object
 						mMessageHandler->setSensorEventTarget(maType, true);
@@ -112,13 +108,13 @@ namespace Wormhole
 						String errorArgs;
 						switch(result)
 						{
-							case SENSOR_ERROR_NOT_AVAILABLE:
+							case MA_SENSOR_ERROR_NOT_AVAILABLE:
 								errorArgs = "{\"code\":-1,\"message\":\"Sensor not available\"}";
 								break;
-							case SENSOR_ERROR_INTERVAL_NOT_SET:
+							case MA_SENSOR_ERROR_INTERVAL_NOT_SET:
 								errorArgs = "{\"code\":-2,\"message\":\"Interval not set\"}";
 								break;
-							case SENSOR_ERROR_ALREADY_ENABLED:
+							case MA_SENSOR_ERROR_ALREADY_ENABLED:
 								errorArgs = "{\"code\":-3,\"message\":\"Sensor already enabled\"}";
 								break;
 						}
@@ -135,15 +131,15 @@ namespace Wormhole
 					int result = maSensorStop(maType);
 					//The the message handler to stop sending this object sensor events
 					mMessageHandler->setSensorEventTarget(maType, false);
-					if(result != SENSOR_ERROR_NONE)
+					if(result != MA_SENSOR_ERROR_NONE)
 					{
 						String errorArgs;
 						switch(result)
 						{
-							case SENSOR_ERROR_NOT_ENABLED:
+							case MA_SENSOR_ERROR_NOT_ENABLED:
 								errorArgs = "{\"code\":-4,\"message\":\"Sensor not enabled\"}";
 								break;
-							case SENSOR_ERROR_CANNOT_DISABLE:
+							case MA_SENSOR_ERROR_CANNOT_DISABLE:
 								errorArgs = "{\"code\":-5,\"message\":\"Interval not set\"}";
 								break;
 						}
@@ -174,12 +170,12 @@ namespace Wormhole
 		//a single sensor type
 		if(type == "" || type == "Accelerometer")
 		{
-			errorCode = maSensorStart(SENSOR_TYPE_ACCELEROMETER, longInterval);
-			if(errorCode != SENSOR_ERROR_NOT_AVAILABLE)
+			errorCode = maSensorStart(MA_SENSOR_TYPE_ACCELEROMETER, longInterval);
+			if(errorCode != MA_SENSOR_ERROR_NOT_AVAILABLE)
 			{
-				if(errorCode != SENSOR_ERROR_ALREADY_ENABLED)
+				if(errorCode != MA_SENSOR_ERROR_ALREADY_ENABLED)
 				{
-					maSensorStop(SENSOR_TYPE_ACCELEROMETER);
+					maSensorStop(MA_SENSOR_TYPE_ACCELEROMETER);
 				}
 				result += "{\"name\":\"Accelerometer\",\"type\":\"Accelerometer\"},";
 			}
@@ -187,38 +183,25 @@ namespace Wormhole
 
 		if(type == "" || type == "MagneticField")
 		{
-			errorCode = maSensorStart(SENSOR_TYPE_MAGNETIC_FIELD, longInterval);
-			if(errorCode != SENSOR_ERROR_NOT_AVAILABLE)
+			errorCode = maSensorStart(MA_SENSOR_TYPE_MAGNETIC_FIELD, longInterval);
+			if(errorCode != MA_SENSOR_ERROR_NOT_AVAILABLE)
 			{
-				if(errorCode != SENSOR_ERROR_ALREADY_ENABLED)
+				if(errorCode != MA_SENSOR_ERROR_ALREADY_ENABLED)
 				{
-					maSensorStop(SENSOR_TYPE_MAGNETIC_FIELD);
+					maSensorStop(MA_SENSOR_TYPE_MAGNETIC_FIELD);
 				}
 				result += "{\"name\":\"MagneticField\",\"type\":\"MagneticField\"},";
 			}
 		}
 
-		if(type == "" || type == "Orientation")
-		{
-			errorCode = maSensorStart(SENSOR_TYPE_ORIENTATION, longInterval);
-			if(errorCode != SENSOR_ERROR_NOT_AVAILABLE)
-			{
-				if(errorCode != SENSOR_ERROR_ALREADY_ENABLED)
-				{
-					maSensorStop(SENSOR_TYPE_ORIENTATION);
-				}
-				result += "{\"name\":\"Orientation\",\"type\":\"Orientation\"},";
-			}
-		}
-
 		if(type == "" || type == "Gyroscope")
 		{
-			errorCode = maSensorStart(SENSOR_TYPE_GYROSCOPE, longInterval);
-			if(errorCode != SENSOR_ERROR_NOT_AVAILABLE)
+			errorCode = maSensorStart(MA_SENSOR_TYPE_GYROSCOPE, longInterval);
+			if(errorCode != MA_SENSOR_ERROR_NOT_AVAILABLE)
 			{
-				if(errorCode != SENSOR_ERROR_ALREADY_ENABLED)
+				if(errorCode != MA_SENSOR_ERROR_ALREADY_ENABLED)
 				{
-					maSensorStop(SENSOR_TYPE_GYROSCOPE);
+					maSensorStop(MA_SENSOR_TYPE_GYROSCOPE);
 				}
 				result += "{\"name\":\"Gyroscope\",\"type\":\"Gyroscope\"},";
 			}
@@ -226,12 +209,12 @@ namespace Wormhole
 
 		if(type == "" || type == "Proximity")
 		{
-			errorCode = maSensorStart(SENSOR_TYPE_PROXIMITY, longInterval);
-			if(errorCode != SENSOR_ERROR_NOT_AVAILABLE)
+			errorCode = maSensorStart(MA_SENSOR_TYPE_PROXIMITY, longInterval);
+			if(errorCode != MA_SENSOR_ERROR_NOT_AVAILABLE)
 			{
-				if(errorCode != SENSOR_ERROR_ALREADY_ENABLED)
+				if(errorCode != MA_SENSOR_ERROR_ALREADY_ENABLED)
 				{
-					maSensorStop(SENSOR_TYPE_PROXIMITY);
+					maSensorStop(MA_SENSOR_TYPE_PROXIMITY);
 				}
 				result += "{\"name\":\"Proximity\",\"type\":\"Proximity\"},";
 			}

@@ -37,6 +37,7 @@
 #include <bps/geolocation.h>
 #include <bps/navigator.h>
 #include <bps/screen.h>
+#include <bps/sensor.h>
 #include <bps/vibration.h>
 #include <img/img.h>
 #include <ft2build.h>
@@ -65,6 +66,8 @@ enum EventCode {
 static void bpsWait(int timeout);
 
 // static variables
+static screen_display_t* sDisplays;
+static int sDisplayCount;
 static screen_context_t sScreen;
 static screen_window_t sWindow;
 static Image* sCurrentDrawSurface = NULL;
@@ -125,6 +128,10 @@ namespace Base
 
 		ERRNO(screen_create_context(&sScreen, SCREEN_APPLICATION_CONTEXT));
 		ERRNO(screen_create_window(&sWindow, sScreen));
+
+		ERRNO(screen_get_context_property_iv(sScreen, SCREEN_PROPERTY_DISPLAY_COUNT, &sDisplayCount));
+		sDisplays = new screen_display_t[sDisplayCount];
+		ERRNO(screen_get_context_property_pv(sScreen, SCREEN_PROPERTY_DISPLAYS, (void**)sDisplays));
 
 		// define the screen usage
 		int param = SCREEN_USAGE_WRITE | SCREEN_USAGE_NATIVE;
@@ -349,7 +356,7 @@ static void bpsWait(int timeout) {
 			mtouch_event_t mtouch_event;
 			int screen_val;
 			ERRNO(screen_get_event_property_iv(screen_event, SCREEN_PROPERTY_TYPE, &screen_val));
-			LOG("screen event %i\n", screen_val);
+			//LOG("screen event %i\n", screen_val);
 			switch(screen_val) {
 			case SCREEN_EVENT_MTOUCH_TOUCH: event.type = EVENT_TYPE_POINTER_PRESSED; break;
 			case SCREEN_EVENT_MTOUCH_MOVE: event.type = EVENT_TYPE_POINTER_DRAGGED; break;
@@ -437,13 +444,42 @@ static void bpsWait(int timeout) {
 			default:
 				LOG("GEOLOCATION unknown event %i\n", event_id);
 			}
+		} else if(event_domain == sensor_get_domain()) {
+			//LOG("SENSOR event %i. voff: %i\n", event_id, (char*)event.sensor.values - (char*)&event);
+			event.type = EVENT_TYPE_SENSOR;
+			float* v = event.sensor.values;
+			switch(event_id) {
+			case SENSOR_ACCELEROMETER_READING:
+				event.sensor.type = MA_SENSOR_TYPE_ACCELEROMETER;
+				BPSERR(sensor_event_get_xyz(event_bps, v+0, v+1, v+2));
+				break;
+			case SENSOR_MAGNETOMETER_READING:
+				event.sensor.type = MA_SENSOR_TYPE_MAGNETIC_FIELD;
+				BPSERR(sensor_event_get_xyz(event_bps, v+0, v+1, v+2));
+				break;
+			case SENSOR_GYROSCOPE_READING:
+				event.sensor.type = MA_SENSOR_TYPE_GYROSCOPE;
+				BPSERR(sensor_event_get_xyz(event_bps, v+0, v+1, v+2));
+				break;
+			case SENSOR_PROXIMITY_READING:
+				event.sensor.type = MA_SENSOR_TYPE_PROXIMITY;
+				v[0] = sensor_event_get_proximity(event_bps);
+				if(v[0] == 0)
+					v[0] = MA_SENSOR_PROXIMITY_VALUE_NEAR;
+				else if(v[0] == 1)
+					v[0] = MA_SENSOR_PROXIMITY_VALUE_FAR;
+				break;
+			default:
+				event.type = 0;
+				LOG("SENSOR unknown event %i\n", event_id);
+			}
 		} else if(event_domain == sMyEventDomain) {
-			LOG("MyEvent %i\n", event_id);
+			//LOG("MyEvent %i\n", event_id);
 			const bps_event_payload_t* payload = bps_event_get_payload(event_bps);
 			switch(event_id) {
 			case EVENT_CODE_MA:
 				event = *(MAEventNative*)payload->data1;
-				LOG("event %p type %i\n", (void*)payload->data1, event.type);
+				//LOG("event %p type %i\n", (void*)payload->data1, event.type);
 				DEBUG_ASSERT(event.type < 100);
 				break;
 			case EVENT_CODE_DEFLUX:
@@ -652,8 +688,10 @@ SYSCALL(void, maUpdateScreen())
 {
 	if(sOpenGLActive)
 		bbutil_swap();
-	else
+	else {
+		ERRNO(screen_wait_vsync(sDisplays[0]));
 		ERRNO(screen_post_window(sWindow, sScreenBuffer, 1, sScreenRect, 0));
+	}
 }
 
 SYSCALL(void, maResetBacklight())
@@ -805,7 +843,8 @@ SYSCALL(int, maGetEvent(MAEvent* dst))
 	dst->type = e.type;
 	// copy data separately, because there can be padding in MAEventNative on 64-bit systems.
 	// compare offsetof(MAEventNative, data) and offsetof(MAEvent, data)
-	memcpy(&dst->data, &e.data, sizeof(dst->data));
+	void* p = (char*)dst + offsetof(MAEventNative, data);
+	memcpy(p, &e.data, size_t(sizeof(MAEvent) - sizeof(dst->type)));
 
 #if 0	//debug log
 	if(e.type == EVENT_TYPE_WIDGET) {
@@ -1168,6 +1207,67 @@ static int maLocationStop() {
 	return 0;
 }
 
+#define SENSOR_RATE_FASTEST_IOS 50
+#define SENSOR_RATE_GAME_IOS 80
+#define SENSOR_RATE_NORMAL_IOS 140
+#define SENSOR_RATE_UI_IOS 160
+
+#define SENSORS(m)\
+	m(ACCELEROMETER, ACCELEROMETER)\
+	m(MAGNETIC_FIELD, MAGNETOMETER)\
+	m(GYROSCOPE, GYROSCOPE)\
+	m(PROXIMITY, PROXIMITY)\
+
+#define DECLARE_ACTIVITY(maName, bbName) static bool sSensorActive##bbName = false;
+
+SENSORS(DECLARE_ACTIVITY);
+
+#define CASE_SENSOR(maName, bbName)\
+	case MA_SENSOR_TYPE_##maName:\
+		type = SENSOR_TYPE_##bbName;\
+		if(sSensorActive##bbName == activityCheck)\
+			return activityResult;\
+		break;
+
+#define SET_SENSOR_TYPE \
+	sensor_type_t type;\
+	switch(sensor) {\
+	SENSORS(CASE_SENSOR)\
+	default:\
+		return MA_SENSOR_ERROR_NOT_AVAILABLE;\
+	}\
+	if(!sensor_is_supported(type))\
+		return MA_SENSOR_ERROR_NOT_AVAILABLE;\
+
+static int maSensorStart(int sensor, int interval) {
+	static const bool activityCheck = true;
+	static const int activityResult = MA_SENSOR_ERROR_ALREADY_ENABLED;
+	SET_SENSOR_TYPE;
+
+	if(interval <= 0) switch(interval) {
+		case MA_SENSOR_RATE_FASTEST: interval = SENSOR_RATE_FASTEST_IOS; break;
+		case MA_SENSOR_RATE_GAME: interval = SENSOR_RATE_GAME_IOS; break;
+		case MA_SENSOR_RATE_NORMAL: interval = SENSOR_RATE_NORMAL_IOS; break;
+		case MA_SENSOR_RATE_UI: interval = SENSOR_RATE_UI_IOS; break;
+		default: BIG_PHAT_ERROR(ERR_INVALID_SENSOR_RATE);
+	}
+	// Convert milliseconds to microseconds.
+	interval *= 1000;
+
+	BPSERR(sensor_set_rate(type, interval));
+	BPSERR(sensor_set_skip_duplicates(type, true));
+	BPSERR(sensor_request_events(type));
+	return MA_SENSOR_ERROR_NONE;
+}
+
+static int maSensorStop(int sensor) {
+	static const bool activityCheck = false;
+	static const int activityResult = MA_SENSOR_ERROR_NOT_ENABLED;
+	SET_SENSOR_TYPE;
+	BPSERR(sensor_stop_events(type));
+	return MA_SENSOR_ERROR_NONE;
+}
+
 
 SYSCALL(void, maPanic(int result, const char* message))
 {
@@ -1234,6 +1334,9 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 
 	maIOCtl_case(maLocationStart);
 	maIOCtl_case(maLocationStop);
+
+	maIOCtl_case(maSensorStart);
+	maIOCtl_case(maSensorStop);
 
 #if 0
 

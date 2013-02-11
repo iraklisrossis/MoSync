@@ -1666,7 +1666,7 @@ interface MAAPI {
 			* Valid only if the event type is \link #EVENT_TYPE_PURCHASE PURCHASE \endlink.
 			*/
 			MAPurchaseEventData purchaseData;
-			}
+		}
 	}
 
 	/**
@@ -4124,7 +4124,7 @@ group OpenGLES "OpenGLES" {
 		*
 		* \param title The dialog title.
 		* \param destructiveButtonTitle The destructive button text. This is an iOS specific feature: it has different color than the other options,
-		* and it indicates that it's action has destructive behaviour. On Android it is treated and it looks like a normal option.
+		* and indicates that its action has destructive behaviour. On Android it is treated and looks like a normal option.
 		* \param cancelButtonTitle The dialog's Cancel button text. If left empty, the dialog is not cancelable.
 		* \param otherButtonTitles The address to the buffer that stores the list of options.
 		* \param otherButtonTitlesSize The size of the buffer, in bytes.
@@ -4134,25 +4134,23 @@ group OpenGLES "OpenGLES" {
 
 group SensorAPI "Sensor API" {
 		group SensorTypes "Sensor Types" {
-		constset int SENSOR_TYPE_ {
-			// A constant describing an accelerometer sensor type.
+		constset int MA_SENSOR_TYPE_ {
+			// A constant describing an accelerometer sensor type. 3 values, xyz, in meters / second^2.
 			ACCELEROMETER = 1;
-			// A constant describing a magnetic field sensor type.
+			// A constant describing a magnetic field sensor type. 3 values, xyz, in microtesla.
 			MAGNETIC_FIELD = 2;
-			// A constant describing an orientation sensor type.
-			ORIENTATION = 3;
-			// A constant describing a gyroscope sensor type.
+			// A constant describing a gyroscope sensor type. 3 values, xyz, in radians / second.
 			GYROSCOPE = 4;
-			// A constant describing a proximity sensor type.
+			// A constant describing a proximity sensor type. 1 value, in centimeters.
 			PROXIMITY = 5;
-			// A constant describing a compass sensor type.
+			// A constant describing a compass sensor type. 1 value, in degrees.
 			COMPASS = 6;
 		}
 
 		} // end of sensor types
 
 		group SensorConsts "Sensor Constants" {
-		constset int SENSOR_RATE_ {
+		constset int MA_SENSOR_RATE_ {
 			// Get sensor data as fast as possible.
 			FASTEST = 0;
 			// A rate suitable for games.
@@ -4163,7 +4161,7 @@ group SensorAPI "Sensor API" {
 			UI = -3;
 		}
 
-		constset int SENSOR_ERROR_ {
+		constset int MA_SENSOR_ERROR_ {
 			NONE = 0;
 			// Errors for maSensorStart
 			NOT_AVAILABLE = -1;
@@ -4174,24 +4172,7 @@ group SensorAPI "Sensor API" {
 			CANNOT_DISABLE = -5;
 		}
 
-		constset int UIDEVICE_ORIENTATION_ {
-		    // The orientation of the device cannot be determined.
-			UNKNOWN = 0;
-			// The device is in portrait mode, with the device held upright and the home button at the bottom.
-			PORTRAIT = 1;
-			// The device is in portrait mode but upside down, with the device held upright and the home button at the top.
-			PORTRAIT_UPSIDE_DOWN = 2;
-			// The device is in landscape mode, with the device held upright and the home button on the right side.
-			LANDSCAPE_LEFT = 3;
-			// The device is in landscape mode, with the device held upright and the home button on the left side.
-			LANDSCAPE_RIGHT = 4;
-			// The device is held parallel to the ground with the screen facing upwards.
-			FACE_UP = 5;
-			// The device is held parallel to the ground with the screen facing downwards.
-			FACE_DOWN = 6;
-		}
-
-		constset int SENSOR_PROXIMITY_VALUE_ {
+		constset int MA_SENSOR_PROXIMITY_VALUE_ {
 			// the device is not close to the user
 			FAR = 0;
 			// the device is close to the user
@@ -4205,13 +4186,13 @@ group SensorAPI "Sensor API" {
 		* \brief Enables a sensor and starts sending events if the sensor is available.
 		* If the sensor is already enabled this call will have no effect.
 		* \param sensor       The sensor which should be enabled.
-		* One of the \link #SENSOR_TYPE_ACCELEROMETER SENSOR_TYPE \endlink constants.
+		* One of the \link #MA_SENSOR_TYPE_ACCELEROMETER MA_SENSOR_TYPE \endlink constants.
 		* \param interval     Time interval in which a sensor update shall be triggered.
-		* Can be one of the \link #SENSOR_RATE_FASTEST SENSOR_RATE \endlink constants or a time interval in milliseconds.
-		* \return    #SENSOR_ERROR_NONE  on success.
-		*            #SENSOR_ERROR_NOT_AVAILABLE if this sensor wasn't available.
-		*            #SENSOR_ERROR_INTERVAL_NOT_SET if the interval wasn't set, could be due to platform limitations.
-		*            #SENSOR_ERROR_ALREADY_ENABLED if the sensor already was enabled.
+		* Can be one of the \link #MA_SENSOR_RATE_FASTEST MA_SENSOR_RATE \endlink constants or a time interval in milliseconds.
+		* \return    #MA_SENSOR_ERROR_NONE  on success.
+		*            #MA_SENSOR_ERROR_NOT_AVAILABLE if this sensor wasn't available.
+		*            #MA_SENSOR_ERROR_INTERVAL_NOT_SET if the interval wasn't set, could be due to platform limitations.
+		*            #MA_SENSOR_ERROR_ALREADY_ENABLED if the sensor already was enabled.
 		* \see #EVENT_TYPE_SENSOR
 		*/
 		int maSensorStart(in int sensor, in int interval);
@@ -4219,10 +4200,10 @@ group SensorAPI "Sensor API" {
 		/**
 		* \brief Disables a sensor so that it doesn't send any further events.
 		* \param sensor    The sensor which should be disabled.
-		* One of the \link #SENSOR_TYPE_ACCELEROMETER SENSOR_TYPE \endlink constants.
-		* \return    #SENSOR_ERROR_NONE on success.
-		*            #SENSOR_ERROR_NOT_ENABLED if this sensor wasn't enabled.
-		*            #SENSOR_ERROR_CANNOT_DISABLE if there was a problem disabling the sensor.
+		* One of the \link #MA_SENSOR_TYPE_ACCELEROMETER MA_SENSOR_TYPE \endlink constants.
+		* \return    #MA_SENSOR_ERROR_NONE on success.
+		*            #MA_SENSOR_ERROR_NOT_ENABLED if this sensor wasn't enabled.
+		*            #MA_SENSOR_ERROR_CANNOT_DISABLE if there was a problem disabling the sensor.
 		* \see #EVENT_TYPE_SENSOR
 		*/
 		int maSensorStop(in int sensor);

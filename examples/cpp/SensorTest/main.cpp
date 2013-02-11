@@ -40,14 +40,17 @@ const char *gSensorName[SENSOR_TYPES + 1] =
 	TXT_NONE,
 	TXT_SENSOR_ACCELEROMETER,
 	TXT_SENSOR_MAG_FIELD,
-	TXT_SENSOR_ORIENTATION,
+	TXT_NONE,
 	TXT_SENSOR_GYROSCOPE,
-	TXT_SENSOR_PROXIMITY
+	TXT_SENSOR_PROXIMITY,
+	TXT_SENSOR_COMPASS,
 };
 
 // Screen dimensions.
 int gScreenWidth;
 int gScreenHeight;
+
+static int sFontHeight = 0;
 
 /**
  * Get the screen size into the instance variables
@@ -72,40 +75,14 @@ static const char* getErrorText(int errorCode)
 {
 	switch (errorCode)
 	{
-		case SENSOR_ERROR_NOT_AVAILABLE:
+		case MA_SENSOR_ERROR_NOT_AVAILABLE:
 			return TXT_NOT_AVAILABLE;
-		case SENSOR_ERROR_INTERVAL_NOT_SET:
+		case MA_SENSOR_ERROR_INTERVAL_NOT_SET:
 			return TXT_INTERVAL;
-		case SENSOR_ERROR_ALREADY_ENABLED:
+		case MA_SENSOR_ERROR_ALREADY_ENABLED:
 			return TXT_ENABLED;
 		default:
 			return TXT_AVAILABLE;
-	}
-}
-
-/*
- * @brief Get the orientation text using the sensor orientation code.
- */
-static const char* getOrientationText(int orientation)
-{
-	switch (orientation)
-	{
-		case UIDEVICE_ORIENTATION_UNKNOWN:
-			return TXT_UNKNOWN;
-		case UIDEVICE_ORIENTATION_PORTRAIT:
-			return TXT_PORTRAIT;
-		case UIDEVICE_ORIENTATION_PORTRAIT_UPSIDE_DOWN:
-			return TXT_UPSIDE_DOWN;
-		case UIDEVICE_ORIENTATION_LANDSCAPE_LEFT:
-			return TXT_LANDSCAPE_LEFT;
-		case UIDEVICE_ORIENTATION_LANDSCAPE_RIGHT:
-			return TXT_LANDSCAPE_RIGHT;
-		case UIDEVICE_ORIENTATION_FACE_UP:
-			return TXT_FACE_UP;
-		case UIDEVICE_ORIENTATION_FACE_DOWN:
-			return TXT_FACE_DOWN;
-		default:
-			maPanic(1, "getOrientationText");
 	}
 }
 
@@ -116,7 +93,7 @@ static void registerSensors()
 {
 	for (int type=1; type<=SENSOR_TYPES; type++)
 	{
-		gSensorError[type] = maSensorStart(type, SENSOR_RATE_NORMAL);
+		gSensorError[type] = maSensorStart(type, MA_SENSOR_RATE_NORMAL);
 	}
 }
 
@@ -143,21 +120,25 @@ static void drawSensorValue(int index, int x, int y)
 	char buffer[BUFFER_SIZE];
 	switch (index)
 	{
-		case SENSOR_TYPE_ACCELEROMETER:
-		case SENSOR_TYPE_MAGNETIC_FIELD:
-		case SENSOR_TYPE_GYROSCOPE:
+		case MA_SENSOR_TYPE_ACCELEROMETER:
+		case MA_SENSOR_TYPE_MAGNETIC_FIELD:
+		case MA_SENSOR_TYPE_GYROSCOPE:
 			sprintf(buffer, "Values: X:%0.4f; Y:%0.4f; Z:%0.4f",
 					values[0], values[1], values[2]);
 			break;
-		case SENSOR_TYPE_ORIENTATION:
-			sprintf(buffer, "Value: %s", getOrientationText((int)values[0]));
-			break;
-		case SENSOR_TYPE_PROXIMITY:
-			if (values[0] == SENSOR_PROXIMITY_VALUE_FAR)
+		case MA_SENSOR_TYPE_PROXIMITY:
+			if (values[0] == MA_SENSOR_PROXIMITY_VALUE_FAR)
 				sprintf(buffer, "Value: FAR");
-			else
+			else if (values[0] == MA_SENSOR_PROXIMITY_VALUE_NEAR)
 				sprintf(buffer, "Value: NEAR");
+			else
+				sprintf(buffer, "Value: %f", values[0]);
 			break;
+		//case MA_SENSOR_TYPE_COMPASS:
+				//sprintf(buffer, "Value: %f", values[0]);
+			//break;
+		default:
+			sprintf(buffer, "Unknown sensor %i\n", index);
 	}
 	maDrawText(x, y, buffer);
 }
@@ -176,7 +157,6 @@ static void drawSensorStatus(int index, int x, int y)
 	maDrawText(x, y, buffer);
 }
 
-
 /*
  * @brief Displays the sensor values
  * or an error message if the sensor cannot register.
@@ -190,9 +170,15 @@ static void drawSensorOutput()
 	//set output text color
 	maSetColor(TEXT_COLOR);
 
+	if(sFontHeight <= 0) {
+		sFontHeight = EXTENT_Y(maGetTextSize("ABCDg"));
+	}
+
 	int posY = 0;
 	for (int i=1; i<=SENSOR_TYPES; i++)
 	{
+		if(strcmp(gSensorName[i], TXT_NONE) == 0)
+			continue;
 		drawSensorStatus(i, 0, posY);
 		posY += OFFSET_Y;
 
@@ -215,9 +201,10 @@ static void setFont()
 	//Check if it's implemented on the current platform.
 	if (0 > defaultFont)
 	{
-		maPanic(0, "Device fonts is only available on Android and iOS.");
+		//maPanic(0, "Device fonts is only available on Android and iOS.");
+	} else {
+		maFontSetCurrent(defaultFont);
 	}
-	maFontSetCurrent(defaultFont);
 }
 
 extern "C" int MAMain()
@@ -241,6 +228,11 @@ extern "C" int MAMain()
 		{
 			if(event.type == EVENT_TYPE_SENSOR)
 			{
+#if 0
+				lprintfln("got SENSOR %i %f %f %f. voff: %i",
+					event.sensor.type, event.sensor.values[0], event.sensor.values[1], event.sensor.values[2],
+					(char*)event.sensor.values - (char*)&event);
+#endif
 				memcpy(gSensorValue[event.sensor.type],
 						event.sensor.values, SENSOR_VALUES * sizeof(float));
 			}
@@ -249,11 +241,14 @@ extern "C" int MAMain()
 			{
 				run = false;
 			}
-
-			drawSensorOutput();
-
-			maUpdateScreen();
+			else if(event.type == EVENT_TYPE_CLOSE)
+			{
+				run = false;
+			}
 		}
+		drawSensorOutput();
+		maUpdateScreen();
+		maWait(-1);
 	}
 
 	unregisterSensors();

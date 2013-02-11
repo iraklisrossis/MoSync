@@ -102,7 +102,7 @@ public:
 		// Start the gyro or accelerometer sensor with a predefined rate
 		// for sending events, suitable for games.
 
-		if(maSensorStart(SENSOR_TYPE_ACCELEROMETER, SENSOR_RATE_GAME) < 0) {
+		if(maSensorStart(MA_SENSOR_TYPE_ACCELEROMETER, MA_SENSOR_RATE_GAME) < 0) {
 			maPanic(1, "Failed to initialize accelerometer!");
 		}
 	}
@@ -140,7 +140,7 @@ public:
 	void sensorEvent(MASensor a) {
 
 		// If the type of sensor data received is from the accelerometer
-		if (a.type == SENSOR_TYPE_ACCELEROMETER) {
+		if (a.type == MA_SENSOR_TYPE_ACCELEROMETER) {
 
 			// Filter the accelerometer gravity vector.
 			Vector3 f = mFilter.filter(Vector3(a.values[0], a.values[1], a.values[2]));

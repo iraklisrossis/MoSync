@@ -19,35 +19,26 @@ import android.util.Log;
 
 import static com.mosync.internal.generated.MAAPI_consts.EVENT_TYPE_SENSOR;
 
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_TYPE_ACCELEROMETER;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_TYPE_MAGNETIC_FIELD;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_TYPE_ORIENTATION;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_TYPE_GYROSCOPE;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_TYPE_PROXIMITY;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_TYPE_COMPASS;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_TYPE_ACCELEROMETER;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_TYPE_MAGNETIC_FIELD;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_TYPE_GYROSCOPE;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_TYPE_PROXIMITY;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_TYPE_COMPASS;
 
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_RATE_FASTEST;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_RATE_GAME;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_RATE_NORMAL;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_RATE_UI;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_RATE_FASTEST;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_RATE_GAME;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_RATE_NORMAL;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_RATE_UI;
 
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_ERROR_ALREADY_ENABLED;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_ERROR_CANNOT_DISABLE;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_ERROR_INTERVAL_NOT_SET;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_ERROR_NONE;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_ERROR_NOT_AVAILABLE;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_ERROR_NOT_ENABLED;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_ERROR_ALREADY_ENABLED;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_ERROR_CANNOT_DISABLE;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_ERROR_INTERVAL_NOT_SET;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_ERROR_NONE;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_ERROR_NOT_AVAILABLE;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_ERROR_NOT_ENABLED;
 
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_PROXIMITY_VALUE_FAR;
-import static com.mosync.internal.generated.MAAPI_consts.SENSOR_PROXIMITY_VALUE_NEAR;
-
-import static com.mosync.internal.generated.MAAPI_consts.UIDEVICE_ORIENTATION_FACE_DOWN;
-import static com.mosync.internal.generated.MAAPI_consts.UIDEVICE_ORIENTATION_FACE_UP;
-import static com.mosync.internal.generated.MAAPI_consts.UIDEVICE_ORIENTATION_LANDSCAPE_LEFT;
-import static com.mosync.internal.generated.MAAPI_consts.UIDEVICE_ORIENTATION_LANDSCAPE_RIGHT;
-import static com.mosync.internal.generated.MAAPI_consts.UIDEVICE_ORIENTATION_PORTRAIT;
-import static com.mosync.internal.generated.MAAPI_consts.UIDEVICE_ORIENTATION_PORTRAIT_UPSIDE_DOWN;
-import static com.mosync.internal.generated.MAAPI_consts.UIDEVICE_ORIENTATION_UNKNOWN;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_PROXIMITY_VALUE_FAR;
+import static com.mosync.internal.generated.MAAPI_consts.MA_SENSOR_PROXIMITY_VALUE_NEAR;
 
 public class MoSyncSensor implements SensorEventListener {
 
@@ -136,12 +127,11 @@ public class MoSyncSensor implements SensorEventListener {
 		{
 			mSensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
 			// Set up conversion table
-			mSensorConversion.put(SENSOR_TYPE_ACCELEROMETER, Sensor.TYPE_ACCELEROMETER);
-			mSensorConversion.put(SENSOR_TYPE_COMPASS, Sensor.TYPE_ORIENTATION);
-			mSensorConversion.put(SENSOR_TYPE_GYROSCOPE, Sensor.TYPE_GYROSCOPE);
-			mSensorConversion.put(SENSOR_TYPE_MAGNETIC_FIELD, Sensor.TYPE_MAGNETIC_FIELD);
-			mSensorConversion.put(SENSOR_TYPE_ORIENTATION,Sensor.TYPE_ORIENTATION);
-			mSensorConversion.put(SENSOR_TYPE_PROXIMITY, Sensor.TYPE_PROXIMITY);
+			mSensorConversion.put(MA_SENSOR_TYPE_ACCELEROMETER, Sensor.TYPE_ACCELEROMETER);
+			mSensorConversion.put(MA_SENSOR_TYPE_COMPASS, Sensor.TYPE_ORIENTATION);
+			mSensorConversion.put(MA_SENSOR_TYPE_GYROSCOPE, Sensor.TYPE_GYROSCOPE);
+			mSensorConversion.put(MA_SENSOR_TYPE_MAGNETIC_FIELD, Sensor.TYPE_MAGNETIC_FIELD);
+			mSensorConversion.put(MA_SENSOR_TYPE_PROXIMITY, Sensor.TYPE_PROXIMITY);
 
 		} catch (Throwable ex)
 		{
@@ -179,25 +169,10 @@ public class MoSyncSensor implements SensorEventListener {
 			switch (nativeSensorType)
 			{
 				case Sensor.TYPE_ORIENTATION:
-					if(mActiveSensors.contains(SENSOR_TYPE_ORIENTATION))
-					{
-						// Since Orientation and Compass is using the same
-						// sensor we need to do things a little bit special.
-
-						int orientation = getOrientation(se.values[1], se.values[2]);
-
-						if(orientation != mLastOrientation)
-						{
-							mLastOrientation = orientation;
-							event[SENSOR_EVENT_SENSOR_TYPE] = SENSOR_TYPE_ORIENTATION;
-							event[SENSOR_EVENT_VALUES] = Float.floatToIntBits(orientation);
-							sendEvent(event);
-						}
-					}
-					if(mActiveSensors.contains(SENSOR_TYPE_COMPASS))
+					if(mActiveSensors.contains(MA_SENSOR_TYPE_COMPASS))
 					{
 						SYSLOG("@@@ MOSYNC onSensorChanged: got compass data");
-						event[SENSOR_EVENT_SENSOR_TYPE] = SENSOR_TYPE_COMPASS;
+						event[SENSOR_EVENT_SENSOR_TYPE] = MA_SENSOR_TYPE_COMPASS;
 						event[SENSOR_EVENT_VALUES] = Float.floatToIntBits(se.values[0]);
 						sendEvent(event);
 					}
@@ -205,14 +180,14 @@ public class MoSyncSensor implements SensorEventListener {
 					break;
 
 				case Sensor.TYPE_PROXIMITY:
-					event[SENSOR_EVENT_SENSOR_TYPE] = SENSOR_TYPE_PROXIMITY;
+					event[SENSOR_EVENT_SENSOR_TYPE] = MA_SENSOR_TYPE_PROXIMITY;
 					event[SENSOR_EVENT_VALUES] =
 						Float.floatToIntBits((se.values[0] == 0)
-							? SENSOR_PROXIMITY_VALUE_NEAR : SENSOR_PROXIMITY_VALUE_FAR);
+							? MA_SENSOR_PROXIMITY_VALUE_NEAR : MA_SENSOR_PROXIMITY_VALUE_FAR);
 					break;
 
 				case Sensor.TYPE_ACCELEROMETER:
-					event[SENSOR_EVENT_SENSOR_TYPE] = SENSOR_TYPE_ACCELEROMETER;
+					event[SENSOR_EVENT_SENSOR_TYPE] = MA_SENSOR_TYPE_ACCELEROMETER;
 					for (int i=0; i<3; i++)
 					{
 						event[SENSOR_EVENT_VALUES + i] =
@@ -221,7 +196,7 @@ public class MoSyncSensor implements SensorEventListener {
 					break;
 
 				case Sensor.TYPE_MAGNETIC_FIELD:
-					event[SENSOR_EVENT_SENSOR_TYPE] = SENSOR_TYPE_MAGNETIC_FIELD;
+					event[SENSOR_EVENT_SENSOR_TYPE] = MA_SENSOR_TYPE_MAGNETIC_FIELD;
 					for (int i=0; i<3; i++)
 					{
 						event[SENSOR_EVENT_VALUES + i] =
@@ -230,7 +205,7 @@ public class MoSyncSensor implements SensorEventListener {
 					break;
 
 				case Sensor.TYPE_GYROSCOPE:
-					event[SENSOR_EVENT_SENSOR_TYPE] = SENSOR_TYPE_GYROSCOPE;
+					event[SENSOR_EVENT_SENSOR_TYPE] = MA_SENSOR_TYPE_GYROSCOPE;
 					for (int i=0; i<3; i++)
 					{
 						event[SENSOR_EVENT_VALUES + i] =
@@ -257,47 +232,6 @@ public class MoSyncSensor implements SensorEventListener {
     }
 
 	/**
-	 * @brief Converts the pitch and roll into an orientation
-	 * @param pitch The current pitch
-	 * @param roll The current roll
-	 * @return One of the UIDEVICE_ORIENTATION enumerations
-	 */
-	int getOrientation(float pitch, float roll)
-	{
-		if ( (-45 < pitch) && (pitch < 45) &&
-				(-45 < roll) && (roll < 45) )
-		{
-			return UIDEVICE_ORIENTATION_FACE_UP;
-		}
-		else if ((135 < pitch) || (pitch < -135) &&
-				(-45 < roll) && (roll < 45) )
-		{
-			return UIDEVICE_ORIENTATION_FACE_DOWN;
-		}
-		else if ( (-45 < roll) && (roll < 45) )
-		{
-			if ( pitch <= 0 )
-			{
-				return UIDEVICE_ORIENTATION_PORTRAIT;
-			}
-			else
-			{
-				return UIDEVICE_ORIENTATION_PORTRAIT_UPSIDE_DOWN;
-			}
-		}
-		else if ( roll > 45 )
-		{
-			return UIDEVICE_ORIENTATION_LANDSCAPE_LEFT;
-		}
-		else if ( roll < -45 )
-		{
-			return UIDEVICE_ORIENTATION_LANDSCAPE_RIGHT;
-		}
-
-		return UIDEVICE_ORIENTATION_UNKNOWN;
-	}
-
-	/**
 	 * @brief Sends the event
 	 * @param event The event array
 	 */
@@ -320,12 +254,12 @@ public class MoSyncSensor implements SensorEventListener {
 
 		if(!mSensorConversion.containsKey(sensor))
 		{
-			return SENSOR_ERROR_NOT_AVAILABLE;
+			return MA_SENSOR_ERROR_NOT_AVAILABLE;
 		}
 
 		if(mActiveSensors.contains(sensor))
 		{
-			return SENSOR_ERROR_ALREADY_ENABLED;
+			return MA_SENSOR_ERROR_ALREADY_ENABLED;
 		}
 
 		int sensorType = mSensorConversion.get(sensor);
@@ -334,7 +268,7 @@ public class MoSyncSensor implements SensorEventListener {
 
 		// If there isn't a default sensor we shouldn't try to activate it
 		if(defaultSensor == null)
-			return SENSOR_ERROR_NOT_AVAILABLE;
+			return MA_SENSOR_ERROR_NOT_AVAILABLE;
 
 		mActiveSensors.add(sensor);
 
@@ -345,9 +279,9 @@ public class MoSyncSensor implements SensorEventListener {
 		}
 
 		if (!mSensorManager.registerListener(this, defaultSensor, rate))
-			return SENSOR_ERROR_INTERVAL_NOT_SET;
+			return MA_SENSOR_ERROR_INTERVAL_NOT_SET;
 
-		return SENSOR_ERROR_NONE;
+		return MA_SENSOR_ERROR_NONE;
 	}
 
 	/*
@@ -356,7 +290,7 @@ public class MoSyncSensor implements SensorEventListener {
 	int maSensorStop(int sensor)
 	{
 		if(!mActiveSensors.contains(sensor))
-			return SENSOR_ERROR_NOT_ENABLED;
+			return MA_SENSOR_ERROR_NOT_ENABLED;
 
 		int sensorType = mSensorConversion.get(sensor);
 
@@ -367,16 +301,6 @@ public class MoSyncSensor implements SensorEventListener {
 
 		try
 		{
-			// We need to do some checks here. Orientation and Compass sensor is using
-			// the same underlying sensor
-			if((sensor == SENSOR_TYPE_COMPASS) || (sensor == SENSOR_TYPE_ORIENTATION))
-			{
-				if(mActiveSensors.contains(SENSOR_TYPE_ORIENTATION) &&
-						mActiveSensors.contains(SENSOR_TYPE_COMPASS))
-				{
-					unregister = false;
-				}
-			}
 			mActiveSensors.remove(sensor);
 
 			if(unregister)
@@ -386,10 +310,10 @@ public class MoSyncSensor implements SensorEventListener {
 		}
 		catch (Exception e)
 		{
-			return SENSOR_ERROR_CANNOT_DISABLE;
+			return MA_SENSOR_ERROR_CANNOT_DISABLE;
 		}
 
-		return SENSOR_ERROR_NONE;
+		return MA_SENSOR_ERROR_NONE;
 	}
 
 	/*
@@ -426,13 +350,13 @@ public class MoSyncSensor implements SensorEventListener {
 	{
 		switch (interval)
 		{
-			case SENSOR_RATE_FASTEST:
+			case MA_SENSOR_RATE_FASTEST:
 				return SensorManager.SENSOR_DELAY_FASTEST;
-			case SENSOR_RATE_GAME:
+			case MA_SENSOR_RATE_GAME:
 				return SensorManager.SENSOR_DELAY_GAME;
-			case SENSOR_RATE_NORMAL:
+			case MA_SENSOR_RATE_NORMAL:
 				return SensorManager.SENSOR_DELAY_NORMAL;
-			case SENSOR_RATE_UI:
+			case MA_SENSOR_RATE_UI:
 				return SensorManager.SENSOR_DELAY_UI;
 			default:
 				return (interval * SENSOR_DELAY_MULTIPLIER);

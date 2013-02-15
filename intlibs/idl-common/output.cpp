@@ -272,11 +272,6 @@ void streamHeaderFunctions(ostream& stream, const Interface& inf, bool syscall) 
 		if(f.groupId != "")
 			stream << "/** @ingroup " << f.groupId << " */\n";
 
-		if(!syscall && f.returnType != "noreturn")
-			stream <<
-				"#if defined(__arm__) && !defined(MAPIP)\n"
-				"inline\n"
-				"#endif\n";
 		if(syscall)
 			stream << "SYSCALL(";
 		stream << cType(inf, f.returnType);
@@ -291,12 +286,7 @@ void streamHeaderFunctions(ostream& stream, const Interface& inf, bool syscall) 
 			stream << ")";
 		if(syscall)
 			stream << ")";
-		stream << ")\n"
-			"#if defined(__arm__) && defined(MAPIP)\n"
-			"__attribute((naked))\n"
-			"#endif\n"
-			";\n"
-		;
+		stream << ");\n";
 		stream << "\n";
 	}
 	stream << "\n";

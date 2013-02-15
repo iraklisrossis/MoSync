@@ -7,6 +7,7 @@ require './config.rb'
 TARGET = 'bb10'
 
 require File.expand_path('../../../../../rules/exe.rb')
+require File.expand_path('../../../../../rules/native_lib.rb')
 require 'zip/zip'
 require 'erb'
 require 'digest'
@@ -95,7 +96,7 @@ class BarTask < FileTask
 	end
 end
 
-class BB10ExeWork < ExeWork
+module BB10Mod
 	def getGccInvoke(ending)
 		return "qcc -V4.6.3,#{CONFIG_COMPILER}"
 	end
@@ -111,6 +112,14 @@ class BB10ExeWork < ExeWork
 		@TARGET_FLAGS = ' -D_FORTIFY_SOURCE=2 -D__BB10__ -Wno-psabi'
 		@TARGET_CPPFLAGS = ''
 	end
+end
+
+class BB10LibWork < NativeLibWork
+	include BB10Mod
+end
+
+class BB10ExeWork < ExeWork
+	include BB10Mod
 
 	def setup3(all_objects, have_cppfiles)
 		@EXTRA_LINKFLAGS += ' -lang-c++ -g -Wl,-z,relro -Wl,-z,now'
@@ -161,16 +170,46 @@ class BB10ExeWork < ExeWork
 	end
 end
 
+BD = '../../../../..'
+
+if(defined?(NATIVE_PROGRAM_DIR))
+	npl = BB10LibWork.new
+	npl.instance_eval do
+		@SOURCES = [
+			NATIVE_PROGRAM_DIR,
+			"#{BD}/libs/ResCompiler",
+		]
+		@EXTRA_CPPFLAGS = " -Wno-shadow -Wno-vla"
+		@EXTRA_INCLUDES = ["#{mosyncdir}/include"]
+		@NAME = 'program'
+		def run; end
+	end
+	npl.invoke
+end
+
 work = BB10ExeWork.new
 work.instance_eval do
-	BD = '../../../../..'
+	if(defined?(NATIVE_PROGRAM_DIR))
+		extraSources = ["#{BD}/runtimes/cpp/base/lib"]
+		extraSourcefiles = []
+		extraIncludes = []
+		@EXTRA_OBJECTS = [npl.target]
+		extraSpecificFlags = {
+			'mosync.cpp' => ' -DNATIVE_PROGRAM=1',
+		}
+	else
+		extraSources = []
+		extraSourcefiles = ["#{BD}/runtimes/cpp/core/Core.cpp"]
+		extraIncludes = ["#{BD}/runtimes/cpp/core"]
+		extraSpecificFlags = { 'mosync.cpp' => ' -DNATIVE_PROGRAM=0' }
+	end
 	@SOURCES = [
 		'src',
 		"#{BD}/runtimes/cpp/base",
 		"#{BD}/intlibs/helpers/platforms/linux",
 		"#{BD}/intlibs/hashmap",
 		"#{BD}/intlibs/net",
-	]
+	] + extraSources
 	@IGNORED_FILES = [
 		'MoSyncDB.cpp',
 		'pim.cpp',
@@ -181,13 +220,11 @@ work.instance_eval do
 		'AudioChannel.cpp',
 	]
 	@EXTRA_SOURCEFILES = [
-		"#{BD}/runtimes/cpp/core/Core.cpp",
 		"#{BD}/runtimes/cpp/platforms/sdl/FileImpl.cpp",
 		"#{BD}/runtimes/cpp/platforms/sdl/netImpl.cpp",
 		"#{BD}/intlibs/filelist/filelist-linux.c",
-	]
+	] + extraSourcefiles
 	@EXTRA_INCLUDES += [
-		"#{BD}/runtimes/cpp/core",
 		"#{BD}/runtimes/cpp/base",
 		"#{BD}/runtimes/cpp",
 		"#{BD}/intlibs",
@@ -199,7 +236,7 @@ work.instance_eval do
 		'SyscallImpl.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',
 		'Syscall.cpp' => ' -Wno-float-equal',
 		'Image.cpp' => ' -Wno-shadow',
-	}
+	}.merge(extraSpecificFlags)
 	@SPECIFIC_CFLAGS['SyscallImpl.cpp'] << ' -Wno-missing-noreturn'	# temp hack until all syscalls are implemented.
 	@LIBRARIES = [
 		'm',

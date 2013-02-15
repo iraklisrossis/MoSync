@@ -1,7 +1,13 @@
 
 #include "config_platform.h"
 
+#if NATIVE_PROGRAM
+extern "C" int MAMain();
+extern "C" int resource_selector();
+#else
 #include <core/Core.h>
+#endif
+
 #include <base/Syscall.h>
 #include <string.h>
 #include <stdio.h>
@@ -11,8 +17,11 @@
 
 using namespace std;
 
-static MAHandle gReloadHandle = 0;
 bool gRunning = false;
+
+#if !NATIVE_PROGRAM
+static MAHandle gReloadHandle = 0;
+#endif
 
 static void sigquit_handler(int) {
 	LOG("SIGQUIT received. Application will now shut down.\n");
@@ -32,9 +41,18 @@ int main() {
 		LOG("SIGQUIT handler installed.\n");
 	}
 
-	Base::Syscall *syscall = 0;
-	syscall = new Base::Syscall();
+	Base::Syscall* syscall = new Base::Syscall();
+	int res;
 
+#if NATIVE_PROGRAM
+	Base::FileStream rf("app/native/resources");
+	MYASSERT(syscall->loadResources(rf, "app/native/resources"), ERR_PROGRAM_LOAD_FAILED);
+	LOG("resources loaded.\n");
+	res = resource_selector();
+	LOG("resource_selector: %i\n", res);
+	res = MAMain();
+	LOG("MAMain: %i\n", res);
+#else
 	gCore = Core::CreateCore(*syscall);
 	MYASSERT(Core::LoadVMApp(gCore, "app/native/program", "app/native/resources"), ERR_PROGRAM_LOAD_FAILED);
 	gRunning = true;
@@ -44,7 +62,7 @@ int main() {
 
 		if(gReloadHandle > 0) {
 			Base::Stream* stream = Base::gSyscall->resources.extract_RT_BINARY(gReloadHandle);
-			bool res = Core::LoadVMApp(gCore, *stream);
+			res = Core::LoadVMApp(gCore, *stream);
 			delete stream;
 			gReloadHandle = 0;
 			if(!res) {
@@ -52,14 +70,18 @@ int main() {
 			}
 		}
 	}
+	res = 0;
+#endif
 
 	bps_shutdown();
-	LOG("main return 0\n");
-	return 0;
+	LOG("main return %i\n", res);
+	return res;
 }
 
+#if !NATIVE_PROGRAM
 SYSCALL(void, maLoadProgram(MAHandle data, int reload)) {
 	Base::gSyscall->VM_Yield();
 	gReloadHandle = data;
 	//gReload |= (reload != 0);
 }
+#endif

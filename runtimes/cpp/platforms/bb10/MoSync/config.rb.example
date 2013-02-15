@@ -8,7 +8,15 @@ ENV['PYTHONPATH'] = ''
 ENV['QDE'] = 'C:/Programs/bbndk/ide/win32/x86'
 
 UNAME_OVERRIDE = 'windows32'
-#CONFIG_RUN_DEVICE = '192.168.136.128'
-#CONFIG_COMPILER = 'gcc_ntox86'
-CONFIG_RUN_DEVICE = '169.254.0.1 -password password'
+
+DEVICE = 1
+
+if(DEVICE == 0)
+CONFIG_RUN_DEVICE = '192.168.136.128'
+CONFIG_COMPILER = 'gcc_ntox86'
+else
+CONFIG_RUN_DEVICE = '169.254.0.1 -password pass'
 CONFIG_COMPILER = 'gcc_ntoarmv7le'
+end
+
+NATIVE_PROGRAM_DIR = 'c:/code/mosync-bb10/examples/cpp/3dLines/'

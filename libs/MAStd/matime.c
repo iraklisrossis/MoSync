@@ -42,7 +42,6 @@ static const int mon_lengths[2][MONSPERYEAR] = {
 	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 };
 
-
 static const int year_lengths[2] = {
 	365,
 	366
@@ -71,7 +70,6 @@ struct tm* split_time(time_t timer, struct tm* res)
 		rem -= SECSPERDAY;
 		++days;
 	}
-
 	/* compute hour, min, and sec */
 	res->tm_hour = (int) (rem / SECSPERHOUR);
 	rem %= SECSPERHOUR;

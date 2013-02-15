@@ -33,7 +33,8 @@ namespace MAUtil {
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
 
-	//always returns >= 0
+	// returns time to next timer, a value >= -1
+	// -1 is returned if there are no timers.
 	int Moblet::timeToNextTimer() {
 		int now = maGetMilliSecondCount();
 		int minTime = -1;
@@ -144,6 +145,7 @@ namespace MAUtil {
 			if ((moblet->mIdleListeners.size() == 0) && (moblet->mRun)) {
 
 				int ttnt = moblet->timeToNextTimer();
+
 				// if ttnt == 0, we shouldn't do maWait(0), since that
 				// doesn't mean waiting no time....
 				if(ttnt)

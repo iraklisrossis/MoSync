@@ -57,7 +57,7 @@ group WidgetAPIFunctions "Widget functions" {
 	*
 	* \param parent The widget layout in which the child will be inserted.
 	* \param child The widget that will be added to the parent.
-	* \param index The index where the widget should be inserted (-1 means last)
+	* \param pos The index where the widget should be inserted (-1 means last)
 	*
 	* \returns Any of the following result codes:
 	* - #MAW_RES_OK if the child could be added to the parent.
@@ -67,7 +67,7 @@ group WidgetAPIFunctions "Widget functions" {
 	* - #MAW_RES_CANNOT_INSERT_DIALOG if the child is a modal dialog.
 	* - #MAW_RES_ERROR if it could not be added for some other reason.
 	*/
-	int maWidgetInsertChild(in MAWidgetHandle parent, in MAWidgetHandle child, in int index);
+	int maWidgetInsertChild(in MAWidgetHandle parent, in MAWidgetHandle child, in int pos);
 
 	/**
 	* Removes a child widget from its parent (but does not destroy it).

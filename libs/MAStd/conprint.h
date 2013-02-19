@@ -51,6 +51,8 @@ void DisplayConsole(void);
 */
 
 void PrintConsole(const wchar * str);
+
+#ifdef MAPIP
 int puts(const char* str);
 int wputs(const wchar* str);
 
@@ -75,6 +77,7 @@ int wprintf(const wchar_t *fmt, ...);
 int wvprintf(const wchar_t *fmt, va_list args);
 
 int putchar(int character);
+#endif
 
 /** \brief The console text color.
 *

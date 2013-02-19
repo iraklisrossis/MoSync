@@ -22,6 +22,8 @@ require "#{File.dirname(__FILE__)}/loader_md.rb"
 require "#{File.dirname(__FILE__)}/flags.rb"
 
 def get_gcc_version_info(gcc)
+	return bb10_get_gcc_version_info() if(gcc == :bb10)
+
 	puts "get_gcc_version_string(#{gcc})" if(PRINT_GCC_VERSION_INFO)
 	info = {}
 	file = open("|#{gcc} -v 2>&1")
@@ -76,7 +78,13 @@ class CompileGccTask < FileTask
 		end
 	end
 
-	def depFlags; " -MMD -MF \"#{@TEMPDEPFILE}\""; end
+	def depFlags
+		if(@work.gcc == :bb10)
+			return " -Wp,-MM,-MF,\"#{@TEMPDEPFILE}\""
+		else
+			return " -MMD -MF \"#{@TEMPDEPFILE}\""
+		end
+	end
 
 	def needed?(log = true)
 		return true if(super(log))
@@ -106,7 +114,17 @@ class CompileGccTask < FileTask
 		# the object file, which means it would not be recompiled, even though it should be.
 		# Having gcc output the dependency file to a temporary location fixes the problem.
 		if(File.exist?(@TEMPDEPFILE))
-			FileUtils.mv(@TEMPDEPFILE, @DEPFILE)
+			if(@work.gcc == :bb10)
+				text = ''
+				open(@TEMPDEPFILE, 'r') do |file|
+					text = file.read
+				end
+				open(@DEPFILE, 'w') do |file|
+					file.write(File.dirname(@DEPFILE) + '/' + text)
+				end
+			else
+				FileUtils.mv(@TEMPDEPFILE, @DEPFILE)
+			end
 		else
 			# Some .s files generate no dependency file when compiled.
 			FileUtils.touch(@DEPFILE)
@@ -163,9 +181,17 @@ end
 # @SPECIFIC_CFLAGS and @EXTRA_OBJECTS.
 # Requires subclasses to implement methods 'gcc', 'gccmode' and 'object_ending'.
 class GccWork < BuildWork
+	def initialize
+		@TARGET_PLATFORM = HOST
+	end
+
 	# Returns a path representing a generated file, given a source filename and a new file ending.
 	def genfile(source, ending)
-		@BUILDDIR + File.basename(source.to_s).ext(ending)
+		base = File.basename(source.to_s)
+		if(@SPECIFIC_OBJNAMES[base])
+			base = @SPECIFIC_OBJNAMES[base]
+		end
+		return @BUILDDIR + base.ext(ending)
 	end
 
 	# The filename of the target.

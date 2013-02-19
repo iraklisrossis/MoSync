@@ -54,8 +54,8 @@ int atoi(const char* string)
 	return v;
 }
 
-long atol(const char* string) { 
-	return atoi(string); 
+long atol(const char* string) {
+	return atoi(string);
 }
 
 #endif	//MAPIP
@@ -96,6 +96,7 @@ int axtoi(const char *hexStg) {
 	return intValue;
 }
 
+#ifdef MAPIP
 char ConvertUtf8ToLatin1(const char* utf8, int* pnBytes) {
 	char b = utf8[0];
 	if(b & 0x80) {
@@ -133,6 +134,7 @@ BOOL StringEqual_utf8_latin1(const char* utf8, const char* latin1) {
 	}
 	return TRUE;
 }
+#endif
 
 #if 0
 int find(const char* a, char b) {
@@ -177,8 +179,8 @@ div_t div(int numer, int denom) {
 	r.rem = numer % denom;
 	return r;
 }
-#endif
 
 void bzero(void* s, size_t n) {
 	memset(s, 0, n);
 }
+#endif

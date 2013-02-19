@@ -87,7 +87,7 @@ if(@GCC_IS_ARM)
 end
 
 if(@GCC_IS_V4) then
-	if(TARGET != :win32 && !isPipeWork)
+	if(@TARGET_PLATFORM != :win32 && !isPipeWork)
 		base_flags += " -fvisibility=hidden"
 	end
 	version_warnings += gcc4_warnings
@@ -114,10 +114,10 @@ else
 	error "wrong configuration: " + CONFIG
 end
 
-if(TARGET == :win32)
+if(@TARGET_PLATFORM == :win32)
 	@TARGET_FLAGS = " -DWIN32"
 	@TARGET_CPPFLAGS = ""
-elsif(TARGET == :linux)
+elsif(@TARGET_PLATFORM == :linux)
 	@TARGET_FLAGS = " -DLINUX -fPIC"
 	if(HOST_PLATFORM == :darwin)
 		sdkNumber = (File.exist?("/Developer/SDKs/MacOSX10.5.sdk")) ? "5":"6"
@@ -125,7 +125,7 @@ elsif(TARGET == :linux)
 		@TARGET_FLAGS += " -isysroot #{sdkAdress} -mmacosx-version-min=10.5 -DDARWIN"
 	end
 	@TARGET_CPPFLAGS = ""
-elsif(TARGET == :darwin)
+elsif(@TARGET_PLATFORM == :darwin)
 	sdkAdress = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk"
 	if(!File.exist?(sdkAdress))
 		sdkNumber = (File.exist?("/Developer/SDKs/MacOSX10.5.sdk")) ? "5":"6"
@@ -137,7 +137,7 @@ else
 	if(respond_to?(:customTargetSetFlags))
 		customTargetSetFlags
 	else
-		error "Unsupported target: #{TARGET}"
+		error "Unsupported target platform: #{@TARGET_PLATFORM}"
 	end
 end
 

@@ -6,9 +6,9 @@ mod = Module.new
 mod.class_eval do
 	def setup_native
 		setup_base
-		@SOURCES = ["libgcc"]
+		@SOURCES = ['../ResCompiler']
 		@EXTRA_SOURCEFILES = ["conprint.c", "ma.c", "maassert.c", "mactype.c", "madmath.c",
-			"mastdlib.c", "mastring.c", "matime.c", "mavsprintf.c", "maxtoa.c", "maheap.c"]
+			"mastdlib.c", "mastring.c", "mavsprintf.c", "maxtoa.c", "maheap.c"]
 		@SPECIFIC_CFLAGS = @native_specific_cflags
 
 		@LOCAL_DLLS = ["mosync"]
@@ -82,6 +82,7 @@ mod.class_eval do
 			"madmath.c" => " -Wno-missing-declarations",
 			"mavsprintf.c" => " -Wno-float-equal -Wno-missing-format-attribute",
 			"mawvsprintf.c" => " -Wno-float-equal",
+			'VariantResourceLookup.cpp' => ' -Wno-vla',
 			}.merge(native_specflags, &HashMergeAdd)
 
 		@pipe_specific_cflags = @native_specific_cflags.merge({

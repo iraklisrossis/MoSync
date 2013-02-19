@@ -1940,7 +1940,7 @@ interface MAAPI {
 	/**
 	* Loads an extension function. Normally you don't call this function directly.
 	*/
-	MAExtensionFunction maExtensionFunctionLoad(in MAExtensionModule module, in int index);
+	MAExtensionFunction maExtensionFunctionLoad(in MAExtensionModule module, in int function);
 
 #if IX_RESOURCE_TYPES
 	constset int RT_ {  //WARNING: must match the resource compiler.
@@ -2047,14 +2047,14 @@ interface MAAPI {
 		/**
 		* Copies the font postscript name of the given index to the buffer.
 		* You must have first called maFontGetCount() at least once before calling this function.
-		* \param 'index' A 0-based index to the font.
+		* \param 'font' A 0-based index to the font.
 		* \param 'buffer' An empty char buffer that will receive the font name.
 		* \param 'bufferLen' The size of the buffer.
 		* \return The number of bytes copied (with terminating NULL) or RES_FONT_INDEX_OUT_OF_BOUNDS
 		* 		or RES_FONT_INSUFFICIENT_BUFFER or RES_FONT_LIST_NOT_INITIALIZED.
 		* \see maFontGetCount, maFontLoadWithName.
 		*/
-		int maFontGetName(in int index, out MAString buffer range("bufferLen"), in int bufferLen);
+		int maFontGetName(in int font, out MAString buffer range("bufferLen"), in int bufferLen);
 
 		/**
 		* Returns a handle to a font with the specific postscript name and size.
@@ -3664,10 +3664,10 @@ group CameraFunctions "Camera Functions" {
 
 		/**
 		* Stores an output format in \a fmt.
-		* \a index must be \>= 0 and \< the number returned by maCameraFormatNumber().
+		* \a i must be \>= 0 and \< the number returned by maCameraFormatNumber().
 		* \returns 0.
 		*/
-		int maCameraFormat(in int index, out MA_CAMERA_FORMAT fmt);
+		int maCameraFormat(in int i, out MA_CAMERA_FORMAT fmt);
 
 		/**
 		* Starts a fullscreen viewfinder.

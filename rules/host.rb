@@ -119,7 +119,3 @@ def filenamesEqual(a, b)
 		return a == b
 	end
 end
-
-if(!defined?(TARGET))
-	TARGET = HOST
-end

@@ -113,7 +113,17 @@ class Object
 			var = var.to_sym
 			#puts "#{var}: #{vars[var].inspect}"
 			if(!vars[var])
-				error "Undefined variable: #{var}"
+				raise "Undefined variable: #{var}"
+			end
+		end
+	end
+end
+
+class Hash
+	def need(*keys)
+		keys.each do |key|
+			if(!self[key])
+				raise "Undefined key: #{key}"
 			end
 		end
 	end

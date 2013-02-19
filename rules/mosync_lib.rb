@@ -24,6 +24,7 @@ require "#{File.dirname(__FILE__)}/native_lib.rb"
 require "#{File.dirname(__FILE__)}/pipe.rb"
 require "#{File.dirname(__FILE__)}/arm.rb"
 require "#{File.dirname(__FILE__)}/config.rb"
+require "#{File.dirname(__FILE__)}/bb10.rb"
 
 module MoSyncMod
 	include MoSyncInclude
@@ -37,7 +38,7 @@ module MoSyncMod
 		endings.each do |ending|
 			collect_headers(ending).each do |h|
 				task = CopyFileTask.new(self, dir + "/" + File.basename(h.to_s), h)
-				@prerequisites = [task] + @prerequisites
+				@prerequisites = [task] + @prerequisites.to_a
 			end
 		end
 		@prerequisites = [DirTask.new(self, dir)] + @prerequisites
@@ -64,7 +65,7 @@ class MoSyncDllWork < DllWork
 		set_defaults
 		setup_native
 		modSetup
-		if(TARGET == :win32)
+		if(@TARGET_PLATFORM == :win32)
 			@EXTRA_LINKFLAGS = @EXTRA_LINKFLAGS.to_s + " -Wl,--enable-auto-import"
 		end
 		@EXTRA_CFLAGS = @EXTRA_CFLAGS.to_s + " -D_POSIX_SOURCE"	#avoid silly bsd functions
@@ -80,6 +81,19 @@ class MoSyncArmLibWork < NativeLibWork
 		set_defaults
 		@COMMON_BUILDDIR = mosync_libdir + "/" + @COMMON_BUILDDIR_NAME + "/"
 		setup_pipe
+		modSetup
+		copyHeaders
+		super
+	end
+end
+
+class MoSyncBB10LibWork < BB10LibWork
+	include MoSyncMod
+	def setup
+		@prerequisites = []
+		set_defaults
+		@COMMON_BUILDDIR = mosync_libdir + "/" + @COMMON_BUILDDIR_NAME + "/"
+		setup_native
 		modSetup
 		copyHeaders
 		super
@@ -165,7 +179,12 @@ def MoSyncLib.invoke(mod)
 	target :mapip2 do
 		MoSyncLib.inin(Mapip2LibWork.new, mod)
 	end
-	if(USE_GNU_BINUTILS)
+	target :bb10 do
+		MoSyncLib.inin(MoSyncBB10LibWork.new, mod)
+	end
+	if(defined?(MODE) && MODE == 'bb10')
+		target :default => [:bb10]
+	elsif(USE_GNU_BINUTILS)
 		target :default => [:mapip2]
 	else
 		target :default => [:pipe]

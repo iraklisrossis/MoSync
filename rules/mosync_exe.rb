@@ -22,6 +22,7 @@ require "#{File.dirname(__FILE__)}/mosync_resources.rb"
 require "#{File.dirname(__FILE__)}/targets.rb"
 require "#{File.dirname(__FILE__)}/exe.rb"
 require "#{File.dirname(__FILE__)}/arm.rb"
+require "#{File.dirname(__FILE__)}/bb10.rb"
 
 module PipeElimTask
 	def execute
@@ -454,8 +455,58 @@ class MoSyncArmExeWork < ExeWork
 	end
 end
 
+class MoSyncBB10ExeWork < BB10ExeWork
+	include MoSyncInclude
+	def setup
+		set_defaults
+		@prerequisites = []
+		@EXTRA_INCLUDES = @EXTRA_INCLUDES.to_a +
+			[mosync_include, "#{mosyncdir}/profiles/vendors/MoSync/Emulator"]
+		@EXTRA_LINKFLAGS = ''
+		#@EXTRA_LINKFLAGS = " -L #{mosyncdir}/lib/#{@BUILDDIR_NAME}"
+		#@EXTRA_LINKFLAGS = " -L #{@COMMON_BUILDDIR}"
+		@LIBRARIES << 'mosynclib'
+		@LIBRARIES << 'mastd'
+		@LIBRARIES.each do |lib|
+			@EXTRA_OBJECTS << FileTask.new(self, "#{mosyncdir}/lib/#{@BUILDDIR_NAME}/#{lib}.a")
+		end
+		@LIBRARIES = BB10_RUNTIME_LIBS
+
+		# resource compilation
+		if(!@LSTFILES)
+			if(@SOURCES[0])
+				@LSTFILES = Dir[@SOURCES[0] + "/*.lst"]
+			else
+				@LSTFILES = []
+			end
+		end
+
+		# rescomp support
+		if(@LSTX)
+			lstxTask = RescompTask.new(self, @BUILDDIR_BASE, @LSTX, @RES_PLATFORM)
+			@resourceTask = PipeResourceTask.new(self, 'build/resources', [lstxTask])
+		end
+
+		if(@resourceTask)
+			@prerequisites << @resourceTask
+		elsif(@LSTFILES.size > 0)
+			lstTasks = @LSTFILES.collect do |name| FileTask.new(self, name) end
+			@resourceTask = PipeResourceTask.new(self, "build/resources", lstTasks)
+			@prerequisites << @resourceTask
+		end
+
+		if(@resourceTask)
+			@BB10_ASSETS = [Asset.new("native/#{File.basename(@resourceTask.to_str)}", @resourceTask)]
+		end
+
+		super
+	end
+end
+
 if(USE_ARM)
 	PipeExeWorkBase = MoSyncArmExeWork
+elsif(defined?(MODE) && MODE == 'bb10')
+	PipeExeWorkBase = MoSyncBB10ExeWork
 else
 	PipeExeWorkBase = OriginalPipeExeWork
 end

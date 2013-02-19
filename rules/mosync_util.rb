@@ -32,5 +32,25 @@ def mosyncdir
 	return switchPathSlashes(m)
 end
 
+def getMosyncVersion
+	open(mosyncdir + '/bin/version.dat') do |vdat|
+		return vdat.lines.to_a[2].strip
+	end
+rescue Exception => e
+	puts "Warning: #{e.message}"
+	return "Unknown"
+end
+
+def getMosyncVersionDat
+	open(mosyncdir + '/bin/version.dat') do |vdat|
+		return vdat.lines.collect do |line|
+			line.strip
+		end
+	end
+rescue Exception => e
+	puts "Warning: #{e.message}"
+	return "Unknown"
+end
+
 require "#{File.dirname(__FILE__)}/host.rb"
 require "#{File.dirname(__FILE__)}/error.rb"

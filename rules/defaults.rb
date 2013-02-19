@@ -69,6 +69,10 @@ def set_defaults
 	# Value is extra compile flags to be used when compiling that file.
 	default(:SPECIFIC_CFLAGS, {})
 
+	# Hash(String,String). Key is the filename of a source file.
+	# Value is an override object base name.
+	default(:SPECIFIC_OBJNAMES, {})
+
 	# Boolean. While true, assembly source files will be automatically collected
 	# from SOURCE directories, much like C/C++ files.
 	default(:COLLECT_S_FILES, true)

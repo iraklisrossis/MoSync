@@ -652,18 +652,18 @@ double strtod(const char* string, char** endptr)
 
 int i2a(int a, char* dst) {
 	char* orig = dst;
-	unsigned int v, index=0;
+	unsigned int v, i=0;
 	if(a < 0) {
 		*(dst++) = '-';
 		a = -a;
 	}
 	v = a;
-	while(v >= gPowersOfTen[index] && index < (sizeof(gPowersOfTen) / sizeof(int)))
-		index++;
-	while(index > 0) {
-		index--;
-		*(dst++) = (v / gPowersOfTen[index]) + '0';
-		v %= gPowersOfTen[index];
+	while(v >= gPowersOfTen[i] && i < (sizeof(gPowersOfTen) / sizeof(int)))
+		i++;
+	while(i > 0) {
+		i--;
+		*(dst++) = (v / gPowersOfTen[i]) + '0';
+		v %= gPowersOfTen[i];
 	}
 	*(dst++) = v + '0';
 	*(dst++) = 0;

@@ -26,12 +26,12 @@ require "#{File.dirname(__FILE__)}/mosync_util.rb"
 module NativeMoSyncWork
 	def define_cflags
 		bd = File.expand_path_fix(File.dirname(__FILE__) + "/..")
-		if(TARGET == :win32)
+		if(@TARGET_PLATFORM == :win32)
 			@EXTRA_INCLUDES += [bd+"/tools/ReleasePackageBuild/build_package_tools/include"]
 			custom_lib_dir = bd+"/tools/ReleasePackageBuild/build_package_tools/lib/"
 			need(:@CUSTOM_LIBS)
 			@CUSTOM_LIBS.each { |cl| @EXTRA_LINKFLAGS += " " + custom_lib_dir + cl }
-		elsif(TARGET == :darwin)
+		elsif(@TARGET_PLATFORM == :darwin)
 			@EXTRA_INCLUDES << '/opt/local/include'
 		end
 		@EXTRA_INCLUDES += [bd+"/intlibs", bd+"/libs"]

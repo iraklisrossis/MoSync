@@ -91,8 +91,8 @@ static void ogl_setup(int x, int y, int w, int h) {
 	glLoadIdentity();
 
 	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST);	
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);	
+	glDisable(GL_DEPTH_TEST);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
@@ -102,14 +102,14 @@ static void ogl_setup(int x, int y, int w, int h) {
 	sViewPort.left = x;
 	sViewPort.top = y;
 	sViewPort.width = w;
-	sViewPort.height = h;	
+	sViewPort.height = h;
 
 }
 
 static void ogl_setClipRect(int x, int y, int w, int h) {
-	glScissor(	x, 
-		sViewPort.height-y-h, 
-		w, 
+	glScissor(	x,
+		sViewPort.height-y-h,
+		w,
 		h);
 }
 
@@ -157,7 +157,7 @@ typedef struct Texture_t {
 	GLfixed textureWidthInv;
 	GLfixed textureHeightInv;
 
-	GLshort textureCoords[8]; 
+	GLshort textureCoords[8];
 
 } Texture;
 
@@ -166,7 +166,7 @@ static Texture textures[256];
 static unsigned int nextPowerOf2(uint minPow, uint x) {
 	unsigned int i = 1 << minPow;
 	while(i < x) {
-		i <<= 1;		
+		i <<= 1;
 	}
 	return i;
 }
@@ -201,9 +201,9 @@ static Texture* addTexture(MAHandle image, GLuint handle) {
 	return &textures[numTextures-1];
 }
 
-static Texture* getTexture(MAHandle image) {	
+static Texture* getTexture(MAHandle image) {
 	int i;
-	GLuint handle;	
+	GLuint handle;
 
 	for(i = numTextures-1; i >= 0; i--) {
 
@@ -223,7 +223,7 @@ static Texture* getTexture(MAHandle image) {
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	return addTexture(image, handle);	
+	return addTexture(image, handle);
 }
 
 static void drawTriangleFan(GLshort* textureCoords, GLshort* vertexCoords) {
@@ -241,9 +241,9 @@ static void drawTriangleFan(GLshort* textureCoords, GLshort* vertexCoords) {
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
-static void drawImage(GLshort* textureCoords, GLshort* vertexCoords, Texture* texture) {		
+static void drawImage(GLshort* textureCoords, GLshort* vertexCoords, Texture* texture) {
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, texture->glTexture);	
+	glBindTexture(GL_TEXTURE_2D, texture->glTexture);
 
 	glMatrixMode(GL_TEXTURE);
 	glPushMatrix();
@@ -265,7 +265,7 @@ static void drawImage(GLshort* textureCoords, GLshort* vertexCoords, Texture* te
 static void ogl_plot(int x, int y) {
 }
 
-static void ogl_line(int x1, int y1, int x2, int y2) {
+static void ogl_line(int x1, int _y1, int x2, int y2) {
 }
 
 static void ogl_fillRect(int left, int top, int width, int height) {
@@ -285,7 +285,7 @@ static void ogl_fillRect(int left, int top, int width, int height) {
 
 	drawTriangleFan(NULL, vertexCoords);
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);	
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	//glEnable(GL_BLEND);
 
@@ -310,15 +310,15 @@ static void ogl_drawImage(MAHandle image, int left, int top) {
 
 	//	if(left>sViewPort.width || left+texture->imageWidth<0 ||
 	//		top>sViewPort.height || top+texture->imageHeight<0)
-	//		return;	
+	//		return;
 
-	drawImage(texture->textureCoords, vertexCoords, texture);				
+	drawImage(texture->textureCoords, vertexCoords, texture);
 }
 
 static void ogl_drawRGB(const MAPoint2d *dstPoint, const void *src, const MARect *srcRect, int scanlength) {
 }
 
-static void ogl_drawImageRegion(MAHandle image, const MARect *srcRect, const MAPoint2d *dstPoint, int transformMode) {	
+static void ogl_drawImageRegion(MAHandle image, const MARect *srcRect, const MAPoint2d *dstPoint, int transformMode) {
 	GLshort textureCoords[] = {
 		(srcRect->left), (srcRect->top),
 		(srcRect->left + srcRect->width), (srcRect->top),
@@ -334,7 +334,7 @@ static void ogl_drawImageRegion(MAHandle image, const MARect *srcRect, const MAP
 		dstPoint->x, dstPoint->y+srcRect->height
 	};
 
-	Texture* texture = getTexture(image);	
+	Texture* texture = getTexture(image);
 
 	drawImage(textureCoords, vertexCoords, texture);
 }
@@ -390,5 +390,5 @@ static void ogl_setColor(int r, int g, int b) {
 
 static void ogl_setAlpha(int a) {
 	sAlpha = a;
-	glColor4x(sColorR<<8, sColorG<<8, sColorB<<8, sAlpha<<8);	
+	glColor4x(sColorR<<8, sColorG<<8, sColorB<<8, sAlpha<<8);
 }

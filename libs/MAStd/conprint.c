@@ -24,6 +24,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "mawvsprintf.h"
 #include "maheap.h"
 #include "conprint.h"
+#include "mawstring.h"
 
 // Console width, in characters
 // Note that not all characters on a line may be visible on a given device, due
@@ -95,7 +96,7 @@ void InitConsole(void)
 	maSetClipRect(0, 0, EXTENT_X(sConsole.screenSize), EXTENT_Y(sConsole.screenSize));
 
 	//sConsole.fontHeight = EXTENT_Y(maGetTextSize("gl"));
-	
+
 	// this is actually even more safe:
 	for(i = 0; i < 95; i++) string[i] = i + 32;
 	string[127] = 0;
@@ -116,7 +117,7 @@ void InitConsole(void)
 
 void DisplayConsole(void)
 {
-	int n, index;
+	int n, i;
 
 	if (gConsoleDisplay == 0)
 		return;
@@ -127,12 +128,12 @@ void DisplayConsole(void)
 		maSetColor(gConsoleBackgroundColor);
 		maFillRect(0, 0, EXTENT_X(sConsole.screenSize), EXTENT_Y(sConsole.screenSize));
 	}
-	
+
 	maSetColor(gConsoleTextColor);
 	for (n = 0;  n < sConsole.height;  n++)
 	{
-		index = (n + sConsole.firstLine) % sConsole.height;
-		maDrawTextW(0, n * sConsole.fontHeight, sConsole.lines[index].line);
+		i = (n + sConsole.firstLine) % sConsole.height;
+		maDrawTextW(0, n * sConsole.fontHeight, sConsole.lines[i].line);
 	}
 
 	maUpdateScreen();
@@ -219,6 +220,7 @@ void PrintConsole(const wchar_t *str)
 		DisplayConsole();
 }
 
+#ifdef MAPIP
 #define PRINTF_BUFSIZE 2048
 int vprintf(const char *fmt, va_list args)
 {
@@ -302,3 +304,4 @@ int putchar(int character)
 	PrintConsole(temp);
 	return character;
 }
+#endif

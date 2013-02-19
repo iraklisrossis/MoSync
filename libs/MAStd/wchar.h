@@ -6,6 +6,10 @@
 #ifndef WCHAR_H
 #define WHCAR_H
 
+#ifndef MAPIP
+#include_next <wchar.h>
+#endif
+
 #include "ma.h"
 
 #ifdef __cplusplus

@@ -21,7 +21,7 @@ class ExeTask < NativeGccLinkTask
 	def initialize(work, name, objects, whole_libs, libs, linkflags, linker)
 		super(work, name, whole_libs + objects + libs, linker)
 		@FLAGS = linkflags
-		if(TARGET == :win32)
+		if(@TARGET_PLATFORM == :win32)
 			@FLAGS << ' -Wl,--enable-stdcall-fixup'
 		end
 	end

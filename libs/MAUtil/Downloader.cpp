@@ -45,7 +45,7 @@ bool DownloadListener::outOfMemory(Downloader*)
 Downloader::Downloader()
 : mIsDownloading(false),
   mIsDataPlaceholderSystemAllocated(false),
-  mDataPlaceholder(NULL),
+  mDataPlaceholder(0),
   mReader(NULL)
 {
 	mConn = new HttpConnection(this);
@@ -167,7 +167,7 @@ void Downloader::closeConnection(int cleanup)
 	{
 		// Return system allocated placeholder.
 		maDestroyPlaceholder(mDataPlaceholder);
-		mDataPlaceholder = NULL;
+		mDataPlaceholder = 0;
 	}
 
 	mIsDownloading = false;
@@ -278,7 +278,7 @@ MAHandle Downloader::getDataPlaceholder()
 ImageDownloader::ImageDownloader() :
 	mIsImagePlaceholderSystemAllocated(false),
 	mIsImageCreated(false),
-	mImagePlaceholder(NULL)
+	mImagePlaceholder(0)
 {
 }
 
@@ -325,7 +325,7 @@ MAHandle ImageDownloader::getHandle()
 	{
 		// Return system allocated data placeholder to pool.
 		maDestroyPlaceholder(mDataPlaceholder);
-		mDataPlaceholder = NULL;
+		mDataPlaceholder = 0;
 	}
 
 	// Image is created.
@@ -362,7 +362,7 @@ void ImageDownloader::closeConnection(int cleanup)
 	{
 		// Return system allocated placeholder to pool.
 		maDestroyPlaceholder(mImagePlaceholder);
-		mImagePlaceholder = NULL;
+		mImagePlaceholder = 0;
 	}
 
 	mIsImageCreated = false;

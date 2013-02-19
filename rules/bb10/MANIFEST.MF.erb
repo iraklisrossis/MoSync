@@ -1,0 +1,30 @@
+Archive-Manifest-Version: 1.5
+Archive-Created-By: MoSync <%= @mosyncVersionDat[0] %> <%= @mosyncVersionDat[1] %> <%= @mosyncVersionDat[2] %>
+
+Package-Type: application
+Package-Author: <%= @settings[:AUTHOR] %>
+Package-Author-Id: <%= @settings[:AUTHOR_ID] %>
+Package-Name: <%= @settings[:PACKAGE_NAME] %>
+Package-Id: <%= @settings[:ID] %>
+Package-Version: <%= @settings[:VERSION] %>
+Package-Version-Id: <%= @settings[:VERSION_ID] %>
+Package-Architecture: x86
+
+Application-Name: <%= @settings[:APP_NAME] %>
+Application-Id: <%= @settings[:ID] %>
+Application-Description: A MoSync application
+Application-Version: <%= @settings[:VERSION] %>
+Application-Version-Id: <%= @settings[:VERSION_ID] %>
+Application-Category: core.games
+Application-Requires-System: BlackBerry 10/10.0.9.1101
+Application-Development-Mode: true
+
+Entry-Point-Name: <%= @settings[:APP_NAME] %>
+Entry-Point-Key: e1
+Entry-Point: LD_LIBRARY_PATH=app/native/lib app/native/<%=File.basename(@elf)%>
+Entry-Point-Type: Qnx/Elf
+Entry-Point-Icon: native/icon.png
+Entry-Point-System-Actions: run_native
+Entry-Point-User-Actions: read_geolocation
+
+<%= assets %>

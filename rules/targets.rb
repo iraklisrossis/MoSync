@@ -38,6 +38,7 @@ class Targets
 
 	@@targets = {}
 	@@goals = []
+	@@handlers = {}
 
 	def Targets.reset(args)
 		@@targets = {}
@@ -88,6 +89,7 @@ class Targets
 		default_const(:NATIVE_RUNTIME, false)
 		default_const(:PROFILING, false)
 		default_const(:ELIM, false)
+		default_const(:TARGET, HOST)
 	end
 
 	# parse ARGV
@@ -109,9 +111,24 @@ class Targets
 			value = a[i+1 .. a.length]
 			puts "Set constant #{name.inspect}=#{value.inspect}"
 			set_const(name, value)
+			if(@@handlers[name])
+				puts "Handler #{name}"
+				@@handlers[name].each do |block|
+					block.call(value)
+				end
+			end
 		else
 			@@goals += [a.to_sym]
 		end
+	end
+
+	def Targets.registerArgHandler(a, &block)
+		raise "Need a block!" if(!block)
+		a = a.to_str
+		if(!@@handlers[a])
+			@@handlers[a] = []
+		end
+		@@handlers[a] << block
 	end
 
 	def Targets.invoke

@@ -146,8 +146,8 @@ static void soft_plot(int x, int y) {
 	maPlot(sCurrentOffset.x + x, sCurrentOffset.y + y);
 }
 
-static void soft_line(int x1, int y1, int x2, int y2) {
-	maLine(sCurrentOffset.x + x1, sCurrentOffset.y + y1, sCurrentOffset.x + x2, sCurrentOffset.y + y2);
+static void soft_line(int x1, int _y1, int x2, int y2) {
+	maLine(sCurrentOffset.x + x1, sCurrentOffset.y + _y1, sCurrentOffset.x + x2, sCurrentOffset.y + y2);
 }
 
 static void soft_fillRect(int left, int top, int width, int height) {

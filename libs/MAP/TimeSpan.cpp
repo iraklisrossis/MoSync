@@ -191,7 +191,7 @@ namespace MAPUtil
 	TimeSpan TimeSpan::duration( ) const
 	//-------------------------------------------------------------------------
 	{
-		return TimeSpan( mTicks < 0 ? -(int)mTicks : (int)mTicks );
+		return TimeSpan( (int)mTicks < 0 ? -(int)mTicks : (int)mTicks );
 	}
 
 	//-------------------------------------------------------------------------

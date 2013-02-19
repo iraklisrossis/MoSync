@@ -108,19 +108,19 @@ static char getChar(int charMode) {
 	return c;
 }
 
-void CharInput_setLowerCaseMapElement(int index, const char *str) {
-	if(index<0 || index>=12) maPanic(1, "Map element index out of bounds");
-	charMapLowerCase[index] = str;
+void CharInput_setLowerCaseMapElement(int i, const char *str) {
+	if(i<0 || i>=12) maPanic(1, "Map element index out of bounds");
+	charMapLowerCase[i] = str;
 }
 
-void CharInput_setUpperCaseMapElement(int index, const char *str) {
-	if(index<0 || index>=12) maPanic(1, "Map element index out of bounds");
-	charMapUpperCase[index] = str;
+void CharInput_setUpperCaseMapElement(int i, const char *str) {
+	if(i<0 || i>=12) maPanic(1, "Map element index out of bounds");
+	charMapUpperCase[i] = str;
 }
 
-void CharInput_setNumMapElement(int index, char num) {
-	if(index<0 || index>=12) maPanic(1, "Map element index out of bounds");
-	numMap[index] = num;
+void CharInput_setNumMapElement(int i, char num) {
+	if(i<0 || i>=12) maPanic(1, "Map element index out of bounds");
+	numMap[i] = num;
 }
 
 static void CharInput_ShortPress(void) {
@@ -150,7 +150,7 @@ void CharInput_setMode(int charMode) {
 }
 
 int CharInput_getMode(void) {
-	return sCurrentCharMode; 
+	return sCurrentCharMode;
 }
 
 void CharInput_Pressed(int keyCode) {

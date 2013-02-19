@@ -23,6 +23,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef MA_H
 #define MA_H
 
+#ifndef MAPIP
+#define __EXT_ANSIC_199012
+#include <stdlib.h>
+#endif
+
 #include "maapi.h"
 
 #ifndef SIZE_T_DEFINED

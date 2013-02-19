@@ -36,8 +36,10 @@ free_hook gFreeHook = NULL;
 realloc_hook gReallocHook = NULL;
 block_size_hook gBlockSizeHook = NULL;
 
+#ifdef MAPIP
 static void* sHeapBase;
 static int sHeapLength;
+#endif
 
 #ifdef MOSYNCDEBUG
 //#define MEMORY_PROTECTION

@@ -28,6 +28,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 //#define CORE_DEBUGGING_MODE
 //#define SYSCALL_DEBUGGING_MODE
 
+#define INSIDE_MOSYNC_CORE
+
 #ifndef SYMBIAN
 #define __STDC_FORMAT_MACROS
 #include <wchar.h>	// works around a build error on Windows Mobile.

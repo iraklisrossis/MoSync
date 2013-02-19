@@ -122,6 +122,7 @@ class CompileGccTask < FileTask
 				open(@DEPFILE, 'w') do |file|
 					file.write(File.dirname(@DEPFILE) + '/' + text)
 				end
+				FileUtils.rm(@TEMPDEPFILE)
 			else
 				FileUtils.mv(@TEMPDEPFILE, @DEPFILE)
 			end
@@ -187,11 +188,7 @@ class GccWork < BuildWork
 
 	# Returns a path representing a generated file, given a source filename and a new file ending.
 	def genfile(source, ending)
-		base = File.basename(source.to_s)
-		if(@SPECIFIC_OBJNAMES[base])
-			base = @SPECIFIC_OBJNAMES[base]
-		end
-		return @BUILDDIR + base.ext(ending)
+		@BUILDDIR + File.basename(source.to_s).ext(ending)
 	end
 
 	# The filename of the target.

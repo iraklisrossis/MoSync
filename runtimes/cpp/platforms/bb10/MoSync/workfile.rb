@@ -6,37 +6,15 @@ require File.expand_path('../../../../../rules/bb10.rb')
 
 BD = '../../../../..'
 
-if(defined?(NATIVE_PROGRAM_DIR))
-	npl = BB10LibWork.new
-	npl.instance_eval do
-		@SOURCES = [
-			NATIVE_PROGRAM_DIR,
-			"#{BD}/libs/ResCompiler",
-		]
-		@EXTRA_CPPFLAGS = " -Wno-shadow -Wno-vla"
-		@EXTRA_INCLUDES = ["#{mosyncdir}/include"]
-		@NAME = 'program'
-		def run; end
-	end
-	npl.invoke
-end
-
-mosynclib = BB10LibWork.new
-mosynclib.instance_eval do
-	extraSources = ["#{BD}/runtimes/cpp/base/lib"]
-	extraSourcefiles = []
-	extraIncludes = []
-	extraSpecificFlags = {
-		'mosync.cpp' => ' -DNATIVE_PROGRAM=1',
-	}
-
+mosync_base = BB10LibWork.new
+mosync_base.instance_eval do
 	@SOURCES = [
 		'src',
 		"#{BD}/runtimes/cpp/base",
 		"#{BD}/intlibs/helpers/platforms/linux",
 		"#{BD}/intlibs/hashmap",
 		"#{BD}/intlibs/net",
-	] + extraSources
+	]
 	@IGNORED_FILES = [
 		'MoSyncDB.cpp',
 		'pim.cpp',
@@ -45,12 +23,14 @@ mosynclib.instance_eval do
 		'AudioSource.cpp',
 		'AudioInterface.cpp',
 		'AudioChannel.cpp',
+		'mosync.cpp',
+		'SyscallImpl.cpp',
 	]
 	@EXTRA_SOURCEFILES = [
 		"#{BD}/runtimes/cpp/platforms/sdl/FileImpl.cpp",
 		"#{BD}/runtimes/cpp/platforms/sdl/netImpl.cpp",
 		"#{BD}/intlibs/filelist/filelist-linux.c",
-	] + extraSourcefiles
+	]
 	@EXTRA_INCLUDES += [
 		"#{BD}/runtimes/cpp/base",
 		"#{BD}/runtimes/cpp",
@@ -59,11 +39,35 @@ mosynclib.instance_eval do
 		"#{BD}/runtimes/cpp/platforms/sdl",
 	]
 	@SPECIFIC_CFLAGS = {
-		'SyscallImpl.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',
 		'Syscall.cpp' => ' -Wno-float-equal',
 		'Image.cpp' => ' -Wno-shadow',
-	}.merge(extraSpecificFlags)
-	@SPECIFIC_CFLAGS['SyscallImpl.cpp'] << ' -Wno-missing-noreturn'	# temp hack until all syscalls are implemented.
+	}
+
+	@NAME = 'mosync_base'
+end
+mosync_base.invoke
+
+mosynclib = BB10LibWork.new
+mosynclib.instance_eval do
+	@SOURCES = [
+		"#{BD}/runtimes/cpp/base/lib",
+		'src/lib',
+	]
+	@EXTRA_INCLUDES += [
+		"#{BD}/runtimes/cpp/base",
+		"#{BD}/runtimes/cpp",
+		"#{BD}/intlibs",
+		'src',
+		"#{BD}/runtimes/cpp/platforms/sdl",
+	]
+	@SPECIFIC_CFLAGS = {
+		'SyscallImpl-lib.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',
+	}
+	@SPECIFIC_CFLAGS['SyscallImpl-lib.cpp'] << ' -Wno-missing-noreturn'	# temp hack until all syscalls are implemented.
+
+	@LOCAL_LIBS = [
+		'mosync_base',
+	]
 
 	@NAME = "mosynclib"
 	def setup
@@ -76,48 +80,14 @@ mosynclib.invoke
 
 work = BB10ExeWork.new
 work.instance_eval do
-	if(defined?(NATIVE_PROGRAM_DIR))
-		extraSources = ["#{BD}/runtimes/cpp/base/lib"]
-		extraSourcefiles = []
-		extraIncludes = []
-		@EXTRA_OBJECTS = [npl.target]
-		extraSpecificFlags = {
-			'mosync.cpp' => ' -DNATIVE_PROGRAM=1',
-		}
-		@SPECIFIC_OBJNAMES = {
-			'mosync.cpp' => 'mosync-native',
-		}
-	else
-		extraSources = []
-		extraSourcefiles = ["#{BD}/runtimes/cpp/core/Core.cpp"]
-		extraIncludes = ["#{BD}/runtimes/cpp/core"]
-		extraSpecificFlags = { 'mosync.cpp' => ' -DNATIVE_PROGRAM=0' }
-		@SPECIFIC_OBJNAMES = {
-			'mosync.cpp' => 'mosync-vm',
-		}
-	end
 	@SOURCES = [
-		'src',
-		"#{BD}/runtimes/cpp/base",
-		"#{BD}/intlibs/helpers/platforms/linux",
-		"#{BD}/intlibs/hashmap",
-		"#{BD}/intlibs/net",
-	] + extraSources
-	@IGNORED_FILES = [
-		'MoSyncDB.cpp',
-		'pim.cpp',
-		'WaveAudioSource.cpp',
-		'BufferAudioSource.cpp',
-		'AudioSource.cpp',
-		'AudioInterface.cpp',
-		'AudioChannel.cpp',
+		'src/vm',
 	]
 	@EXTRA_SOURCEFILES = [
-		"#{BD}/runtimes/cpp/platforms/sdl/FileImpl.cpp",
-		"#{BD}/runtimes/cpp/platforms/sdl/netImpl.cpp",
-		"#{BD}/intlibs/filelist/filelist-linux.c",
-	] + extraSourcefiles
+		"#{BD}/runtimes/cpp/core/Core.cpp",
+	]
 	@EXTRA_INCLUDES += [
+		"#{BD}/runtimes/cpp/core",
 		"#{BD}/runtimes/cpp/base",
 		"#{BD}/runtimes/cpp",
 		"#{BD}/intlibs",
@@ -126,11 +96,13 @@ work.instance_eval do
 	]
 	@SPECIFIC_CFLAGS = {
 		'Core.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',
-		'SyscallImpl.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',
-		'Syscall.cpp' => ' -Wno-float-equal',
-		'Image.cpp' => ' -Wno-shadow',
-	}.merge(extraSpecificFlags)
-	@SPECIFIC_CFLAGS['SyscallImpl.cpp'] << ' -Wno-missing-noreturn'	# temp hack until all syscalls are implemented.
+		'SyscallImpl-vm.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',
+	}
+	@SPECIFIC_CFLAGS['SyscallImpl-vm.cpp'] << ' -Wno-missing-noreturn'	# temp hack until all syscalls are implemented.
+
+	@LOCAL_LIBS = [
+		'mosync_base',
+	]
 	@LIBRARIES = BB10_RUNTIME_LIBS
 
 	@NAME = "MoSync"

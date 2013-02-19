@@ -48,9 +48,9 @@ class String
 	def ext(newEnd)
 		doti = rindex('.')
 		slashi = rindex('/')
-		if(doti && slashi) then if(slashi > doti) then
+		if((doti && slashi && slashi > doti) || !doti)
 			return self + newEnd
-		end end
+		end
 		return self[0, doti] + newEnd
 	end
 

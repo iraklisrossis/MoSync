@@ -5,6 +5,7 @@
 extern "C" int MAMain();
 extern "C" int resource_selector();
 #else
+#define INSIDE_MOSYNC_CORE
 #include <core/Core.h>
 #endif
 

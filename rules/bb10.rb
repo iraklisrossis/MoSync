@@ -131,6 +131,7 @@ class BB10ExeWork < ExeWork
 
 		@EXTRA_LINKFLAGS += ' -lang-c++ -g -Wl,-z,relro -Wl,-z,now'
 		@LIBRARIES.each { |l| @EXTRA_LINKFLAGS += ' -l' + l }
+		@LOCAL_LIBS.each { |ll| all_objects << FileTask.new(self, @COMMON_BUILDDIR + ll + ".a") }
 		need(:@NAME)
 		need(:@BUILDDIR)
 		need(:@TARGETDIR)
@@ -147,7 +148,6 @@ class BB10ExeWork < ExeWork
 			assets << Asset.new("native/#{File.basename(file)}", FileTask.new(self, file))
 		end
 		assets += @BB10_ASSETS if(@BB10_ASSETS)
-		p assets
 		@barFile = BarTask.new(self, @TARGET.to_s + '.bar', @TARGET, assets, @BB10_SETTINGS)
 		@prerequisites << @barFile
 	end

@@ -534,7 +534,7 @@ static void streamTypedefs(ostream& stream, const vector<Typedef>& typedefs, int
 		"typedef unsigned short wchar;\n"
 		"typedef wchar wchar_t;\n"
 		"#endif	//__cplusplus\n"
-		"#elif defined(__BB10__)\n"
+		"#elif defined(__BB10__) && !defined(INSIDE_MOSYNC_CORE)\n"
 		"typedef wchar_t wchar;\n"
 		"#else	//MAPIP\n"
 		"typedef unsigned short wchar;\n"

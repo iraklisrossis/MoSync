@@ -467,6 +467,7 @@ class MoSyncBB10ExeWork < BB10ExeWork
 		#@EXTRA_LINKFLAGS = " -L #{@COMMON_BUILDDIR}"
 		@LIBRARIES << 'mosynclib'
 		@LIBRARIES << 'mastd'
+		@LIBRARIES << 'mosync_base'
 		@LIBRARIES.each do |lib|
 			@EXTRA_OBJECTS << FileTask.new(self, "#{mosyncdir}/lib/#{@BUILDDIR_NAME}/#{lib}.a")
 		end

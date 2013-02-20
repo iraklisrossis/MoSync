@@ -8,31 +8,31 @@
 
     <!-- A universally unique application identifier. Must be unique across all BlackBerry applications.
          Using a reverse DNS-style name as the id is recommended. (Eg. com.example.ExampleApplication.) Required. -->
-    <id>com.example.MoSync</id>
+    <id><%= s[:PACKAGE_NAME] %></id>
 
     <!-- The name that is displayed in the BlackBerry application installer.
          May have multiple values for each language. See samples or xsd schema file. Optional. -->
-    <name>MoSync</name>
+    <name><%= s[:APP_NAME] %></name>
 
     <!-- A string value of the format <0-999>.<0-999>.<0-999> that represents application version which can be used to check for application upgrade.
          Values can also be 1-part or 2-part. It is not necessary to have a 3-part value.
          An updated version of application must have a versionNumber value higher than the previous version. Required. -->
-    <versionNumber>1.0.0</versionNumber>
+    <versionNumber><%= versionMain %></versionNumber>
 
     <!-- Fourth digit segment of the package version. First three segments are taken from the
          <versionNumber> element.  Must be an integer from 0 to 2^16-1 -->
-    <buildId>1</buildId>
+    <buildId><%= versionBuild %></buildId>
 
     <!-- Description, displayed in the BlackBerry application installer.
          May have multiple values for each language. See samples or xsd schema file. Optional. -->
-    <description>The MoSync application</description>
+    <description>A MoSync application</description>
 
     <!--  Name of author which is used for signing. Must match the developer name of your development certificate. -->
-    <author>Example Inc.</author>
+    <author><%= s[:AUTHOR] %></author>
     <platformVersion>10.0.9.1101</platformVersion>
 
     <!--  Unique author ID assigned by signing authority. Required if using debug tokens. -->
-    <!-- <authorId>ABC1234YjsnUk235h</authorId> -->
+    <authorId><%= s[:AUTHOR_ID] %></authorId>
 
     <initialWindow>
         <systemChrome>none</systemChrome>
@@ -45,31 +45,31 @@
     <asset path="icon.png">icon.png</asset>
     <configuration id="com.qnx.qcc.configuration.exe.debug.646993845" name="Device-Debug">
        <platformArchitecture>armle-v7</platformArchitecture>
-       <asset path="Device-Debug/MoSync" entry="true" type="Qnx/Elf">MoSync</asset>
+       <asset path="Device-Debug/<%=name%>" entry="true" type="Qnx/Elf"><%=name%></asset>
     </configuration>
     <configuration id="com.qnx.qcc.configuration.exe.release.1233978087" name="Device-Release">
        <platformArchitecture>armle-v7</platformArchitecture>
-       <asset path="Device-Release/MoSync" entry="true" type="Qnx/Elf">MoSync</asset>
+       <asset path="Device-Release/<%=name%>" entry="true" type="Qnx/Elf"><%=name%></asset>
     </configuration>
     <configuration id="com.qnx.qcc.configuration.exe.profile.181617909" name="Device-Profile">
        <platformArchitecture>armle-v7</platformArchitecture>
-       <asset path="Device-Profile/MoSync" entry="true" type="Qnx/Elf">MoSync</asset>
+       <asset path="Device-Profile/<%=name%>" entry="true" type="Qnx/Elf"><%=name%></asset>
     </configuration>
     <configuration id="com.qnx.qcc.configuration.exe.profile.coverage.1212744209" name="Device-Coverage">
        <platformArchitecture>armle-v7</platformArchitecture>
-       <asset path="Device-Coverage/MoSync" entry="true" type="Qnx/Elf">MoSync</asset>
+       <asset path="Device-Coverage/<%=name%>" entry="true" type="Qnx/Elf"><%=name%></asset>
     </configuration>
     <configuration id="com.qnx.qcc.configuration.exe.debug.1640464781" name="Simulator-Debug">
        <platformArchitecture>x86</platformArchitecture>
-       <asset path="Simulator-Debug/MoSync" entry="true" type="Qnx/Elf">MoSync</asset>
+       <asset path="Simulator-Debug/<%=name%>" entry="true" type="Qnx/Elf"><%=name%></asset>
     </configuration>
     <configuration id="com.qnx.qcc.configuration.exe.profile.549908383" name="Simulator-Profile">
        <platformArchitecture>x86</platformArchitecture>
-       <asset path="Simulator-Profile/MoSync" entry="true" type="Qnx/Elf">MoSync</asset>
+       <asset path="Simulator-Profile/<%=name%>" entry="true" type="Qnx/Elf"><%=name%></asset>
     </configuration>
     <configuration id="com.qnx.qcc.configuration.exe.profile.coverage.2018649338" name="Simulator-Coverage">
        <platformArchitecture>x86</platformArchitecture>
-       <asset path="Simulator-Coverage/MoSync" entry="true" type="Qnx/Elf">MoSync</asset>
+       <asset path="Simulator-Coverage/<%=name%>" entry="true" type="Qnx/Elf"><%=name%></asset>
     </configuration>
 
     <!--  The icon for the application, which should be 86x86. -->

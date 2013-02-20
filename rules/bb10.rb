@@ -19,6 +19,16 @@ def bb10_get_gcc_version_info()
 	return v
 end
 
+class BarDescriptorTask < MemoryGeneratedFileTask
+	def initialize(work, name, s)
+		super(work, 'build/bar-descriptor.xml')
+		parts = s[:VERSION].split('.')
+		versionMain = "#{parts[0]}.#{parts[1]}.#{parts[2]}"
+		versionBuild = parts[3]
+		@buf = ERB.new(open("#{File.dirname(__FILE__)}/bb10/bar-descriptor.xml.erb").read).result(binding)
+	end
+end
+
 # zip-file-name, FileTask.
 Asset = Struct.new(:target, :source)
 
@@ -141,8 +151,8 @@ class BB10ExeWork < ExeWork
 
 		# packaging
 		assets = [
-			Asset.new('native/bar-descriptor.xml', FileTask.new(self, 'bar-descriptor.xml')),
-			Asset.new('native/icon.png', FileTask.new(self, 'icon.png')),
+			Asset.new('native/bar-descriptor.xml', BarDescriptorTask.new(self, @NAME, @BB10_SETTINGS)),
+			Asset.new('native/icon.png', FileTask.new(self, "#{File.dirname(__FILE__)}/bb10/icon.png")),
 		]
 		Dir['assets/*'].each do |file|
 			assets << Asset.new("native/#{File.basename(file)}", FileTask.new(self, file))

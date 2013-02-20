@@ -44,6 +44,11 @@ mosync_base.instance_eval do
 	}
 
 	@NAME = 'mosync_base'
+	def setup
+		set_defaults
+		@INSTALLDIR = "#{mosyncdir}/lib/#{@BUILDDIR_NAME}"
+		super
+	end
 end
 mosync_base.invoke
 
@@ -64,10 +69,6 @@ mosynclib.instance_eval do
 		'SyscallImpl-lib.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',
 	}
 	@SPECIFIC_CFLAGS['SyscallImpl-lib.cpp'] << ' -Wno-missing-noreturn'	# temp hack until all syscalls are implemented.
-
-	@LOCAL_LIBS = [
-		'mosync_base',
-	]
 
 	@NAME = "mosynclib"
 	def setup

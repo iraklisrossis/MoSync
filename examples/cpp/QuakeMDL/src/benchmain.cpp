@@ -81,7 +81,8 @@ int BenchMain ( void )
 	//
 	printf( ".\n" );
 	printf( "-------------\n" );
-	printf( "Starting benchmark" );
+	printf( "Starting benchmark\n" );
+	int totalK = 0;
 	for ( int i = 0; i < BENCH_PASSES; i++ )
 	{
 		//
@@ -90,6 +91,7 @@ int BenchMain ( void )
 		printf( "    - Pass %d/%d\n", i+1, BENCH_PASSES );
 		renderedFrames = 0;
 		tmrIni = maGetMilliSecondCount( );
+		int passK = 0;
 
 		while ( true )
 		{
@@ -126,24 +128,31 @@ int BenchMain ( void )
 
 			// Count frames
 			renderedFrames++;
-			if ( renderedFrames == FRAMES_PASS )
-				break;
-
-
+			if ( renderedFrames == FRAMES_PASS ) {
+				passK++;
+				if(maGetMilliSecondCount() - tmrIni > 1000) {
+					break;
+				} else {
+					renderedFrames = 0;
+				}
+			}
 		}
 
 		// Calculate average fps for pass
 		tmrEnd  = maGetMilliSecondCount( );
 		int denom = (tmrEnd-tmrIni);
 		if(denom == 0) denom = 1;
-		avgFpsPerPass[i] = renderedFrames*1000.0f/denom;
+		avgFpsPerPass[i] = (passK * FRAMES_PASS * 1000.0f) / denom;
+		totalK += passK;
 	}
 
 	float averageFps = 0.0f;
 	for ( int i = 0; i < BENCH_PASSES; i++ )
 		averageFps += avgFpsPerPass[i];
 	averageFps /= (float)BENCH_PASSES;
-	printf( "Benchmark done\nAverage fps %.1f\n", averageFps );
+	printf( "Benchmark done\n");
+	printf( "%i K frames calculated.\n", totalK);
+	printf( "Average fps %.1f\n", averageFps );
 	printf( "-------------\n\n" );
 	printf( ".\n" );
 

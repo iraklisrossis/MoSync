@@ -1665,7 +1665,7 @@ namespace Wormhole
 			// is complete and pass the result/error code.
 			// We ignore the data sent back from the server.
 
-			if (RES_OK != result || NULL == data)
+			if (RES_OK != result || 0 == data)
 			{
 				mPhoneGapFile->callFileTransferError(
 					mCallbackID,

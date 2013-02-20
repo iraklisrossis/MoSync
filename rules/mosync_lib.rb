@@ -93,7 +93,11 @@ class MoSyncBB10LibWork < BB10LibWork
 		@prerequisites = []
 		set_defaults
 		@COMMON_BUILDDIR = mosync_libdir + "/" + @COMMON_BUILDDIR_NAME + "/"
-		setup_native
+		if(respond_to?(:setup_native))
+			setup_native
+		else
+			setup_pipe
+		end
 		modSetup
 		copyHeaders
 		super

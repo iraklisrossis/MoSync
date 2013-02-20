@@ -26,15 +26,9 @@ MA 02110-1301, USA.
 #include <ma.h>				// MoSync API
 #include <maheap.h>			// C memory allocation
 #include <mastring.h>		// C string functions
-#include <mavsprintf.h>		// C string functions
+//#include <mavsprintf.h>		// C string functions
 #include <mastdlib.h>		// C string conversion functions
 #include <MAUtil/String.h>	// C++ String class
-
-// Since MAFS redefines types used in newlib, we need to prevent
-// them from being defined when using newlib.
-#ifdef USE_NEWLIB
-#define DONT_USE_TYPE_DEFINES
-#endif
 
 #include <MAFS/File.h>		// Library for file system bundles
 
@@ -66,7 +60,7 @@ namespace Wormhole
 	 */
 	MAUtil::String FileUtil::getLocalPath()
 	{
-		int bufferSize = 2048;
+		static const int bufferSize = 2048;
 		char buffer[bufferSize];
 
 		int size = maGetSystemProperty(

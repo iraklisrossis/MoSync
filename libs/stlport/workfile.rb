@@ -22,7 +22,7 @@ mod.class_eval do
 		endings.each do |ending|
 			collect_files(ending, '.c').each do |ending|
 				task = CopyFileTask.new(self, dir + "/" + File.basename(ending.to_s), ending)
-				@prerequisites = [task] + @prerequisites
+				@prerequisites = [task] + @prerequisites.to_a
 			end
 		end
 		@prerequisites = [DirTask.new(self, dir)] + @prerequisites

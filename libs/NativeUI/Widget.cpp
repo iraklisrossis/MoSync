@@ -72,7 +72,7 @@ namespace NativeUI
             delete mChildren[i];
         }
 
-        if (NULL != widgetHandle)
+        if (0 != widgetHandle)
         {
             maWidgetDestroy(widgetHandle);
         }
@@ -84,7 +84,7 @@ namespace NativeUI
      */
     void Widget::markWidgetHandleAsDeleted()
     {
-        mWidgetHandle = NULL;
+        mWidgetHandle = 0;
 
         for (int i = 0; i < mChildren.size(); ++i)
         {

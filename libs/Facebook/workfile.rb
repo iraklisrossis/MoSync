@@ -15,6 +15,9 @@ mod.class_eval do
 			'GraphAPI/GetFacebookObjects', 'GraphAPI/GetFacebookObjects/FacebookObjects',
 			'GraphAPI/Publish', 'HTTP', 'JSON_lib']
 		@EXTRA_INCLUDES = ['.']
+		@SPECIFIC_CFLAGS = {
+			'FacebookPublisher2.cpp' => ' -Wno-vla',
+		}
 
 		copyFilesSubDir('GraphAPI/GetFacebookObjects/FacebookObjects')
 		copyFilesSubDir('GraphAPI/GetFacebookObjects')

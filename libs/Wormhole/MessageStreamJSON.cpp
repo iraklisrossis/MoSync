@@ -223,7 +223,7 @@ namespace Wormhole
 		//lprintfln("@@@ MessageStreamJSON::parse %i", dataHandle);
 
 		// We must have data.
-		if (NULL == dataHandle)
+		if (0 == dataHandle)
 		{
 			return;
 		}

@@ -66,10 +66,10 @@ namespace Ads
 		mBannerManager->unregisterBanner(this);
         mBannerEventListeners.clear();
 
-        if (NULL != mHandle)
+        if (0 != mHandle)
         {
             maAdsBannerDestroy(mHandle);
-            mHandle = NULL;
+            mHandle = 0;
         }
     }
 

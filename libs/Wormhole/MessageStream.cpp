@@ -239,7 +239,7 @@ namespace Wormhole
 		mData = NULL;
 
 		// We must have data.
-		if (NULL == dataHandle)
+		if (0 == dataHandle)
 		{
 			return;
 		}

@@ -19,7 +19,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <maheap.h>
 #include <mactype.h>
 
-#ifndef USE_NEWLIB
+#if !defined(USE_NEWLIB) && !defined(__BB10__)
 #include <mavsprintf.h>
 #include <conprint.h>
 #else

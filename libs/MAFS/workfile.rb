@@ -11,11 +11,11 @@ mod.class_eval do
 		end
 		setup_base
 	end
-	
+
 	def setup_pipe
 		setup_base
 	end
-	
+
 	def setup_base
 		if(CONFIG == "")
 			# broken compiler

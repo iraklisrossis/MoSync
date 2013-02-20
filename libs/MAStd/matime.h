@@ -28,6 +28,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 extern "C" {
 #endif
 
+#ifdef __BB10__
+#include <time.h>
+#else
+
 #ifdef _MSC_VER
 #include <crtdefs.h>
 #endif
@@ -64,6 +68,7 @@ struct tm
 	///Daylight Saving Time flag. Ignored by MoSync functions.
 	int tm_isdst;
 };
+#endif	//__BB10__
 
 /**
 * Converts a time value to the structure pointed to by \a tim_p.

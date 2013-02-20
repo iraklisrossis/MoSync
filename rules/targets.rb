@@ -90,8 +90,7 @@ class Targets
 		default_const(:PROFILING, false)
 		default_const(:ELIM, false)
 		default_const(:TARGET, HOST)
-		default_const(:MODE, 'default')
-		default_const(:HAVE_LIBC, USE_NEWLIB || (MODE == 'bb10'))
+		default_const(:HAVE_LIBC, USE_NEWLIB || (defined?(MODE) && MODE == 'bb10'))
 	end
 
 	# parse ARGV

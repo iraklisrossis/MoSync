@@ -9,6 +9,11 @@
 
 #include "matime.h"
 #include "mavsprintf.h"
+
+#ifndef MAPIP
+#include <time.h>
+#else
+
 #include "mastdlib.h"
 
 #define SECSPERMIN	60
@@ -112,6 +117,7 @@ struct tm* split_time(time_t timer, struct tm* res)
 
 	return res;
 }
+#endif	//MAPIP
 
 char* sprint_tm(const struct tm *tim_p, char* buf)
 {
@@ -138,7 +144,7 @@ char* sprint_time(time_t timer) {
 	return sprint_tm(split_time(timer, &temp), stbuf);
 }
 
-
+#ifdef MAPIP
 static void validate_structure(struct tm *tim_p)
 {
 	div_t res;
@@ -274,3 +280,9 @@ time_t mktime(struct tm *tim_p)
 
 	return tim;
 }
+
+#else	//MAPIP
+struct tm* split_time(time_t timer, struct tm* res) {
+	return gmtime_r(&timer, res);
+}
+#endif	//MAPIP

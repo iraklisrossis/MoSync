@@ -23,6 +23,7 @@ MA 02110-1301, USA.
 #include <maapi.h>
 #include <MAUtil/Set.h>
 #include <mastring.h>
+#include <matime.h>
 
 #include "FacebookDemoMoblet.h"
 #include "Facebook/GetPermissions.h"
@@ -39,8 +40,6 @@ MA 02110-1301, USA.
 
 #include <NativeUI/Screen.h>
 #include <NativeUI/Image.h>
-
-#include <matime.h>
 
 /**
  * The constructor creates the user interface and the FacebookManager
@@ -198,8 +197,8 @@ MAUtil::String FacebookDemoMoblet::extractAccessToken(const char *newurl)
 	if (strstr(newurl, "fbconnect://") == newurl)
 	{
 		Environment::getEnvironment().removeCustomEventListener(this);
-		char *accessToken = strstr(newurl, "access_token=") + strlen("access_token=");
-		char *expiresIn = strstr(newurl, "&expires_in=");
+		char *accessToken = (char*)strstr(newurl, "access_token=") + strlen("access_token=");
+		const char *expiresIn = strstr(newurl, "&expires_in=");
 		accessToken[expiresIn - accessToken] = 0;
 		access_token.append(accessToken, strlen(accessToken));
 	}

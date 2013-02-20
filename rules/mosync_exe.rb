@@ -271,7 +271,7 @@ module MoSyncExeModule
 			return Mapip2CppTask if(MODE == 'cpp')
 			return Mapip2CsTask if(MODE == 'cs')
 			return Mapip2RebuildTask if(MODE == 'rebuild')
-			raise hell
+			raise "Invalid MODE #{MODE}" if(MODE != 'default')
 		end
 		return (isPackingForIOS ? Mapip2CppTask : super)
 	end
@@ -410,19 +410,8 @@ module MoSyncExeModule
 	end
 end
 
-class OriginalPipeExeWork < PipeGccWork
-	include MoSyncExeModule
-	def libFileEnding; '.lib'; end
-end
-
-class MoSyncArmExeWork < ExeWork
-	include MoSyncExeModule
-	include MoSyncInclude
-	include MoSyncArmGccMod
-	def libFileEnding; NATIVE_LIB_FILE_ENDING; end
-	def linkerName(have_cppfiles); ARM_DRIVER_NAME; end
-	def applyLibraries; end
-	def libTasks
+module MoSyncLibSort
+	def sortLibs(libs)
 		# reorder libraries according to dependencies,
 		# to avoid "undefined reference" errors from GNU ld.
 		libDeps = {
@@ -438,14 +427,31 @@ class MoSyncArmExeWork < ExeWork
 			'Notification' => 'mautil',
 			'Wormhole' => 'nativeui',
 		}
-		libs = @LIBRARIES.sort do |a,b|
+		libs = libs.sort do |a,b|
 			num = 1
 			num = -1 if(libDeps[a] == b)
 			num = 0 if(a == b)
 			num
 		end
+		return libs
+	end
+end
 
-		return (libs + @DEFAULT_LIBS).collect do |lib|
+class OriginalPipeExeWork < PipeGccWork
+	include MoSyncExeModule
+	def libFileEnding; '.lib'; end
+end
+
+class MoSyncArmExeWork < ExeWork
+	include MoSyncExeModule
+	include MoSyncInclude
+	include MoSyncArmGccMod
+	include MoSyncLibSort
+	def libFileEnding; NATIVE_LIB_FILE_ENDING; end
+	def linkerName(have_cppfiles); ARM_DRIVER_NAME; end
+	def applyLibraries; end
+	def libTasks
+		return (sortLibs(@LIBRARIES) + @DEFAULT_LIBS).collect do |lib|
 			libTask(lib)
 		end
 	end
@@ -457,6 +463,7 @@ end
 
 class MoSyncBB10ExeWork < BB10ExeWork
 	include MoSyncInclude
+	include MoSyncLibSort
 	def setup
 		set_defaults
 		@prerequisites = []
@@ -465,12 +472,16 @@ class MoSyncBB10ExeWork < BB10ExeWork
 		@EXTRA_LINKFLAGS = ''
 		#@EXTRA_LINKFLAGS = " -L #{mosyncdir}/lib/#{@BUILDDIR_NAME}"
 		#@EXTRA_LINKFLAGS = " -L #{@COMMON_BUILDDIR}"
-		@LIBRARIES << 'mosynclib'
-		@LIBRARIES << 'mastd'
-		@LIBRARIES << 'mosync_base'
-		@LIBRARIES.each do |lib|
-			@EXTRA_OBJECTS << FileTask.new(self, "#{mosyncdir}/lib/#{@BUILDDIR_NAME}/#{lib}.a")
+		libs = sortLibs(@LIBRARIES)
+		libs << 'mosynclib'
+		libs << 'mastd'
+		libs << 'mosync_base'
+
+		libs.each do |lib|
+			f ="#{mosyncdir}/lib/#{@BUILDDIR_NAME}/#{lib}.a"
+			@EXTRA_OBJECTS << FileTask.new(self, f)
 		end
+
 		@LIBRARIES = BB10_RUNTIME_LIBS
 
 		# resource compilation
@@ -498,6 +509,26 @@ class MoSyncBB10ExeWork < BB10ExeWork
 
 		if(@resourceTask)
 			@BB10_ASSETS = [Asset.new("native/#{File.basename(@resourceTask.to_str)}", @resourceTask)]
+		end
+
+		def id
+			i = 'testDev_mple_'+@NAME
+			#raise "name too long (#{i.length})" if(i.length > 27)
+			puts "WARNING: name too long (#{i.length})" if(i.length > 27)
+			i << '01234576789'[0, (27 - i.length)] if(i.length < 27)
+			return i
+		end
+
+		if(!@BB10_SETTINGS)
+			@BB10_SETTINGS = {
+				:AUTHOR => 'a',
+				:AUTHOR_ID => 'gYAAgEtfkcaouNHlVckFZUnMyKo',
+				:APP_NAME => @NAME,
+				:PACKAGE_NAME => 'com.example.'+@NAME,
+				:ID => id,
+				:VERSION => '1.0.0.1',
+				:VERSION_ID => 'testMS4wLjAuMSAgICAgICAgICB',
+			}
 		end
 
 		super

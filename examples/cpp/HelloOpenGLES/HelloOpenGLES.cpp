@@ -30,7 +30,7 @@ MA 02110-1301, USA.
 
 // Include MoSync syscalls.
 #include <maapi.h>
-
+#include <madmath.h>
 #include <mavsprintf.h>
 
 // Include header file for Moblets.
@@ -350,8 +350,6 @@ private:
 		GLfloat zNear,
 		GLfloat zFar)
 	{
-		const float M_PI = 3.14159;
-
 		GLfloat ymax = zNear * tan(fovy * M_PI / 360.0);
 		GLfloat ymin = -ymax;
 		GLfloat xmin = ymin * aspect;

@@ -28,6 +28,7 @@ resources
 resources.deps
 Resources
 log.txt
+log.*.txt
 panic.report
 Stabs.tab
 Sld.tab
@@ -165,6 +166,7 @@ LocalFiles.bin*
 /runtimes/cpp/platforms/bb10/.metadata
 /runtimes/cpp/platforms/bb10/MoSync/config.rb
 /runtimes/cpp/platforms/bb10/MoSync/*-Debug/*
+/runtimes/cpp/platforms/bb10/MoSync/assets/*
 
 /runtimes/java/source/MAAPI_consts.h
 /runtimes/java/source/core_consts.h

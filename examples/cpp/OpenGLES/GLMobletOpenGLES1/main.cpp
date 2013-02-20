@@ -19,6 +19,7 @@ MA 02110-1301, USA.
 #include <MAUtil/GLMoblet.h>
 #include <GLES/gl.h>
 #include <mavsprintf.h>
+#include <madmath.h>
 
 using namespace MAUtil;
 
@@ -39,8 +40,6 @@ static void gluPerspective(
 	GLfloat zNear,
 	GLfloat zFar)
 {
-	const float M_PI = 3.14159f;
-
 	GLfloat ymax = zNear * tan(fovy * M_PI / 360.0f);
 	GLfloat ymin = -ymax;
 	GLfloat xmin = ymin * aspect;

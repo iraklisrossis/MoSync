@@ -8,7 +8,7 @@ mod.class_eval do
 		setup_base
 		@SOURCES = ['../ResCompiler']
 		@EXTRA_SOURCEFILES = ["conprint.c", "ma.c", "maassert.c", "mactype.c", "madmath.c",
-			"mastdlib.c", "mastring.c", "mavsprintf.c", "maxtoa.c", "maheap.c"]
+			"mastdlib.c", "mastring.c", "mavsprintf.c", "maxtoa.c", "maheap.c", 'matime.c']
 		@SPECIFIC_CFLAGS = @native_specific_cflags
 
 		@LOCAL_DLLS = ["mosync"]

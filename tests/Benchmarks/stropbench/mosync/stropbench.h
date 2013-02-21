@@ -8,12 +8,12 @@
 #ifndef STROPBENCH_H_
 #define STROPBENCH_H_
 
-#include <MAUtil/String.h>
 #include <ma.h>
 #include <conprint.h>
 #include <maassert.h> //give access to FREEZE macro
 #include <mastdlib.h> //give acces to rand()
 #include <string>
+#include <MAUtil/String.h>
 
 #define ALOT 256 //used as number of iterations when we want to do a lot of operations
 #define MAUTIL_STRING 0

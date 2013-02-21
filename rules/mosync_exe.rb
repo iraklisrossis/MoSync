@@ -23,6 +23,7 @@ require "#{File.dirname(__FILE__)}/targets.rb"
 require "#{File.dirname(__FILE__)}/exe.rb"
 require "#{File.dirname(__FILE__)}/arm.rb"
 require "#{File.dirname(__FILE__)}/bb10.rb"
+require "#{File.dirname(__FILE__)}/flags.rb"
 
 module PipeElimTask
 	def execute
@@ -229,6 +230,7 @@ module MoSyncMemorySettings
 end
 
 class Mapip2MxTask < MultiFileTask
+	include FlagsChanged
 	def initialize(work, prereq, mxFlags)
 		@progName = prereq.to_s
 		@mxFlags = mxFlags
@@ -236,9 +238,14 @@ class Mapip2MxTask < MultiFileTask
 		@sldName = name + '.sld'
 		super(work, name, [@sldName])
 		@prerequisites << prereq
+		initFlags
+	end
+	def cFlags
+		return " -mx #{@NAME}#{@mxFlags} #{@progName} #{@sldName}"
 	end
 	def execute
-		sh "#{mosyncdir}/bin/elfStabSld -mx #{@NAME}#{@mxFlags} #{@progName} #{@sldName}"
+		sh "#{mosyncdir}/bin/elfStabSld#{cFlags}"
+		execFlags
 	end
 end
 

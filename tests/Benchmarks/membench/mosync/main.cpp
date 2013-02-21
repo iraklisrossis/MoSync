@@ -8,6 +8,7 @@
  * MoSync C++ library.
  */
 
+extern "C" int MAMain() GCCATTRIB(noreturn);
 extern "C" int MAMain()
 {
 
@@ -43,5 +44,5 @@ extern "C" int MAMain()
 //		}
 //	}
 
-	return 0;
+	//return 0;
 }

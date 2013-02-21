@@ -21,7 +21,7 @@
 **
 **
 */
-#ifdef MAPIP
+
 #include <maheap.h>
 #include <mastdlib.h>
 #include <maapi.h>
@@ -30,11 +30,6 @@
 #include <limits.h>
 #include <maassert.h>
 //#include <benchdb/benchdb.h>
-#else
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#endif
 
 #define DP
 
@@ -73,17 +68,7 @@ static REAL second   (void);
 static void *mempool;
 
 int g_startTime;
-#ifdef MAPIP
 int MAMain ( void )
-#else
-static int maGetMilliSecondCount(void) {
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return tv.tv_sec * 1000 + (tv.tv_usec / 1000);
-}
-
-int main(void)
-#endif
 {
 	//char    buf[80];
 	int     arsize;

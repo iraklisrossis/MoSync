@@ -43,7 +43,7 @@ module FlagsChanged
 		return flagsNeeded?(log)
 	end
 
-	# Call from needed?.
+	# Call from needed?, if the including class implements it.
 	def flagsNeeded?(log=true)
 		#puts "Oldflags: #{@OLDFLAGS.inspect} newflags: #{@FLAGS.inspect}"
 		if(@OLDFLAGS != cFlags)

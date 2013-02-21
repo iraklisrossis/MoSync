@@ -72,11 +72,11 @@ public:
 
 class MemBench : public MAUtil::Moblet {
 public:
-	MemBench();
+	MemBench() GCCATTRIB(noreturn);
 	~MemBench();
 
 	/* start benching! */
-	void bench();
+	void bench() GCCATTRIB(noreturn);
 
 private:
 

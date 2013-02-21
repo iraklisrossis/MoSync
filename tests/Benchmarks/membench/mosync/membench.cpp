@@ -17,7 +17,7 @@
  */
 
 #include "membench.h"
-#include "buildinfo.h"
+//#include "buildinfo.h"
 #include <MAUtil/String.h>
 #include <benchdb/benchdb.h>
 
@@ -143,6 +143,9 @@ void MemBench::bench() {
 	"2", allocStr10, allocStr100, allocVoid1, allocVoid100, allocVoid1000, allocDummy, allocDummyStruct, allocDummyMix,
 	accessArray, accessVector, addVector, accessDummy, accessDummyStruct, accessDummyMix);*/
 
+#if 1
+	maExit(0);
+#else
 	BenchResult br;
 
 	//str_alloc_100, alloc_void_1, alloc_void_100, alloc_void_1000, alloc_dummy, alloc_dummy_struct, alloc_dummy_mix,
@@ -169,8 +172,8 @@ void MemBench::bench() {
 
 	BenchDBConnector * bdbc = new BenchDBConnector(br);
 	printf("bdbc: %p\n", bdbc);
-
 	//FREEZE;
+#endif
 
 }
 
@@ -240,6 +243,11 @@ int MemBench::heapBench(int numRuns, int size, int testType) {
 
 }
 
+		int tmp;
+		float ftmp;
+		MAUtil::String tmpStr;
+		MAUtil::Vector<MAUtil::String> tmpStrVec;
+
 int MemBench::memAccess(int numRuns, int size, int testType) {
 
 	int startTime = currTime();
@@ -301,10 +309,6 @@ int MemBench::memAccess(int numRuns, int size, int testType) {
 		break;
 
 	case DUMMY_MIX_ACCESS:
-		int tmp;
-		float ftmp;
-		MAUtil::String tmpStr;
-		MAUtil::Vector<MAUtil::String> tmpStrVec;
 		mDom.str_vec = MAUtil::Vector<MAUtil::String>();
 		for(int i = 0; i < numRuns; ++i){
 			mDom.a = rand(); mDom.b = rand(); mDom.c = rand(); mDom.d = rand(); mDom.e = rand(); mDom.f = rand(); mDom.g = rand();

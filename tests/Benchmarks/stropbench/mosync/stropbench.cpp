@@ -185,7 +185,7 @@ void StropBencher::bench() {
 	printf("%1.2f KSTROPS\n", (float) (ALOT*i)/(float) time);
 
 	//freeze until 0 is pressed
-	FREEZE;
+	//FREEZE;
 }
 
 
@@ -195,9 +195,9 @@ void StropBencher::bench() {
 int StropBencher::appender(int numRuns, int strType, int func) {
 
 	int startTime = currTime();
-	MAUtil::String str("Ima String!");
+	static const MAUtil::String str("Ima String!");
 	MAUtil::String appStr("Append me!");
-	std::string _str("Ima String!");
+	static const std::string _str("Ima String!");
 	std::string _appStr("Append me!");
 	switch(strType) {
 
@@ -225,6 +225,8 @@ int StropBencher::appender(int numRuns, int strType, int func) {
 		}
 		return currTime() - startTime;
 
+	default:
+		BIG_PHAT_ERROR;
 	}
 
 }
@@ -236,9 +238,9 @@ int StropBencher::appender(int numRuns, int strType, int func) {
 int StropBencher::insert(int numRuns, int strType, int insType) {
 
 	MAUtil::String str("I am a string!");
-	MAUtil::String inStr("I am a string to be inserted into other strings!");
+	static const MAUtil::String inStr("I am a string to be inserted into other strings!");
 	std::string _str("I am a string!");
-	std::string _inStr("I am a string to be inserted into other strings!");
+	static const std::string _inStr("I am a string to be inserted into other strings!");
 
 	int startTime = currTime();
 	switch(strType) {
@@ -267,6 +269,8 @@ int StropBencher::insert(int numRuns, int strType, int insType) {
 		}
 		return currTime() - startTime;
 
+	default:
+		BIG_PHAT_ERROR;
 	}
 
 }
@@ -310,6 +314,8 @@ int StropBencher::copy(int numRuns, int strType) {
 		//printf("cpyStr = %s", cpyStr.c_str());
 		return currTime() - startTime;
 
+	default:
+		BIG_PHAT_ERROR;
 	}
 
 }
@@ -321,11 +327,11 @@ int StropBencher::copy(int numRuns, int strType) {
 int StropBencher::find(int numRuns, int strType, int func) {
 
 	int startTime = currTime();
-	MAUtil::String alphabet("abcdefghiljkmnopqrstuvwxyz");
+	static const MAUtil::String alphabet("abcdefghiljkmnopqrstuvwxyz");
 	const char * c_str = "a\0b\0c\0d\0e\0f\0g\0h\0i\0j\0k\0l\0m\0n\0o\0p\0q\0r\0s\0t\0u\0v\0w\0x\0y\0z\0";
-	MAUtil::String largeAlphabet("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
-	std::string _alphabet("abcdefghiljkmnopqrstuvwxyz");
-	std::string _largeAlphabet("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
+	static const MAUtil::String largeAlphabet("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
+	static const std::string _alphabet("abcdefghiljkmnopqrstuvwxyz");
+	static const std::string _largeAlphabet("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
 	int res; //result of find (position where char was found or -1 on no match)
 
 	switch(strType) {
@@ -359,7 +365,7 @@ int StropBencher::find(int numRuns, int strType, int func) {
 
 		for(int i = 0; i < numRuns; ++i){
 			for(int j = 0; j < ALOT; ++j){
-				for(char k = 0; k < _alphabet.length(); ++k){
+				for(byte k = 0; k < _alphabet.length(); ++k){
 					if(func == 0){
 						res = _alphabet.find(c_str+2*k, 0); //a little hack to make this compile (char)k+97 will not work here
 						if(res == -1)
@@ -380,6 +386,8 @@ int StropBencher::find(int numRuns, int strType, int func) {
 		}
 		return currTime() - startTime;
 
+	default:
+		BIG_PHAT_ERROR;
 	}
 
 }
@@ -402,7 +410,8 @@ int StropBencher::substr(int numRuns, int strType) {
 
 		for(int i = 0; i < numRuns; ++i){
 			for(int j = 0; j < ALOT; ++j){
-				subStr = longStr.substr(pos = rand()%(longStr.length()-1), rand()%(longStr.length()-pos));
+				pos = rand()%(longStr.length()-1);
+				subStr = longStr.substr(pos, rand()%(longStr.length()-pos));
 			}
 		}
 		//printf("subStr: %s", subStr.c_str()); //force the compiler to actually do the operations because subStr is used!
@@ -412,12 +421,15 @@ int StropBencher::substr(int numRuns, int strType) {
 
 		for(int i = 0; i < numRuns; ++i){
 			for(int j = 0; j < ALOT; ++j){
-				_subStr = _longStr.substr(pos = rand()%(_longStr.length()-1), rand()%(_longStr.length()-pos));
+				pos = rand()%(_longStr.length()-1);
+				_subStr = _longStr.substr(pos, rand()%(_longStr.length()-pos));
 			}
 		}
 		//printf("subStr: %s", subStr.c_str()); //force the compiler to actually do the operations because subStr is used!
 		return currTime() - startTime;
 
+	default:
+		BIG_PHAT_ERROR;
 	}
 
 }
@@ -441,7 +453,8 @@ int StropBencher::remove(int numRuns, int strType) {
 		for(int i = 0; i < numRuns; ++i){
 			for(int j = 0; j < ALOT; ++j){
 				longStr = MAUtil::String("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
-				longStr.remove(pos = rand()%(longStr.length()-1), rand()%(longStr.length()-pos)); //randomize starting position from 0 -> strlen-1 and length from 0->strlen-startpos
+				pos = rand()%(longStr.length()-1);
+				longStr.remove(pos, rand()%(longStr.length()-pos)); //randomize starting position from 0 -> strlen-1 and length from 0->strlen-startpos
 			}
 		}
 		//printf("longStr: %s", longStr.c_str()); //force the compiler to actually do the operations because subStr is used!
@@ -453,6 +466,8 @@ int StropBencher::remove(int numRuns, int strType) {
 		//printf("longStr: %s", longStr.c_str()); //force the compiler to actually do the operations because subStr is used!
 		return -1;
 
+	default:
+		BIG_PHAT_ERROR;
 	}
 
 }
@@ -467,7 +482,6 @@ int StropBencher::resize(int numRuns, int strType) {
 	MAUtil::String subStr;
 	std::string _longStr("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
 	std::string _subStr;
-	int pos;
 
 	switch(strType) {
 
@@ -491,9 +505,13 @@ int StropBencher::resize(int numRuns, int strType) {
 		//printf("longStr: %s", longStr.c_str()); //force the compiler to actually do the operations because subStr is used!
 		return currTime() - startTime;
 
+	default:
+		BIG_PHAT_ERROR;
 	}
 
 }
+
+volatile bool sDummy;
 
 /*
  * Test the performance of string comparisons on our strType
@@ -502,17 +520,16 @@ int StropBencher::compare(int numRuns, int strType, int cmpType) {
 
 	int startTime = currTime();
 	bool ret;
-	MAUtil::String longStr("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
-	MAUtil::String eq("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
-	MAUtil::String notEq("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghilj#kmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
-	MAUtil::String less("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljjkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz"); //2 j:s in a row makes this string lexiographically less than longStr
-	MAUtil::String more("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljmkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz"); //a m after the j makes this string lexiographically more than longStr
-	std::string _longStr("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
-	std::string _eq("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
-	std::string _notEq("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghilj#kmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
-	std::string _less("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljjkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz"); //2 j:s in a row makes this string lexiographically less than longStr
-	std::string _more("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljmkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz"); //a m after the j makes this string lexiographically more than longStr
-	int pos;
+	static const MAUtil::String longStr("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
+	static const MAUtil::String eq("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
+	static const MAUtil::String notEq("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghilj#kmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
+	static const MAUtil::String less("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljjkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz"); //2 j:s in a row makes this string lexiographically less than longStr
+	static const MAUtil::String more("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljmkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz"); //a m after the j makes this string lexiographically more than longStr
+	static const std::string _longStr("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
+	static const std::string _eq("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
+	static const std::string _notEq("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghilj#kmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz");
+	static const std::string _less("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljjkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz"); //2 j:s in a row makes this string lexiographically less than longStr
+	static const std::string _more("abcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljmkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyzabcdefghiljkmnopqrstuvwxyz"); //a m after the j makes this string lexiographically more than longStr
 
 	switch(strType) {
 
@@ -533,6 +550,7 @@ int StropBencher::compare(int numRuns, int strType, int cmpType) {
 				else
 					ret = longStr > less;
 
+				sDummy = ret;
 			}
 		}
 		//		printf("ret: %d", ret); //force the compiler to actually do the operations because subStr is used!
@@ -555,11 +573,14 @@ int StropBencher::compare(int numRuns, int strType, int cmpType) {
 				else
 					ret = longStr > less;
 
+				sDummy = ret;
 			}
 		}
 		//		printf("ret: %d", ret); //force the compiler to actually do the operations because subStr is used!
 		return currTime() - startTime;
 
+	default:
+		BIG_PHAT_ERROR;
 	}
 
 }

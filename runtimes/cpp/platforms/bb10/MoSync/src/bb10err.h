@@ -1,10 +1,14 @@
 #include <errno.h>
 
-#define LOG_ERRNO LOG("Errno at %s:%i: %i(%s)\n", __FILE__, __LINE__, errno, strerror(errno))
+#define LOG_ERRNO_(e) LOG("Errno at %s:%i: %i(%s)\n", __FILE__, __LINE__, e, strerror(e))
+#define LOG_ERRNO LOG_ERRNO_(errno)
 
-#define DO_ERRNO do { LOG_ERRNO; MoSyncErrorExit(errno); } while(0)
+#define DO_ERRNO_(e) do { LOG_ERRNO_(e); MoSyncErrorExit(e); } while(0)
+#define DO_ERRNO DO_ERRNO_(errno)
 
 #define ERRNO(func) do { int _res = (func); if(_res < 0) DO_ERRNO; } while(0)
+
+#define ERRNO_RET(func) do { int _res = (func); if(_res != EOK) DO_ERRNO_(_res); } while(0)
 
 #define NULL_ERRNO(func) do { void* _res = (func); if(_res < NULL) DO_ERRNO; } while(0)
 

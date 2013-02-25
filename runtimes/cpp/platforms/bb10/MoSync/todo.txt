@@ -1,9 +1,9 @@
 Bluetooth - btdevice.h, btspp.h
-OpenGL - egl.h
+OpenGL - egl.h	DONE
 NFC - nfc.h
-Location - geolocation.h
-Sensors - sensor.h, wmm.h, accelerometer.h
-Battery - battery.h
+Location - geolocation.h	DONE
+Sensors - sensor.h, wmm.h, accelerometer.h	DONE
+Battery - battery.h	DONE
 Notifications - notification.h
 maPlatformRequest - ???
 maVibrate - ???

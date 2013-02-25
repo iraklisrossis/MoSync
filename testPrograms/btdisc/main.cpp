@@ -19,20 +19,21 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <mautil/mauuid.h>
 #include <maassert.h>
 #include <conprint.h>
+#include <wchar.h>
 
 void scan();
 
-#define SCAN_DEVICES
+#define SCAN_DEVICES 1
 
+extern "C" int MAMain() GCCATTRIB(noreturn);
 extern "C" int MAMain() {
 	InitConsole();
 	gConsoleLogging = 1;
 	scan();
 	Freeze(0);
-	return 0;
 }
 
-const char* btaddr2string(const MABtAddr& a) {
+static const char* btaddr2string(const MABtAddr& a) {
 	static char buffer[16];
 	sprintf(buffer, "%02x%02x%02x%02x%02x%02x", a.a[0], a.a[1], a.a[2], a.a[3], a.a[4], a.a[5]);
 	return buffer;
@@ -41,17 +42,17 @@ const char* btaddr2string(const MABtAddr& a) {
 void scan() {
 	int nserv=0;
 	MAEvent event;
-#ifdef SCAN_DEVICES
+	int res;
+#if SCAN_DEVICES
 scan_devices:
 	int ndev=0;
 	MABtDevice d;
 	char namebuf[256];
-	int res;
 
 	printf("DevDisc...\n");
 	int startTime = maGetMilliSecondCount();
-	maBtStartDeviceDiscovery(1);
-	//printf("Started\n");
+	res = maBtStartDeviceDiscovery(1);
+	printf("Started %i\n", res);
 
 	while(true) {
 		d.name = namebuf;
@@ -61,18 +62,27 @@ scan_devices:
 			strcpy(namebuf, "Hello Debugger!");
 			res = maBtGetNewDevice(&d);
 			if(res) {
-				printf("d%i: %i %s\n", ndev++, res, d.name);
+				wchar_t buf[256];
+				int i = mbstowcs(buf, d.name, sizeof(buf));
+				if(i < 0) {
+					printf("d%i: %i %s\n", ndev++, res, d.name);
+				} else {
+					wprintf(L"wd%i: %i %S\n", ndev++, res, buf);
+				}
 				if(res < 0) {
 					break;
 				}
 				printf("%s\n", btaddr2string(d.address));
-			} else {
+			} else if(res != 0) {
 				printf("res %i\n", res);
 			}
 		} while(res > 0);
 
 		maWait(0);
 		maGetEvent(&event);	//this oughta work, cause maWait(0) guarantees that there's at least one event.
+		if(event.type == EVENT_TYPE_BT) {
+			printf("EVENT_TYPE_BT\n");
+		}
 		if(event.type == EVENT_TYPE_BT && event.state != 0)
 			break;
 		if(event.type == EVENT_TYPE_CLOSE ||
@@ -109,7 +119,8 @@ scan_devices:
 	//const MABtAddr address = { { 0x00, 0x18, 0xc5, 0x3f, 0x74, 0x7e } };	//N73
 	//const MABtAddr address = { { 0x00, 0x80, 0x98, 0x44, 0x74, 0xc8 } };	//MS-FREDRIK
 	//const MABtAddr address = { { 0x00, 0x11, 0x67, 0x9c, 0xd9, 0x3c } };	//MS-FREDRIK, new dongle
-	const MABtAddr address = { { 0x00, 0x23, 0x3a, 0xb3, 0xc7, 0x82 } };	//Samsung SGH-i900
+	//const MABtAddr address = { { 0x00, 0x23, 0x3a, 0xb3, 0xc7, 0x82 } };	//Samsung SGH-i900
+	const MABtAddr address = { { 0x00, 0x11, 0x67, 0x9d, 0x28, 0x02 } };	//FREDIK-7
 #endif	//SCAN_DEVICES
 
 	printf("ServDisc %s\n", btaddr2string(address));
@@ -121,7 +132,6 @@ scan_devices:
 		char sNameBuf[256];
 		static const int MAX_UUIDS = 32;
 		MAUUID uuidBuf[MAX_UUIDS];
-		int res;
 		s.name = sNameBuf;
 		s.nameBufSize = sizeof(sNameBuf);
 		s.uuids = uuidBuf;
@@ -173,7 +183,7 @@ scan_devices:
 		}
 	}
 	printf("Done %i, %i ms\n", event.state, maGetMilliSecondCount() - servStartTime);
-#ifdef SCAN_DEVICES
+#if SCAN_DEVICES
 	printf("Done, total %i ms\n", maGetMilliSecondCount() - startTime);
 #endif	//SCAN_DEVICES
 }

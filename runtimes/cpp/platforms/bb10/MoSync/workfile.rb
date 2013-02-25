@@ -14,6 +14,7 @@ mosync_base.instance_eval do
 		"#{BD}/intlibs/helpers/platforms/linux",
 		"#{BD}/intlibs/hashmap",
 		"#{BD}/intlibs/net",
+		"#{BD}/intlibs/bluetooth/bb10",
 	]
 	@IGNORED_FILES = [
 		'MoSyncDB.cpp',
@@ -41,6 +42,7 @@ mosync_base.instance_eval do
 	@SPECIFIC_CFLAGS = {
 		'Syscall.cpp' => ' -Wno-float-equal',
 		'Image.cpp' => ' -Wno-shadow',
+		'bluetooth.cpp' => ' -Wno-missing-noreturn',	# temp hack until all syscalls are implemented.
 	}
 
 	@NAME = 'mosync_base'

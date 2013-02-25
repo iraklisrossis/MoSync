@@ -12,7 +12,7 @@
 
 #include "config_platform.h"
 
-//#include <bluetooth/discovery.h>
+#include <bluetooth/discovery.h>
 
 //#include "pim.h"
 //#include "helpers/CPP_IX_PIM.h"

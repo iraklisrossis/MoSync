@@ -130,6 +130,7 @@ BB10_RUNTIME_LIBS = [
 	'EGL',
 	'GLESv1_CM',
 	'GLESv2',
+	'btapi',
 ]
 
 class BB10ExeWork < ExeWork

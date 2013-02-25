@@ -19,6 +19,7 @@
 
 #define NETWORKING_H
 #include "networking.h"
+#include "bluetooth/discovery.h"
 
 // libc includes
 #include <math.h>
@@ -209,6 +210,8 @@ namespace Base
 			}
 		}
 
+		Bluetooth::MABtInit();
+
 		ERRNO(sMyEventDomain = bps_register_domain());
 		sMainEventChannel = bps_channel_get_active();
 	}
@@ -293,25 +296,6 @@ void DefluxBinPushEvent(MAHandle handle, Stream& s) {
 	bps_event_payload_t payload = { handle, (uintptr_t)&s, 0 };
 	BPSERR(bps_event_create(&be, sMyEventDomain, EVENT_CODE_DEFLUX, &payload, NULL));
 	BPSERR(bps_channel_push_event(sMainEventChannel, be));
-}
-
-BtSppConnection* createBtSppConnection(MABtAddr const*, unsigned int) {
-	DEBIG_PHAT_ERROR;
-}
-int BtSppServer::open(MAUUID const&, char const*, int) {
-	DEBIG_PHAT_ERROR;
-}
-int BtSppServer::getAddr(MAConnAddr& addr) {
-	DEBIG_PHAT_ERROR;
-}
-int BtSppServer::accept(BtSppConnection*&) {
-	DEBIG_PHAT_ERROR;
-}
-void BtSppServer::close() {
-	DEBIG_PHAT_ERROR;
-}
-int Bluetooth::getLocalAddress(MABtAddr&) {
-	DEBIG_PHAT_ERROR;
 }
 
 
@@ -480,6 +464,7 @@ static void bpsWait(int timeout) {
 			case EVENT_CODE_MA:
 				event = *(MAEventNative*)payload->data1;
 				//LOG("event %p type %i\n", (void*)payload->data1, event.type);
+				delete (MAEventNative*)payload->data1;
 				DEBUG_ASSERT(event.type < 100);
 				break;
 			case EVENT_CODE_DEFLUX:
@@ -1268,6 +1253,13 @@ static int maSensorStop(int sensor) {
 	return MA_SENSOR_ERROR_NONE;
 }
 
+static void BtWaitTrigger() {
+	LOGD("BtWaitTrigger\n");
+	MAEventNative* e = new MAEventNative;
+	e->type = EVENT_TYPE_BT;
+	e->state = Bluetooth::maBtDiscoveryState();
+	ConnPushEvent(e);
+}
 
 SYSCALL(void, maPanic(int result, const char* message))
 {
@@ -1338,8 +1330,6 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 	maIOCtl_case(maSensorStart);
 	maIOCtl_case(maSensorStop);
 
-#if 0
-
 	maIOCtl_case(maAccept);
 
 	case maIOCtl_maBtStartDeviceDiscovery:
@@ -1348,10 +1338,12 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 	case maIOCtl_maBtStartServiceDiscovery:
 		return BLUETOOTH(maBtStartServiceDiscovery)(GVMRA(MABtAddr), GVMR(b, MAUUID), BtWaitTrigger);
 
-		maIOCtl_syscall_case(maBtGetNewDevice);
-		maIOCtl_syscall_case(maBtGetNewService);
-		maIOCtl_maBtGetNextServiceSize_case(BLUETOOTH(maBtGetNextServiceSize));
-		maIOCtl_maBtCancelDiscovery_case(BLUETOOTH(maBtCancelDiscovery));
+	maIOCtl_syscall_case(maBtGetNewDevice);
+	maIOCtl_syscall_case(maBtGetNewService);
+	maIOCtl_maBtGetNextServiceSize_case(BLUETOOTH(maBtGetNextServiceSize));
+	maIOCtl_maBtCancelDiscovery_case(BLUETOOTH(maBtCancelDiscovery));
+
+#if 0
 
 	case maIOCtl_maPlatformRequest:
 		{

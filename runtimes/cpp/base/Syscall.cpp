@@ -900,7 +900,6 @@ LOG("cwd: %s\n", getcwd(NULL, 0));
 	}
 
 #if !defined(_android)
-#ifndef __BB10__
 	int Syscall::maBtGetNewDevice(MABtDevice* dst) {
 		MABtDeviceNative dn;
 		dn.nameBufSize = dst->nameBufSize;
@@ -924,7 +923,6 @@ LOG("cwd: %s\n", getcwd(NULL, 0));
 		dst->port = sn.port;
 		return res;
 	}
-#endif	//__BB10__
 
 #define FILE_FAIL(val) do { LOGF(val); return val; } while(0)
 

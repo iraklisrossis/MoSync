@@ -79,13 +79,15 @@ struct Bt {
 	BtServiceSearch serviceSearch;
 	bool names;
 
-#ifdef WIN32
+#if defined(WIN32) || defined(__BB10__)
 	//protects devices, nextDevice, discoveryState, services and nextService.
 	CRITICAL_SECTION critSec;
 #endif
 };
 
+#ifndef __BB10__
 extern Bt gBt;
+#endif
 
 namespace Bluetooth {
 	extern BluetoothStack gBluetoothStack;

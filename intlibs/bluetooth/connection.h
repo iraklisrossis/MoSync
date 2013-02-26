@@ -91,7 +91,11 @@ class BtSppConnection : public Connection {
 public:
 	friend BtSppConnection* createBtSppConnection(const MABtAddr* address, uint port);
 };
+#ifdef __BB10__
+BtSppConnection* createBtSppConnection(const MABtAddr& address, const char* uuid);
+#else
 BtSppConnection* createBtSppConnection(const MABtAddr* address, uint port);
+#endif
 
 #ifdef WINSOCK_SUPPORTED
 class WinsockBtSppConnection : public BtSppConnection {

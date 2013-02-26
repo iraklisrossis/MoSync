@@ -664,6 +664,8 @@ interface MAAPI {
 	* For the <tt>btspp</tt> protocol, \a \<address\> is 12 hexadecimal digits and
 	* \<port\> is a decimal number from 1 to 30.
 	*
+	* On Android and Blackberry 10, \<port\> is instead a 32 hex-digit service UUID.
+	*
 	* Example TCP url: <tt>socket://www.example.com:23</tt>
 	*
 	* Example UDP url: <tt>datagram://www.example.com:53</tt>
@@ -676,7 +678,7 @@ interface MAAPI {
 	*
 	* Example Bluetooth url: <tt>btspp://001dbe15e455:9</tt>
 	*
-	* You can also use MAUtil::BluetoothConnection to connect via Bluetooth service uuid.
+	* Example Bluetooth UUID url: <tt>btspp://001dbe15e455:0000110100001000800000805F9B34FB</tt>
 	*
 	* To find useful Bluetooth addresses, use the Bluetooth discovery API.
 	* See maBtStartDeviceDiscovery().

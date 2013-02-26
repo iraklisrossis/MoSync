@@ -471,8 +471,9 @@ SYSCALL(MAHandle, maConnect(const char* url)) {
 		// btspp://localhost:%32x
 		// btspp://localhost:%32x;name=%s
 		// btspp://%12x:%i
+		// btspp://%12x:%32x
 		//the first two are for servers, without and with service name.
-		//the last is for clients.
+		//the rest are for clients.
 
 		//extract address and port
 		const char* parturl = url + sizeof(btspp_string) - 1;
@@ -549,12 +550,30 @@ SYSCALL(MAHandle, maConnect(const char* url)) {
 				address.a[i] = (byte)ai[i];
 			}
 
-			int port = atoi(first_colon + 1);
+#ifdef __BB10__
+			const char* portString = first_colon + 1;
+			bool isUUID = true;
+			for(int i=0; i<32; i++) {
+				if(!isxdigit(portString[i])) {
+					isUUID = false;
+					break;
+				}
+			}
+			if(isUUID && portString[32] != 0)
+				isUUID = false;
+			if(isUUID) {
+				conn = createBtSppConnection(address, portString);
+			} else {
+				return CONNERR_URL;
+			}
+#else
+			int port = atoi(portString);
 			if(port <= 0 || port > 30) {
 				return CONNERR_URL;
 			}
 
 			conn = createBtSppConnection(&address, port);
+#endif
 		}
 	} else {
 		return CONNERR_URL;

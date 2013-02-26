@@ -14,7 +14,10 @@
 using namespace MoSyncError;
 
 #include <btapi/btdevice.h>
+#include <btapi/btspp.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 using namespace Bluetooth;
 
@@ -23,10 +26,17 @@ static bool sCanceled;
 
 #define TEST(truth) if(!(truth)) { IN_FILE_ON_LINE; LOG("%i: %c(0x%02x)\n", i, buf[i], buf[i]); return CONNERR_INTERNAL; }
 #define TCHARtoCHAR memcpy
+#define ARRAY_LEN(a) (sizeof(a) / sizeof(*a))
 
 static void* doDiscovery(void*);
 //static void* doSearch(void*);
 
+
+static void printBtAddr(char* buf, const MABtAddr& addr) {
+	const byte* a = addr.a;
+	sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X",
+		a[0], a[1], a[2], a[3], a[4], a[5]);
+}
 
 static int parseBtAddr(const char* buf, MABtAddr& addr) {
 	int i = 17, j;
@@ -49,9 +59,106 @@ int Bluetooth::getLocalAddress(MABtAddr& addr) {
 	return parseBtAddr(buf, addr);
 }
 
-BtSppConnection* createBtSppConnection(MABtAddr const*, unsigned int) {
-	DEBIG_PHAT_ERROR;
+class BB10BtSppConnection : public BtSppConnection {
+public:
+	BB10BtSppConnection(const MABtAddr&, const char* uuid);
+	~BB10BtSppConnection();
+
+	int connect();
+	bool isConnected();
+	int read(void* dst, int max);
+	int write(const void* src, int len);
+	void close();
+	int getAddr(MAConnAddr& addr);
+private:
+	int mSock;
+	const MABtAddr mAddr;
+	char mUuid[37];
+
+	BB10BtSppConnection(int sock);
+	friend class BtSppServer;
+};
+
+BtSppConnection* createBtSppConnection(const MABtAddr& addr, const char* uuid) {
+	return new BB10BtSppConnection(addr, uuid);
 }
+
+BB10BtSppConnection::BB10BtSppConnection(const MABtAddr& addr, const char* uuid)
+: mSock(-1), mAddr(addr)
+{
+	DEBUG_ASSERT(strlen(uuid) == 32);
+	//#define SPP_SERVICE_UUID "00001101-0000-1000-8000-00805F9B34FB"
+	static const uint uuidLens[] = { 8, 4, 4, 4, 12 };
+	static const uint nUuidParts = ARRAY_LEN(uuidLens);
+	char* dst = mUuid;
+	const char* src = uuid;
+	for(uint i=0; i<nUuidParts; i++) {
+		uint len = uuidLens[i];
+		memcpy(dst, src, len);
+		src += len;
+		dst += len;
+		if(i != nUuidParts-1) {
+			*dst++ = '-';
+		}
+	}
+	*dst++ = 0;
+	DEBUG_ASSERT((dst - mUuid) == sizeof(mUuid));
+}
+BB10BtSppConnection::~BB10BtSppConnection() {
+	close();
+}
+
+int BB10BtSppConnection::connect() {
+	char addrBuf[18];
+	printBtAddr(addrBuf, mAddr);
+	//LOG("%s %s\n", addrBuf, mUuid);
+	mSock = bt_spp_open(addrBuf, mUuid, false);
+	if(mSock < 0) {
+		LOG_ERRNO;
+		return CONNERR_GENERIC;
+	}
+	return 1;
+}
+
+bool BB10BtSppConnection::isConnected() {
+	return mSock > 0;
+}
+
+int BB10BtSppConnection::read(void* dst, int max) {
+	int bytesRecv = ::read(mSock, dst, max);
+	if(bytesRecv < 0) {
+		LOG_ERRNO;
+		return CONNERR_GENERIC;
+	} else if (bytesRecv == 0) {
+		return CONNERR_CLOSED;
+	} else {
+		return bytesRecv;
+	}
+}
+
+int BB10BtSppConnection::write(const void* src, int len) {
+	int bytesSent = ::write(mSock, src, len);
+	if(bytesSent != len) {
+		DUMPINT(bytesSent);
+		LOG_ERRNO;
+		return CONNERR_GENERIC;
+	} else {
+		return 1;
+	}
+}
+
+
+void BB10BtSppConnection::close() {
+	if(isConnected()) {
+		ERRNO(bt_spp_close(mSock));
+		mSock = -1;
+	}
+}
+
+int BB10BtSppConnection::getAddr(MAConnAddr&) {
+	return IOCTL_UNAVAILABLE;
+}
+
 
 int BtSppServer::open(MAUUID const&, char const*, int) {
 	DEBIG_PHAT_ERROR;
@@ -97,10 +204,12 @@ void Bluetooth::MABtInit() {
 	InitializeCriticalSection(&gBt.critSec);
 
 	ERRNO(bt_device_init(btCallback));
+	ERRNO(bt_spp_init());
 }
 
 void Bluetooth::MABtClose() {
 	DeleteCriticalSection(&gBt.critSec);
+	ERRNO(bt_spp_deinit());
 	bt_device_deinit();
 }
 
@@ -246,12 +355,6 @@ int Bluetooth::maBtGetNextServiceSize(MABtServiceSize* dst) {
 	s.address = *address;
 	ERRNO_RET(pthread_create(NULL, NULL, doSearch, NULL));
 	return 0;
-}
-
-static void printBtAddr(char* buf, const MABtAddr& addr) {
-	const byte* a = addr.a;
-	sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X",
-		a[0], a[1], a[2], a[3], a[4], a[5]);
 }
 
 static void* doSearch(void*) {

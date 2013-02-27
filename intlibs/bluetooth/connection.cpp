@@ -157,6 +157,7 @@ int WinsockBtSppConnection::connect() {
 #endif
 	res = ::connect(mSock, (const sockaddr*)&mAddress, sizeof(mAddress));
 	if(res == SOCKET_ERROR) {
+		LOGBT("addr %012I64X, port %lu\n", mAddress.btAddr, mAddress.port);
 		LOGBT("connect failed, code %i\n", WSAGetLastError());
 		return CONNERR_GENERIC;
 	}

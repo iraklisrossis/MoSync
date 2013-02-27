@@ -20,6 +20,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "connection.h"
 
+#if defined(__BB10__)
+#include "ThreadPoolImpl.h"
+#endif
+
 #define ANY_PORT (-1)
 
 class BtSppServer : public Closable {
@@ -42,10 +46,20 @@ public:
 
 	virtual ~BtSppServer() { close(); }
 
+	void callback(int fd);
+
 private:
 #if defined(WIN32) && !defined(_WIN32_WCE)
 	SOCKET mSock;
 	SOCKADDR_BTH mAddr;
+#endif
+#if defined(__BB10__)
+	char mUuid[37];
+	bool mIsOpen;
+	bool mIsAccepting;
+	int mFd;
+	MoSyncSemaphore mSem;
+	int mErrno;
 #endif
 };
 

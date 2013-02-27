@@ -227,7 +227,7 @@ static void doSearch2() {
 	CHECK_CANCELED(return);
 
 	INT res = WSALookupServiceBegin(&qs,
-#ifndef _WIN32_WCE 
+#ifndef _WIN32_WCE
 		LUP_FLUSHCACHE
 #else
 		0
@@ -248,9 +248,17 @@ static void doSearch2() {
 		res = WSALookupServiceNext(sLookup, LUP_RETURN_COMMENT | LUP_RETURN_NAME |
 			LUP_RETURN_ADDR | LUP_RETURN_BLOB, &qsSize, pQs);
 		DUMPPTR((void*)res);
-		if(res == SOCKET_ERROR && (WSAGetLastError() == WSA_E_NO_MORE || WSAGetLastError() == WSAENOMORE))
-			break;
-		WSATS(res);
+		if(res == SOCKET_ERROR) {
+			switch(WSAGetLastError()) {
+			case WSA_E_NO_MORE:
+			case WSAENOMORE:
+			case ERROR_ALREADY_EXISTS:
+				LOGBT("WSALookupServiceNext failed. WSAGetLastError: %i\n", WSAGetLastError());
+				break;
+			default:
+				WSATS(res);
+			}
+		}
 		LOGBT("dSS 5\n");
 
 		DUMPPTR(pQs->lpcsaBuffer);
@@ -325,9 +333,9 @@ static void doDiscovery2() {
 	qs.dwNameSpace = NS_BTH;
 
 	CHECK_CANCELED(return);
-	
+
 	INT res = WSALookupServiceBegin(&qs, LUP_CONTAINERS
-#ifndef _WIN32_WCE 
+#ifndef _WIN32_WCE
 		| LUP_FLUSHCACHE
 #endif
 		,&sLookup);
@@ -353,10 +361,10 @@ static void doDiscovery2() {
 		//some results have empty names
 		//bHaveName = pwsaResults->lpszServiceInstanceName && *(pwsaResults->lpszServiceInstanceName);
 		if(pQs->lpszServiceInstanceName == NULL) {
-#ifdef _WIN32_WCE 
+#ifdef _WIN32_WCE
 			pQs->lpszServiceInstanceName = (LPWSTR)TEXT("");
 #else
-			pQs->lpszServiceInstanceName = (LPSTR)TEXT("");				
+			pQs->lpszServiceInstanceName = (LPSTR)TEXT("");
 #endif
 		}
 		if(*(pQs->lpszServiceInstanceName) == 0) {

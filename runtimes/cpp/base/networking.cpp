@@ -550,8 +550,8 @@ SYSCALL(MAHandle, maConnect(const char* url)) {
 				address.a[i] = (byte)ai[i];
 			}
 
-#ifdef __BB10__
 			const char* portString = first_colon + 1;
+#ifdef __BB10__
 			bool isUUID = true;
 			for(int i=0; i<32; i++) {
 				if(!isxdigit(portString[i])) {

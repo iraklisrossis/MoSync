@@ -202,7 +202,7 @@ public:
 			if (mWriteBufferPosition < sBufferSize)
 			{
 				mCurrentBuffer[mWriteBufferPosition++] = charCode;
-				printf("Writing: %c\n", charCode);
+				//printf("Writing: %c\n", charCode);
 			}
 		}
 	}
@@ -216,7 +216,9 @@ public:
 		if (mIsConnected && !mIsWriting)
 		{
 			// Send data to server.
-			printf("Sending data...\n");
+			printf("Sending data:\n");
+			mCurrentBuffer[mWriteBufferPosition] = 0;
+			printf("%s\n", mCurrentBuffer);
 			mConnection.write(mCurrentBuffer, mWriteBufferPosition);
 
 			// We are now writing.

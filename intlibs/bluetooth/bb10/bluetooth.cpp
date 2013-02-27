@@ -108,6 +108,10 @@ BB10BtSppConnection::~BB10BtSppConnection() {
 	close();
 }
 
+BB10BtSppConnection::BB10BtSppConnection(int fd) : mSock(fd), mAddr(MABtAddr()) {
+	DEBUG_ASSERT(fd > 0);
+}
+
 int BB10BtSppConnection::connect() {
 	char addrBuf[18];
 	printBtAddr(addrBuf, mAddr);
@@ -159,23 +163,72 @@ int BB10BtSppConnection::getAddr(MAConnAddr&) {
 	return IOCTL_UNAVAILABLE;
 }
 
+static void btServerCallback(long param, int fd) {
+	BtSppServer* s = (BtSppServer*)param;
+	LOG("btServerCallback %i\n", fd);
+	s->callback(fd);
+}
+void BtSppServer::callback(int fd) {
+	if(!mIsAccepting)
+		return;
+	mFd = fd;
+	mErrno = errno;
+	mSem.post();
+}
 
-int BtSppServer::open(MAUUID const&, char const*, int) {
-	DEBIG_PHAT_ERROR;
+int BtSppServer::open(MAUUID const& uuid, char const* name, int port) {
+	mIsOpen = false;
+	mIsAccepting = false;
+	DEBUG_ASSERT(port == ANY_PORT);
+	const uint* u = (uint*)uuid.i;
+	//#define SPP_SERVICE_UUID "00001101-0000-1000-8000-00805F9B34FB"
+	sprintf(mUuid, "%08X-%04X-%04X-%04X-%04X%08X",
+		u[0], u[1] >> 16, u[1] & 0xFFFF, u[2] >> 16, u[2] & 0xFFFF, u[3]);
+	LOG("%s\n", mUuid);
+	int res = bt_spp_open_server((char*)name, mUuid, false, btServerCallback, (long)this);
+	if(res < 0) {
+		LOG_ERRNO;
+		return CONNERR_GENERIC;
+	}
+	mIsOpen = true;
+	return 1;
 }
 int BtSppServer::getAddr(MAConnAddr& addr) {
-	DEBIG_PHAT_ERROR;
+	addr.bt.port = -1;
+	addr.family = CONN_FAMILY_BT;
+	return getLocalAddress(addr.bt.addr);
 }
-int BtSppServer::accept(BtSppConnection*&) {
-	DEBIG_PHAT_ERROR;
+int BtSppServer::accept(BtSppConnection*& connP) {
+	DEBUG_ASSERT(mIsOpen);
+	DEBUG_ASSERT(!mIsAccepting);
+	mIsAccepting = true;
+	mSem.wait();
+	if(mFd < 0) {
+		if(mErrno == ECANCELED)
+			return CONNERR_CANCELED;
+		else
+			return CONNERR_GENERIC;
+	}
+	connP = new BB10BtSppConnection(mFd);
+	mIsAccepting = false;
+	return 1;
 }
 void BtSppServer::close() {
-	DEBIG_PHAT_ERROR;
+	if(mIsOpen) {
+		if(mIsAccepting) {
+			mIsAccepting = false;
+			mFd = -1;
+			mErrno = ECANCELED;
+			mSem.post();
+		}
+		ERRNO(bt_spp_close_server(mUuid));
+		mIsOpen = false;
+	}
 }
 
 
 static void btCallback(const int event, const char* bt_addr, const char* event_data) {
-	LOG("btCallback %i %s %s\n", event, bt_addr, event_data);
+	LOG("btCallback %i '%s' '%s'\n", event, bt_addr, event_data);
 	switch(event) {
 	case BT_EVT_DEVICE_ADDED:
 		if(gBt.discoveryState == 0 && gBt.deviceCallback != NULL) {

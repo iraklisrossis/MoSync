@@ -23,6 +23,7 @@ using namespace Bluetooth;
 
 static Bt gBt;
 static bool sCanceled;
+static bool sAvailable;
 
 #define TEST(truth) if(!(truth)) { IN_FILE_ON_LINE; LOG("%i: %c(0x%02x)\n", i, buf[i], buf[i]); return CONNERR_INTERNAL; }
 #define TCHARtoCHAR memcpy
@@ -256,8 +257,16 @@ void Bluetooth::MABtInit() {
 
 	InitializeCriticalSection(&gBt.critSec);
 
-	ERRNO(bt_device_init(btCallback));
+	int res = bt_device_init(btCallback);
+	if(res < 0) {
+		if(errno == ENOSYS) {
+			sAvailable = false;
+			return;
+		}
+		DO_ERRNO;
+	}
 	ERRNO(bt_spp_init());
+	sAvailable = true;
 }
 
 void Bluetooth::MABtClose() {

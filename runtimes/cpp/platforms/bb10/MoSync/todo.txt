@@ -1,10 +1,10 @@
-Bluetooth - btdevice.h, btspp.h
+Bluetooth - btdevice.h, btspp.h	DONE
 OpenGL - egl.h	DONE
 NFC - nfc.h
 Location - geolocation.h	DONE
 Sensors - sensor.h, wmm.h, accelerometer.h	DONE
 Battery - battery.h	DONE
 Notifications - notification.h
-maPlatformRequest - ???
-maVibrate - ???
+maPlatformRequest - navigator_invoke.h	FAIL
+maVibrate - vibration.h	DONE
 maGetSystemProperty - ???

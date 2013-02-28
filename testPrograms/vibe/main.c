@@ -17,7 +17,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include <ma.h>
 
-int MAMain() {
+int MAMain(void) {
 	int available = maVibrate(1);
 	int on = FALSE;
 
@@ -26,9 +26,12 @@ int MAMain() {
 	maUpdateScreen();
 
 	for(;;) {
-		EVENT event;
+		MAEvent event;
 		while(maGetEvent(&event)) {
 			switch(event.type) {
+				case EVENT_TYPE_POINTER_PRESSED:
+					event.key = MAK_FIRE;
+					// intentional fallthrough
 				case EVENT_TYPE_KEY_PRESSED:
 					switch(event.key) {
 				case MAK_FIRE:
@@ -52,8 +55,7 @@ int MAMain() {
 					}
 					break;
 				case EVENT_TYPE_CLOSE:
-					maExit(0);
-					break;
+					return 0;
 			}
 		}
 		if(on) {

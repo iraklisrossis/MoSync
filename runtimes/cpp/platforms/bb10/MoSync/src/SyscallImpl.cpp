@@ -37,6 +37,7 @@
 #include <bps/event.h>
 #include <bps/geolocation.h>
 #include <bps/navigator.h>
+#include <bps/navigator_invoke.h>
 #include <bps/screen.h>
 #include <bps/sensor.h>
 #include <bps/vibration.h>
@@ -1261,6 +1262,33 @@ static void BtWaitTrigger() {
 	ConnPushEvent(e);
 }
 
+static int maPlatformRequest(const char* uri) {
+	LOG("maPlatformRequest(%s)\n", uri);
+
+	// create handler invocation
+	navigator_invoke_invocation_t *invoke = NULL;
+	BPSERR(navigator_invoke_invocation_create(&invoke));
+
+	//BPSERR(navigator_invoke_invocation_set_target(invoke, "sys.browser"));
+	//BPSERR(navigator_invoke_invocation_set_type(invoke, "text/html"));
+	//BPSERR(navigator_invoke_invocation_set_action(invoke, "bb.action.OPEN"));
+
+	//BPSERR(navigator_invoke_invocation_set_type(invoke, "application/vnd.blackberry.phone.startcall"));
+	//BPSERR(navigator_invoke_invocation_set_action(invoke, "bb.action.DIAL"));
+
+	// pass URI pointing the the data (in this example, the image to view)
+	BPSERR(navigator_invoke_invocation_set_uri(invoke, uri));
+
+	// invoke the target
+	// This function returns SUCCESS even though no app is invoked.
+	BPSERR(navigator_invoke_invocation_send(invoke));
+
+	// clean up resources
+	BPSERR(navigator_invoke_invocation_destroy(invoke));
+
+	return IOCTL_UNAVAILABLE;	// above code does not work.
+}
+
 SYSCALL(void, maPanic(int result, const char* message))
 {
 	LOG("maPanic(%i, %s)\n", result, message);
@@ -1343,21 +1371,9 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 	maIOCtl_maBtGetNextServiceSize_case(BLUETOOTH(maBtGetNextServiceSize));
 	maIOCtl_maBtCancelDiscovery_case(BLUETOOTH(maBtCancelDiscovery));
 
-#if 0
+	maIOCtl_case(maPlatformRequest);
 
-	case maIOCtl_maPlatformRequest:
-		{
-			const char* url = SYSCALL_THIS->GetValidatedStr(a);
 #if 0
-			if(sstrcmp(url, "http://") == 0 || sstrcmp(url, "https://") == 0) {
-				return 0;
-			} else
-#endif
-			{
-				return CONNERR_UNAVAILABLE;
-			}
-		}
-
 		maIOCtl_case(maSendTextSMS);
 
 		//maIOCtl_case(maStartVideoStream);

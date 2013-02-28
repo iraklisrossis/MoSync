@@ -1,4 +1,3 @@
-/* Copyright (C) 2009 Mobile Sorcery AB
 /* Copyright (C) 2011 MoSync AB
 
 This program is free software; you can redistribute it and/or modify it under
@@ -67,7 +66,7 @@ public:
 		} else if(res > (int)sizeof(buf)) {
 			printf("too long: %i\n", res);
 		} else {
-			printf("    %s\n", buf);
+			printf(" %s\n", buf);
 		}
 
 	}

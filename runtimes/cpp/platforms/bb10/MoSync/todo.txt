@@ -7,4 +7,4 @@ Battery - battery.h	DONE
 Notifications - notification.h
 maPlatformRequest - navigator_invoke.h	FAIL
 maVibrate - vibration.h	DONE
-maGetSystemProperty - ???
+maGetSystemProperty - locale.h, ???

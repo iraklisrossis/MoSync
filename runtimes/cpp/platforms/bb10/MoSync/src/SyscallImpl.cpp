@@ -36,6 +36,7 @@
 #include <bps/button.h>
 #include <bps/event.h>
 #include <bps/geolocation.h>
+#include <bps/locale.h>
 #include <bps/navigator.h>
 #include <bps/navigator_invoke.h>
 #include <bps/screen.h>
@@ -1289,6 +1290,29 @@ static int maPlatformRequest(const char* uri) {
 	return IOCTL_UNAVAILABLE;	// above code does not work.
 }
 
+static int maGetSystemProperty(const char* key, char* buf, int size) {
+	size_t len;
+	if(strcmp(key, "mosync.iso-639-1") == 0) {
+		char* language, * country;
+		BPSERR(locale_get(&language, &country));
+		LOG("language: %s. country: %s\n", language, country);
+		len = strlen(language);
+		strncpy(buf, language, size);
+		bps_free(language);
+		bps_free(country);
+	} else if(strcmp(key, "mosync.path.local") == 0) {
+		char cwd[PATH_MAX+1];
+		NULL_ERRNO(getcwd(cwd, PATH_MAX));
+		len = strlen(cwd);
+		cwd[len++] = '/';
+		cwd[len] = 0;
+		strncpy(buf, cwd, size);
+	} else {
+		return -2;
+	}
+	return len + 1;
+}
+
 SYSCALL(void, maPanic(int result, const char* message))
 {
 	LOG("maPanic(%i, %s)\n", result, message);
@@ -1372,6 +1396,7 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 	maIOCtl_maBtCancelDiscovery_case(BLUETOOTH(maBtCancelDiscovery));
 
 	maIOCtl_case(maPlatformRequest);
+	maIOCtl_case(maGetSystemProperty);
 
 #if 0
 		maIOCtl_case(maSendTextSMS);
@@ -1464,10 +1489,6 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 	maIOCtl_syscall_case(maPimItemCreate);
 	maIOCtl_syscall_case(maPimItemRemove);
 #endif	//EMULATOR
-
-	case maIOCtl_maGetSystemProperty:
-		return maGetSystemProperty(SYSCALL_THIS->GetValidatedStr(a),
-			(char*)SYSCALL_THIS->GetValidatedMemRange(b, c), c);
 
 #endif	//0
 

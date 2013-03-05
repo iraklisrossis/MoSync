@@ -65,12 +65,12 @@ namespace EuropeanCountries
 	/**
 	 * Background color for layouts.
 	 */
-	extern char* gLayoutBackgroundColor;
+	extern const char* gLayoutBackgroundColor;
 
 	/**
 	 * Background color for title layout.
 	 */
-	extern char* gTitleBackgroundColor;
+	extern const char* gTitleBackgroundColor;
 
 	/**
 	 * Init global screen size constants.

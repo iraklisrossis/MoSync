@@ -39,7 +39,7 @@
 
 #include "DisclaimerScreen.h"
 #include "DisclaimerScreenObserver.h"
-#include "MAHeaders.h"
+#include "../MAHeaders.h"
 #include "ViewUtils.h"
 
 namespace EuropeanCountries

@@ -46,7 +46,7 @@
 
 #include "CountryInfoScreen.h"
 #include "CountryInfoScreenObserver.h"
-#include "MAHeaders.h"
+#include "../MAHeaders.h"
 #include "ViewUtils.h"
 #include "../Model/Country.h"
 
@@ -61,8 +61,8 @@ namespace EuropeanCountries
 		mMainLayout(NULL),
 		mDataLayout(NULL),
 		mTitleBarLayout(NULL),
-		mInfoLayout(NULL),
 		mNameLabel(NULL),
+		mInfoLayout(NULL),
 		mBackButton(NULL),
 		mDisclaimerTitleBarButton(NULL),
 		mPopulationLabel(NULL),

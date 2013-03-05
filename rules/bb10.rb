@@ -88,19 +88,12 @@ module BB10Mod
 	def initialize
 		super
 		@TARGET_PLATFORM = :bb10
+		setBB10env
 		q = ENV['QNX_TARGET']
 		@EXTRA_INCLUDES = [
 			"#{q}/usr/include/freetype2",
 			"#{q}/../target-override/usr/include",
 		]
-
-		ENV['QNX_TARGET'] = 'C:/Programs/bbndk/target_10_0_9_1101/qnx6'
-		ENV['QNX_HOST'] = 'C:/Programs/bbndk/host_10_0_9_284/win32/x86'
-		ENV['QNX_CONFIGURATION'] = 'C:/Users/Fredrik/AppData/Local/Research In Motion/BlackBerry Native SDK'
-		ENV['MAKEFLAGS'] = " -I#{ENV['QNX_TARGET']}/usr/include"
-		ENV['PATH'] = "#{ENV['QNX_HOST']}/usr/bin;#{ENV['QNX_CONFIGURATION']}/bin;C:/Programs/bbndk/ide/win32/x86/eclipse/jre/bin;#{ENV['PATH']}"
-		ENV['PYTHONPATH'] = ''
-		ENV['QDE'] = 'C:/Programs/bbndk/ide/win32/x86'
 	end
 	def customTargetSetFlags
 		@TARGET_FLAGS = ' -D_FORTIFY_SOURCE=2 -D__BB10__ -Wno-psabi'

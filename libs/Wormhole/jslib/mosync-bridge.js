@@ -48,6 +48,17 @@ var mosync = (function()
 	mosync.isWindowsPhone =
 		navigator.userAgent.indexOf("Windows Phone OS") != -1;
 
+	// Logging support.
+
+	/**
+	 * Write log output using maWriteLog in the MoSync C++ API.
+	 * @param s Log message string.
+	 */
+	mosync.log = function(s)
+	{
+		mosync.bridge.send(["MoSync", "SysLog", s]);
+	};
+
 	// Application functions.
 
 	mosync.app = {};
@@ -208,14 +219,19 @@ var mosync = (function()
 	};
 
 	// console.log does not work on WP7.
+	// Define console if undefined.
 	if (typeof console === "undefined")
 	{
 		console = {}
 	}
+
+	// Define console.log if undefined.
 	if (typeof console.log === "undefined")
 	{
-		// TODO: Send console output somewhere.
-		console.log = function(s) {};
+		console.log = function(s)
+		{
+			mosync.log(s);
+		};
 	}
 
 	// alert does not work on WP7, replace with

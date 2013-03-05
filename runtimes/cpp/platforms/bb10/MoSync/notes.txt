@@ -1,0 +1,4 @@
+16:33 2013-03-01
+testProgram fileList on Dev Alpha Simulator (v10.0.9.1101) caused process freeze just after the 6500 mark.
+Sending SIGTERM and SIGKILL from the IDE didn't kill the process. SSH to simulator and kill -9 didn't work either.
+Simulator reboot required.

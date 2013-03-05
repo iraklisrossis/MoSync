@@ -45,6 +45,7 @@ static void checkEvents() {
 }
 
 static char buffer[256];
+static int sCount = 0;
 
 static bool dumpFileList(const char* path) {
 	MAHandle list = maFileListStart(path, "*", 0);
@@ -58,6 +59,10 @@ static bool dumpFileList(const char* path) {
 		MAUtil::String p2(path);
 		p2 += buffer;
 		LOG(p2);
+		sCount++;
+		if(sCount % 100 == 0) {
+			printf("%i\n", sCount);
+		}
 		if(p2[p2.size()-1] == '/')
 			dumpFileList(p2.c_str());
 		empty = false;
@@ -76,6 +81,7 @@ extern "C" int MAMain() {
 	dumpFileList("");
 	int endTime = maGetMilliSecondCount();
 	printf("Done in %i ms\n", endTime - startTime);
+	printf("%i files total\n", sCount);
 
 	FREEZE;
 }

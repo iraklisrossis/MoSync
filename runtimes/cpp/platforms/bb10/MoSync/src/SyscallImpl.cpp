@@ -1427,6 +1427,7 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 		maIOCtl_case(maStreamPos);
 		maIOCtl_case(maStreamSetPos);
 #endif	//MA_PROF_SUPPORT_VIDEO_STREAMING
+#endif	//0
 
 		maIOCtl_syscall_case(maFileOpen);
 		maIOCtl_syscall_case(maFileExists);
@@ -1456,6 +1457,7 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 		return SYSCALL_THIS->maFileListNext(a, (char*)SYSCALL_THIS->GetValidatedMemRange(b, c), c);
 		maIOCtl_syscall_case(maFileListClose);
 
+#if 0
 		maIOCtl_case(maCameraFormatNumber);
 		maIOCtl_case(maCameraFormat);
 		maIOCtl_case(maCameraStart);

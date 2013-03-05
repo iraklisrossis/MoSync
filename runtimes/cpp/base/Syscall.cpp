@@ -1459,6 +1459,15 @@ LOG("cwd: %s\n", getcwd(NULL, 0));
 	// we'll put all filesystem access into a separate directory, like chroot.
 	MAHandle Syscall::maFileListStart(const char* path, const char* filter, int sorting) {
 		LOGF("maFileListStart(%s, %s, 0x%x)\n", path, filter, sorting);
+
+#if defined(__BB10__) && defined(__X86__)
+		if(strcmp(path, "/dev/camera/") == 0) {
+			LOG("Note: BB10 simulator: maFileListStart(%s) causes infinite loop that"
+				" cannot be stopped by SIGKILL.\n", path);
+			return MA_FERR_FORBIDDEN;
+		}
+#endif
+
 #ifndef _WIN32_WCE
 		sFileListSorting = sorting;
 #endif

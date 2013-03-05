@@ -23,14 +23,15 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #if 0	//log to file
 #define LOG(str) lprintfln(str.c_str())
 #define LPRINTFLN lprintfln
-#else
-#if 1	//log to screen
+#elif 0	//log to file until X, then log to screen
+#define LOG(str) if(sCount < 7500) lprintfln(str.c_str()); else puts((str + "\n").c_str())
+#define LPRINTFLN(fmt, a...) printf(fmt "\n", a)
+#elif 1	//log to screen
 #define LOG(str) puts((str + "\n").c_str())
 #define LPRINTFLN(fmt, a...) printf(fmt "\n", a)
 #else	//don't log anything (useful for timing the list operation)
 #define LOG(str)
 #define LPRINTFLN(fmt, a...)
-#endif
 #endif
 
 static void checkEvents() {

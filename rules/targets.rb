@@ -91,6 +91,7 @@ class Targets
 		default_const(:ELIM, false)
 		default_const(:TARGET, HOST)
 		default_const(:HAVE_LIBC, USE_NEWLIB || (defined?(MODE) && MODE == 'bb10'))
+		default_const(:BB10_ARCH, DEFAULT_BB10_ARCH)
 	end
 
 	# parse ARGV

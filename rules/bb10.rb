@@ -9,8 +9,9 @@ require 'base64'
 
 # Override the GNU version; it seems impossible to determine qcc's version dynamically.
 def bb10_get_gcc_version_info()
+	need(:@BB10_COMPILER)
 	v = {
-		:string => "4.6.3_#{BB10_COMPILER}",
+		:string => "4.6.3_#{@BB10_COMPILER}",
 		:ver => '4.6.3',
 		:arm => false,
 		:clang => false,
@@ -83,8 +84,9 @@ end
 
 module BB10Mod
 	def getGccInvoke(ending)
-		return "qcc -V4.6.3,#{BB10_COMPILER}"
+		return "qcc -V4.6.3,#{@BB10_COMPILER}"
 	end
+
 	def initialize
 		super
 		@TARGET_PLATFORM = :bb10
@@ -95,10 +97,25 @@ module BB10Mod
 			"#{q}/../target-override/usr/include",
 		]
 	end
+
+	def set_defaults
+		if(BB10_ARCH == 'arm')
+			@QNX_LIBDIR = 'armle-v7'
+			@BB10_COMPILER = 'gcc_ntoarmv7le'
+		elsif(BB10_ARCH == 'x86')
+			@QNX_LIBDIR = 'x86'
+			@BB10_COMPILER = 'gcc_ntox86'
+		else
+			raise "Illegal BB10_ARCH '#{BB10_ARCH}'"
+		end
+		super
+	end
+
 	def customTargetSetFlags
 		@TARGET_FLAGS = ' -D_FORTIFY_SOURCE=2 -D__BB10__ -Wno-psabi'
 		@TARGET_CPPFLAGS = ''
 	end
+
 	def gcc
 		return :bb10
 	end
@@ -125,6 +142,8 @@ BB10_RUNTIME_LIBS = [
 	'GLESv2',
 	'btapi',
 	'bbcascades',
+	'bb',
+	'bbdevice',
 	'QtCore',
 #	'QtDeclarative',
 #	'QtSql',
@@ -140,15 +159,15 @@ class BB10ExeWork < ExeWork
 		@BB10_SETTINGS.need(:AUTHOR, :AUTHOR_ID, :APP_NAME, :PACKAGE_NAME, :ID, :VERSION, :VERSION_ID)
 
 		@EXTRA_LINKFLAGS << ' -lang-c++ -g -Wl,-z,relro -Wl,-z,now'
-		@EXTRA_LINKFLAGS << " -Wl,-rpath-link,\"#{ENV['QNX_TARGET']}/armle-v7/usr/lib/qt4/lib\""
-		@EXTRA_LINKFLAGS << " -Wl,-L,\"#{ENV['QNX_TARGET']}/armle-v7/usr/lib/qt4/lib\""
+		@EXTRA_LINKFLAGS << " -Wl,-rpath-link,\"#{ENV['QNX_TARGET']}/#{@QNX_LIBDIR}/usr/lib/qt4/lib\""
+		@EXTRA_LINKFLAGS << " -Wl,-L,\"#{ENV['QNX_TARGET']}/#{@QNX_LIBDIR}/usr/lib/qt4/lib\""
 		@LIBRARIES.each { |l| @EXTRA_LINKFLAGS += ' -l' + l }
 		@LOCAL_LIBS.each { |ll| all_objects << FileTask.new(self, @COMMON_BUILDDIR + ll + ".a") }
 		need(:@NAME)
 		need(:@BUILDDIR)
 		need(:@TARGETDIR)
 		target = @BUILDDIR + @NAME
-		linker = "qcc -V4.6.3,#{BB10_COMPILER}"
+		linker = "qcc -V4.6.3,#{@BB10_COMPILER}"
 		@TARGET = link_task_class.new(self, target, all_objects, [], [], @EXTRA_LINKFLAGS, linker)
 
 		# packaging

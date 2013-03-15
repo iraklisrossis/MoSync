@@ -15,3 +15,5 @@ int maWidgetSetProperty(MAWidgetHandle handle, const char* property, const char*
 int maWidgetGetProperty(MAWidgetHandle handle, const char* property, char* value, int maxSize);
 int maWidgetScreenAddOptionsMenuItem(MAWidgetHandle widget, const char*  title,
 	const char* iconHandle, int iconPredefined);
+
+MAExtent getScrSize();

@@ -220,7 +220,7 @@ namespace Base {
 namespace Base {
 	extern Syscall* gSyscall;
 }
-#define SYSCALL_THIS gSyscall
+#define SYSCALL_THIS Base::gSyscall
 #endif	//SYMBIAN
 
 

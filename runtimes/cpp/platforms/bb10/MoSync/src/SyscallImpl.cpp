@@ -17,6 +17,7 @@
 #include "helpers/CPP_IX_GL2.h"
 #include "bbutil.h"
 #include "NativeUI.h"
+#include "event.h"
 
 #define NETWORKING_H
 #include "networking.h"
@@ -55,6 +56,8 @@
 #include "generated/gl.h.cpp"
 #include <EGL/egl.h>
 
+#define HAVE_SCREEN 0
+
 // using
 using namespace Base;
 
@@ -64,15 +67,19 @@ using namespace Base;
 enum EventCode {
 	EVENT_CODE_MA,
 	EVENT_CODE_DEFLUX,
+	EVENT_CODE_FUNCTOR,
 };
 
 // functions
 static void bpsWait(int timeout);
 
 // static variables
-static screen_display_t* sDisplays;
+#if HAVE_SCREEN
 static int sDisplayCount;
 static screen_context_t sScreen;
+static int sScreenFormat;
+#endif
+static screen_display_t* sDisplays;
 static screen_window_t sWindow;
 static Image* sCurrentDrawSurface = NULL;
 static MAHandle sCurrentDrawHandle = HANDLE_SCREEN;
@@ -80,8 +87,9 @@ static Image* sBackBuffer = NULL;
 static int sCurrentColor = 0;
 static screen_buffer_t sScreenBuffer;
 static int sScreenRect[4] = { 0,0 };
-static int sScreenFormat;
 static bool sOpenGLActive = false;
+
+static char sCwd[PATH_MAX];
 
 static size_t sCodecCount = 0;
 static img_codec_t* sCodecs = NULL;
@@ -127,9 +135,11 @@ namespace Base
 		assert(gSyscall == NULL);
 		gSyscall = this;
 
+		NULL_ERRNO(getcwd(sCwd, PATH_MAX));
+
 		Syscall::init();
 		MANetworkInit();
-#if 1
+#if HAVE_SCREEN
 		ERRNO(screen_create_context(&sScreen, SCREEN_APPLICATION_CONTEXT));
 		ERRNO(screen_create_window(&sWindow, sScreen));
 
@@ -298,6 +308,17 @@ void DefluxBinPushEvent(MAHandle handle, Stream& s) {
 	bps_event_t* be;
 	bps_event_payload_t payload = { handle, (uintptr_t)&s, 0 };
 	BPSERR(bps_event_create(&be, sMyEventDomain, EVENT_CODE_DEFLUX, &payload, NULL));
+	BPSERR(bps_channel_push_event(sMainEventChannel, be));
+}
+
+void putEvent(const MAEventNative& e) {
+	sEventFifo.put(e);
+}
+
+void executeInCoreThread(Functor* f) {
+	bps_event_t* be;
+	bps_event_payload_t payload = { (uintptr_t)f, 0, 0 };
+	BPSERR(bps_event_create(&be, sMyEventDomain, EVENT_CODE_FUNCTOR, &payload, NULL));
 	BPSERR(bps_channel_push_event(sMainEventChannel, be));
 }
 
@@ -474,6 +495,13 @@ static void bpsWait(int timeout) {
 				SYSCALL_THIS->resources.extract_RT_FLUX(payload->data1);
 				ROOM(SYSCALL_THIS->resources.add_RT_BINARY(payload->data1,
 					(Stream*)payload->data2));
+				break;
+			case EVENT_CODE_FUNCTOR:
+				{
+					Functor* f = (Functor*)payload->data1;
+					f->func(*f);
+					free(f);
+				}
 				break;
 			default:
 				DEBIG_PHAT_ERROR;
@@ -688,7 +716,11 @@ SYSCALL(void, maResetBacklight())
 
 SYSCALL(MAExtent, maGetScrSize())
 {
+#if HAVE_SCREEN
 	return EXTENT(sBackBuffer->width, sBackBuffer->height);
+#else
+	return getScrSize();
+#endif
 }
 
 SYSCALL(void, maDrawImage(MAHandle image, int left, int top))
@@ -916,7 +948,6 @@ SYSCALL(int, maVibrate(int duration))
 
 static mmr_connection_t* sMmrConnection;
 static mmr_context_t* sMmrContext;
-static char sCwd[PATH_MAX];
 static char sAudioUrl[PATH_MAX];
 static const char* const AUDIO_PATH = "tmp/maSound.mp3";
 
@@ -975,7 +1006,6 @@ static void soundInit() {
 	LOG("soundInit...\n");
 	NULL_ERRNO(sMmrConnection = mmr_connect(NULL));
 	NULL_ERRNO(sMmrContext = mmr_context_create(sMmrConnection, "maSound", 0, S_IRUSR | S_IXUSR));
-	NULL_ERRNO(getcwd(sCwd, PATH_MAX));
 	snprintf(sAudioUrl, PATH_MAX, "file://%s/%s", sCwd, AUDIO_PATH);
 
 	// remove the fifo file, just in case.

@@ -29,6 +29,8 @@ default_const(:EXIT_ON_ERROR, true)
 default_const(:PRINT_WORKING_DIRECTORY, false)
 default_const(:INSTALL_DIR, false)
 
+default_const(:DEFAULT_BB10_ARCH, 'arm')
+
 # Implement this in local_config.rb.
 #def setBB10env
 #ENV['QNX_TARGET'] = 'C:/Programs/bbndk-10-gold/target_10_0_9_1673/qnx6'

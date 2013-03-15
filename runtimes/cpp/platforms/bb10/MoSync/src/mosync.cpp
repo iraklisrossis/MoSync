@@ -15,6 +15,7 @@ extern "C" int resource_selector();
 #include <helpers/log.h>
 #include <signal.h>
 #include <bps/bps.h>
+#include "Cascade.h"
 
 using namespace std;
 
@@ -24,14 +25,15 @@ bool gRunning = false;
 static MAHandle gReloadHandle = 0;
 #endif
 
+static int bpsThreadFunc(void*);
+
 static void sigquit_handler(int) {
 	LOG("SIGQUIT received. Application will now shut down.\n");
+	abort();
 }
 
-int main() {
+int main(int argc, char** argv) {
 	LogOverrideFile(stderr);
-	bps_initialize();
-	bps_set_verbosity(3);
 	LOG("Log initialized.\n");
 
 	{
@@ -41,6 +43,13 @@ int main() {
 		sigaction(SIGQUIT, &act, NULL);
 		LOG("SIGQUIT handler installed.\n");
 	}
+
+	return runCascadeApp(argc, argv, bpsThreadFunc);
+}
+
+static int bpsThreadFunc(void*) {
+	bps_initialize();
+	bps_set_verbosity(2);
 
 	Base::Syscall* syscall = new Base::Syscall();
 	int res;

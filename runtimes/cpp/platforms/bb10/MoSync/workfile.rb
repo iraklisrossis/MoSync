@@ -6,6 +6,17 @@ require File.expand_path('../../../../../rules/bb10.rb')
 
 BD = '../../../../..'
 
+class MocTask < FileTask
+	def initialize(work, src)
+		super(work, "build/moc_#{File.basename(src)}.cpp")
+		@prerequisites << FileTask.new(work, src)
+		@src = src
+	end
+	def execute
+		sh "#{ENV['QNX_HOST']}/usr/bin/moc -o#{@NAME} -i #{@src}"
+	end
+end
+
 mosync_base = BB10LibWork.new
 mosync_base.instance_eval do
 	@SOURCES = [
@@ -32,6 +43,9 @@ mosync_base.instance_eval do
 		"#{BD}/runtimes/cpp/platforms/sdl/netImpl.cpp",
 		"#{BD}/intlibs/filelist/filelist-linux.c",
 	]
+	@EXTRA_PREREQUSITES = [
+		MocTask.new(self, 'src/slots.h'),
+	]
 	@EXTRA_INCLUDES += [
 		"#{BD}/runtimes/cpp/base",
 		"#{BD}/runtimes/cpp",
@@ -43,7 +57,7 @@ mosync_base.instance_eval do
 		'Syscall.cpp' => ' -Wno-float-equal',
 		'Image.cpp' => ' -Wno-shadow',
 		'bluetooth.cpp' => ' -Wno-missing-noreturn',	# temp hack until all syscalls are implemented.
-		'NativeUI.cpp' => " -Wno-missing-noreturn -I \"#{ENV['QNX_TARGET']}/usr/include/qt4\" -Wp,-std=c++0x",
+		'NativeUI.cpp' => " -Wno-missing-noreturn -I \"#{ENV['QNX_TARGET']}/usr/include/qt4\" -Wp,-std=gnu++0x",
 	}
 
 	@NAME = 'mosync_base'

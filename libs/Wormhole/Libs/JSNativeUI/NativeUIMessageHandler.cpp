@@ -425,7 +425,7 @@ namespace Wormhole
 			// "WebViewHookInvoked" events to be able to pass data to
 			// the main (hidden) WebView using mosync.bridge.sendRaw.
 			sprintf(buffer,
-				"try{mosync.nativeui.event(%d, \"%s\", %d, %d, %d)}catch(e){}",
+				"try{mosync.nativeui.event(%d, \"%s\", %d, 0x%x, 0x%x)}catch(e){}",
 				widget,
 				eventType.c_str(),
 				firstParameter,

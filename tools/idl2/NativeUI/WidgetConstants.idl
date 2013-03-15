@@ -55,7 +55,7 @@ group WidgetConstants "Widget constants" {
 		HARD = 6;
 
 		/**
-		* @brief The hook type is a message sendt from JavaScript.
+		* @brief The hook type is a message sent from JavaScript.
 		* Used in #MAW_EVENT_WEB_VIEW_HOOK_INVOKED.
 		* This type of hook does not use any hook pattern, it is
 		* always sent from the browser, using a platform specific

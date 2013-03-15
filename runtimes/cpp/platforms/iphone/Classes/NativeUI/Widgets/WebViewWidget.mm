@@ -218,6 +218,14 @@
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
+    //Check whether the error was due to a self-sertified host
+    if(error.code == kCFURLErrorServerCertificateUntrusted)
+    {
+        //Make a connection request to handle the authorization
+        [[[NSURLConnection alloc] initWithRequest:
+            [NSURLRequest requestWithURL:[error.userInfo valueForKey:@"NSErrorFailingURLKey"]] delegate:self] retain];
+        return;
+    }
     MAEvent event;
     event.type = EVENT_TYPE_WIDGET;
     MAWidgetEventData *eventData = new MAWidgetEventData;
@@ -227,6 +235,21 @@
     event.data = (MAAddress)eventData;
     Base::gEventQueue.put(event);
     return;
+}
+
+-(void)connection:(NSURLConnection *)connection willSendRequestForAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge {
+    if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+        //This accepts the authorization challenge.
+        [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
+    }
+    [challenge.sender continueWithoutCredentialForAuthenticationChallenge:challenge];
+}
+
+-(void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)pResponse {
+    //The authorization challenge has been accepted, reload the current request to the webview
+    [connection cancel];
+    [(UIWebView*)self.view loadRequest:[connection currentRequest]];
+    [connection release];
 }
 
 - (BOOL)webView:(UIWebView *)webView

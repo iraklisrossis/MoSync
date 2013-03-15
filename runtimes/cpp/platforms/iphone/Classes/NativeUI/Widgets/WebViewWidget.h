@@ -18,7 +18,7 @@
 #import <Foundation/Foundation.h>
 #import "IWidget.h"
 
-@interface WebViewWidget : IWidget <UIWebViewDelegate> {
+@interface WebViewWidget : IWidget <UIWebViewDelegate,NSURLConnectionDelegate> {
 	NSString* newurl;
 	NSString* baseUrl;
     NSString* softHookPattern;

@@ -695,7 +695,8 @@ namespace Base {
 		LOGD("MkDir %i\n", res);
 #elif defined(__IPHONE__)
 #else
-		_mkdir(STORE_PATH);
+		int res = _mkdir(STORE_PATH);
+		LOG("_mkdir(%s): %i (errno %i (%s))\n", STORE_PATH, res, errno, strerror(errno));
 #endif	//_WIN32_WCE
 
 #ifdef SYMBIAN

@@ -19,21 +19,21 @@ BarcodeScanner::~BarcodeScanner()
 
 }
 
-bool BarcodeScanner::initiate()
+void BarcodeScanner::initiate()
 {
 	// create a reader
-	zbar::ImageScanner mImageScanner = zbar::zbar_image_scanner_create();
+	mImageScanner = zbar::zbar_image_scanner_create();
 
 	// configure the reader
 	zbar::zbar_image_scanner_set_config(mImageScanner, zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
 }
 
-bool BarcodeScanner::shutdown()
+void BarcodeScanner::shutdown()
 {
 
 }
 
-bool BarcodeScanner::uploadHandle(MAHandle image)
+void BarcodeScanner::uploadHandle(MAHandle image)
 {
 	if(mImageScanner == NULL)
 		maPanic(0, "No Image Scanner");
@@ -55,10 +55,10 @@ bool BarcodeScanner::uploadHandle(MAHandle image)
 
 	mImgData = (unsigned char*) malloc(imgDataSize);
 
-	return upload(imgData, imgW, imgH);
+	upload(imgData, imgW, imgH);
 }
 
-bool BarcodeScanner::uploadRGB888(int* img, int width, int height)
+void BarcodeScanner::uploadRGB888(int* img, int width, int height)
 {
 	lprintfln("uploadRGB888 called\n");
 
@@ -81,10 +81,10 @@ bool BarcodeScanner::uploadRGB888(int* img, int width, int height)
 
 	lprintfln("Allocated the internal image buffer ( w:%u h:%u s:%u )\n", width, height, imgDataSize);
 
-	return upload(img, width, height);
+	upload(img, width, height);
 }
 
-bool BarcodeScanner::upload(int* img, int width, int height)
+void BarcodeScanner::upload(int* img, int width, int height)
 {
 	lprintfln("upload called\n");
 
@@ -144,6 +144,8 @@ bool BarcodeScanner::getBarcode(char* barcodeType, char* barcode)
 
 	// scan the image for barcodes
 	int n = zbar_scan_image(mImageScanner, mImage);
+
+	lprintfln("zbar_scan_image returned %i\n", n);
 
 	// extract results
 	const zbar::zbar_symbol_t *symbol = zbar_image_first_symbol(mImage);

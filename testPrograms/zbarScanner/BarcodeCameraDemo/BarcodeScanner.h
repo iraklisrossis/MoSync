@@ -18,17 +18,17 @@ public:
 	BarcodeScanner();
 	virtual ~BarcodeScanner();
 
-	bool initiate();
-	bool shutdown();
+	void initiate();
+	void shutdown();
 
-	bool uploadHandle(MAHandle image);
-	bool uploadRGB888(int* img, int width, int height);
+	void uploadHandle(MAHandle image);
+	void uploadRGB888(int* img, int width, int height);
 
 	bool getBarcode(char* barcodeType, char* barcode);
 
 private:
 
-	bool upload(int* img, int width, int height);
+	void upload(int* img, int width, int height);
 	const char* getBarcodeType(int type);
 
 	zbar::zbar_image_t *mImage;

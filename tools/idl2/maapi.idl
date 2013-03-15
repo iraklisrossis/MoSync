@@ -3251,9 +3251,8 @@ interface MAAPI {
 		* "mosync.network.type" it the type of the current active network connection.
 		* It can one of the following four values: "none", "wifi", "mobile", or "unknown".
 		*
-		* "mosync.path.local" is the absolute path to the local file system,
-		* on devices that have a local file system. The returned path has a
-		* trailing slash character ('/').
+		* "mosync.path.local" is the absolute path to a directory where the application may store private data.
+		* The returned path has a trailing slash character ('/').
 		*
 		* \param key The property's key.
 		* \param buf A buffer where the value should be written.

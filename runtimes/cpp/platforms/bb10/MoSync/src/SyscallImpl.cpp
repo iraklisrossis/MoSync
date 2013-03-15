@@ -16,6 +16,7 @@
 #include "helpers/CPP_IX_GL1.h"
 #include "helpers/CPP_IX_GL2.h"
 #include "bbutil.h"
+#include "NativeUI.h"
 
 #define NETWORKING_H
 #include "networking.h"
@@ -128,7 +129,7 @@ namespace Base
 
 		Syscall::init();
 		MANetworkInit();
-
+#if 1
 		ERRNO(screen_create_context(&sScreen, SCREEN_APPLICATION_CONTEXT));
 		ERRNO(screen_create_window(&sWindow, sScreen));
 
@@ -190,11 +191,11 @@ namespace Base
 		// request the window be displayed
 		maUpdateScreen();
 		LOG("Screen init complete.\n");
-
+#endif
 		// initialize events
 		BPSERR(navigator_request_events(0));
 		BPSERR(button_request_events(0));
-		BPSERR(screen_request_events(sScreen));
+		//BPSERR(screen_request_events(sScreen));
 
 		// initialize image decoder
 		{
@@ -478,8 +479,8 @@ static void bpsWait(int timeout) {
 				DEBIG_PHAT_ERROR;
 			}
 		} else {
-			LOG("Unknown event domain %i\n", event_domain);
-			DEBIG_PHAT_ERROR;
+			LOG("Unknown event: domain %i, code %i\n", event_domain, event_id);
+			//DEBIG_PHAT_ERROR;
 		}
 		if(event.type != 0) {
 			if(event.type == EVENT_TYPE_WIDGET) {
@@ -1301,16 +1302,20 @@ static int maGetSystemProperty(const char* key, char* buf, int size) {
 		bps_free(language);
 		bps_free(country);
 	} else if(strcmp(key, "mosync.path.local") == 0) {
-		char cwd[PATH_MAX+1];
+		char cwd[PATH_MAX+8];
 		NULL_ERRNO(getcwd(cwd, PATH_MAX));
 		len = strlen(cwd);
-		cwd[len++] = '/';
-		cwd[len] = 0;
+		strcpy(cwd + len, "/data/");
 		strncpy(buf, cwd, size);
 	} else {
 		return -2;
 	}
 	return len + 1;
+}
+
+static int maFileSetProperty(const char* path, int property, int value) {
+	// keep it quiet.
+	return MA_FERR_NO_SUCH_PROPERTY;
 }
 
 SYSCALL(void, maPanic(int result, const char* message))
@@ -1373,6 +1378,8 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 	//maIOCtl_IX_GL_OES_FRAMEBUFFER_OBJECT_caselist;
 #undef glGetPointerv
 #endif	//SUPPORT_OPENGL_ES
+
+	maIOCtl_IX_WIDGET_caselist;
 
 	maIOCtl_case(maGetBatteryCharge);
 
@@ -1456,6 +1463,8 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 	case maIOCtl_maFileListNext:
 		return SYSCALL_THIS->maFileListNext(a, (char*)SYSCALL_THIS->GetValidatedMemRange(b, c), c);
 		maIOCtl_syscall_case(maFileListClose);
+
+		maIOCtl_case(maFileSetProperty);
 
 #if 0
 		maIOCtl_case(maCameraFormatNumber);

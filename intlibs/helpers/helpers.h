@@ -100,7 +100,7 @@ inline bool isPowerOf2(unsigned int x) {
 inline uint nextPowerOf2(uint minPow, uint x) {
 	uint i = 1 << minPow;
 	while(i < x) {
-		i <<= 1;		
+		i <<= 1;
 	}
 	return i;
 }
@@ -109,17 +109,19 @@ inline uint nextPowerOf2(uint minPow, uint x) {
 inline uint biggestPowerOf2(uint minPow, uint max) {
 	uint i = 1 << minPow;
 	while(i <= max) {
-		i <<= 1;		
+		i <<= 1;
 	}
 	i >>= 1;
 	return i;
 }
 
+#ifndef __BB10__	// conflicts with <utility>
 template<class T> void swap(T& a, T& b) {
 	T temp = a;
 	a = b;
 	b = temp;
 }
+#endif
 
 /*__inline const char* FileNameFromPath(const char* path) {
 	const char* ptr = strrchr(path, '\\');

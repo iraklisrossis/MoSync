@@ -14,6 +14,7 @@ mod.class_eval do
 
 		@EXTRA_CFLAGS = ' -Wno-declaration-after-statement'+
 			' -Wno-pointer-arith -Wno-sign-compare'+
+			' -Wno-inline'+
 			' -D_POSIX_SOURCE'	#avoid silly bsd functions
 		@EXTRA_CFLAGS << ' -Wno-missing-field-initializers' if(@GCC_IS_V4)
 		@EXTRA_CFLAGS << ' -Wno-unreachable-code' if(!@GCC_IS_V4)	#compiler bug
@@ -26,6 +27,7 @@ mod.class_eval do
 			'rs.c' => ' -Wno-parentheses',
 			'util.c' => ' -Wno-parentheses',
 			'code128.c' => ' -Wno-shadow',
+			'qrdectxt.c' => ' -Wno-unused-but-set-variable',
 		}
 		@SPECIFIC_CFLAGS['convert.c'] = ' -w' if(!@GCC_IS_V4)
 

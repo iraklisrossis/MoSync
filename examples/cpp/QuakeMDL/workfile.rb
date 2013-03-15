@@ -7,7 +7,7 @@ work.instance_eval do
 	@SOURCES = ['src', 'src/endian']
 	@EXTRA_INCLUDES = ['inc', '.']
 	@LSTFILES = ['resources.lst']
-	#@EXTRA_CPPFLAGS = ' -DBENCHMARK'
+	@EXTRA_CPPFLAGS = ' -DBENCHMARK'
 	@EXTRA_LINKFLAGS = ' -heapsize 386 -stacksize 16'
 	@NAME = 'QuakeMDL'
 	@BB10_SETTINGS = {

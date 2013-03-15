@@ -43,6 +43,7 @@ mosync_base.instance_eval do
 		'Syscall.cpp' => ' -Wno-float-equal',
 		'Image.cpp' => ' -Wno-shadow',
 		'bluetooth.cpp' => ' -Wno-missing-noreturn',	# temp hack until all syscalls are implemented.
+		'NativeUI.cpp' => " -Wno-missing-noreturn -I \"#{ENV['QNX_TARGET']}/usr/include/qt4\" -Wp,-std=c++0x",
 	}
 
 	@NAME = 'mosync_base'

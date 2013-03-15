@@ -205,6 +205,20 @@ mod.class_eval do
 end
 MoSyncLib.invoke(mod)
 
+class CombTask < FileTask
+	def initialize(work, target, sources)
+		super(work, target)
+		@prerequisites = sources
+	end
+	def execute
+		open(@NAME, 'wb') do |f|
+			@prerequisites.each do |p|
+				f.write(open(p, 'rb').read)
+			end
+		end
+	end
+end
+
 class TTWork < PipeExeWork
 	def initialize(f, name)
 		super()
@@ -262,6 +276,12 @@ class TTWork < PipeExeWork
 		@TARGET_PATH = @BUILDDIR + @NAME.ext('.moo')
 	end
 	def builddir; @BUILDDIR; end
+	def invoke
+		super
+		return if(!SETTINGS[:htdocs_dir])
+		name = @NAME + '.comb'
+		CombTask.new(self, SETTINGS[:htdocs_dir] + name, [@TARGET, @resourceTask]).invoke
+	end
 end
 
 
@@ -394,6 +414,8 @@ end
 unskippedCount = 0
 wins = 0
 
+LOADER_URLS_FILE = open(SETTINGS[:htdocs_dir] + 'libc_tests.urls', 'wb') if(SETTINGS[:htdocs_dir])
+
 files.sort.each do |filename, targetName|
 	bn = targetName
 	next if(target && bn != target)
@@ -429,6 +451,9 @@ files.sort.each do |filename, targetName|
 	logFile = ofn.ext('.log' + suffix)
 	sldFile = ofn.ext('.sld' + suffix)
 	force_rebuild = SETTINGS[:rebuild_failed] && File.exists?(failFile)
+
+	LOADER_URLS_FILE.puts(SETTINGS[:loader_base_url] + bn.ext('.comb'))
+	#LOADER_URLS_FILE.flush
 
 	next if(!SETTINGS[:retry_failed] && File.exists?(failFile))
 

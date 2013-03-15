@@ -124,6 +124,12 @@ BB10_RUNTIME_LIBS = [
 	'GLESv1_CM',
 	'GLESv2',
 	'btapi',
+	'bbcascades',
+	'QtCore',
+#	'QtDeclarative',
+#	'QtSql',
+#	'QtScript',
+#	'QtXml',
 ]
 
 class BB10ExeWork < ExeWork
@@ -133,7 +139,9 @@ class BB10ExeWork < ExeWork
 		need(:@BB10_SETTINGS)
 		@BB10_SETTINGS.need(:AUTHOR, :AUTHOR_ID, :APP_NAME, :PACKAGE_NAME, :ID, :VERSION, :VERSION_ID)
 
-		@EXTRA_LINKFLAGS += ' -lang-c++ -g -Wl,-z,relro -Wl,-z,now'
+		@EXTRA_LINKFLAGS << ' -lang-c++ -g -Wl,-z,relro -Wl,-z,now'
+		@EXTRA_LINKFLAGS << " -Wl,-rpath-link,\"#{ENV['QNX_TARGET']}/armle-v7/usr/lib/qt4/lib\""
+		@EXTRA_LINKFLAGS << " -Wl,-L,\"#{ENV['QNX_TARGET']}/armle-v7/usr/lib/qt4/lib\""
 		@LIBRARIES.each { |l| @EXTRA_LINKFLAGS += ' -l' + l }
 		@LOCAL_LIBS.each { |ll| all_objects << FileTask.new(self, @COMMON_BUILDDIR + ll + ".a") }
 		need(:@NAME)

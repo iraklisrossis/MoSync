@@ -82,7 +82,7 @@ private:
 		}
 		TEST(store);
 		int status;
-		MAHandle data = PlaceholderPool::alloc();
+		MAHandle data = maCreatePlaceholder();
 		TEST(maReadStore(store, data));
 		if(maGetDataSize(data) != sizeof(int)) {
 			printf("Broken exit_status.\n");
@@ -101,7 +101,7 @@ private:
 
 	void loadState() {
 		mState = -1;
-		MAHandle data = PlaceholderPool::alloc();
+		MAHandle data = maCreatePlaceholder();
 		MAHandle store = maOpenStore(STORE_BASE_NAME "state", 0);
 		if(store == STERR_NONEXISTENT)
 			return;
@@ -113,17 +113,17 @@ private:
 			FREEZE;
 		}
 		maReadData(data, &mState, 0, sizeof(int));
-		PlaceholderPool::put(data);
+		maDestroyPlaceholder(data);
 	}
 
 	void saveState() {
 		MAHandle store = maOpenStore(STORE_BASE_NAME "state", MAS_CREATE_IF_NECESSARY);
 		TEST(store);
-		MAHandle data = PlaceholderPool::alloc();
+		MAHandle data = maCreatePlaceholder();
 		TEST(maCreateData(data, sizeof(int)));
 		maWriteData(data, &mState, 0, sizeof(int));
 		TEST(maWriteStore(store, data));
-		PlaceholderPool::put(data);
+		maDestroyPlaceholder(data);
 		maCloseStore(store, 0);
 	}
 
@@ -147,7 +147,7 @@ private:
 		TEST(mHttp.getResponseHeader("content-length", &lenStr));
 		int len = atoi(lenStr.c_str());
 		printf("list is %i bytes.\n", len);
-		mListData = PlaceholderPool::alloc();
+		mListData = maCreatePlaceholder();
 		TEST(maCreateData(mListData, len));
 		mHttp.readToData(mListData, 0, len);
 	}
@@ -169,7 +169,7 @@ private:
 	}
 
 	void loadList() {
-		mListData = PlaceholderPool::alloc();
+		mListData = maCreatePlaceholder();
 		MAHandle store = maOpenStore(STORE_BASE_NAME "list", 0);
 		TEST(store);
 		TEST(maReadStore(store, mListData));
@@ -231,7 +231,7 @@ private:
 			TEST(http->getResponseHeader("content-length", &lenStr));
 			int len = atoi(lenStr.c_str());
 			printf("test is %i bytes.\n", len);
-			mData = PlaceholderPool::alloc();
+			mData = maCreatePlaceholder();
 			TEST(maCreateData(mData, len));
 			http->readToData(mData, 0, len);
 		}

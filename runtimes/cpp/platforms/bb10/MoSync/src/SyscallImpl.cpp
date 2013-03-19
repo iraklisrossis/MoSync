@@ -18,6 +18,7 @@
 #include "bbutil.h"
 #include "NativeUI.h"
 #include "event.h"
+#include "nfc.h"
 
 #define NETWORKING_H
 #include "networking.h"
@@ -481,6 +482,8 @@ static void bpsWait(int timeout) {
 				event.type = 0;
 				LOG("SENSOR unknown event %i\n", event_id);
 			}
+		} else if(event_domain == nfc_get_domain()) {
+			handleNfcEvent(event_bps, event_id);
 		} else if(event_domain == sMyEventDomain) {
 			//LOG("MyEvent %i\n", event_id);
 			const bps_event_payload_t* payload = bps_event_get_payload(event_bps);
@@ -1532,6 +1535,23 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 #endif	//EMULATOR
 
 #endif	//0
+
+	maIOCtl_case(maNFCStart);
+	maIOCtl_case(maNFCStop);
+	maIOCtl_case(maNFCReadTag);
+	maIOCtl_case(maNFCDestroyTag);
+	//maIOCtl_case(maNFCConnectTag);
+	//maIOCtl_case(maNFCCloseTag);
+	maIOCtl_case(maNFCIsType);
+	maIOCtl_case(maNFCGetTypedTag);
+	//maIOCtl_case(maNFCBatchStart);
+	//maIOCtl_case(maNFCBatchCommit);
+	//maIOCtl_case(maNFCBatchRollback);
+	//maIOCtl_case(maNFCTransceive);
+	//maIOCtl_case(maNFCSetReadOnly);
+	//maIOCtl_case(maNFCIsReadOnly);
+	maIOCtl_case(maNFCGetSize);
+	maIOCtl_case(maNFCGetId);
 
 	default:
 		LOG("maIOCtl(%i) unimplemented.\n", function);

@@ -144,6 +144,8 @@ BB10_RUNTIME_LIBS = [
 	'bbcascades',
 	'bb',
 	'bbdevice',
+	'nfc',
+	'nfc_bps',
 	'QtCore',
 #	'QtDeclarative',
 #	'QtSql',

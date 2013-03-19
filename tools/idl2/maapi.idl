@@ -1374,7 +1374,7 @@ interface MAAPI {
 		ALERT = 34;
 
 		/** \brief A new NFC tag was received
-		* A new tag has been received, use maGetNextTag to
+		* A new tag has been received, use maNFCReadTag to
 		* retreive it.
 		*/
 		NFC_TAG_RECEIVED = 35;

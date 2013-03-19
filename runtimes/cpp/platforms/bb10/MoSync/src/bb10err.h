@@ -1,4 +1,6 @@
 #include <errno.h>
+#include <string.h>
+#include "helpers/helpers.h"
 
 #define LOG_ERRNO_(e) LOG("Errno at %s:%i: %i(%s)\n", __FILE__, __LINE__, e, strerror(e))
 #define LOG_ERRNO LOG_ERRNO_(errno)

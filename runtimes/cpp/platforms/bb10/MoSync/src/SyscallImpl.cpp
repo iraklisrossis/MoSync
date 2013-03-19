@@ -1552,6 +1552,13 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 	//maIOCtl_case(maNFCIsReadOnly);
 	maIOCtl_case(maNFCGetSize);
 	maIOCtl_case(maNFCGetId);
+	maIOCtl_case(maNFCGetNDEFMessage);
+	maIOCtl_case(maNFCGetNDEFRecordCount);
+	maIOCtl_case(maNFCGetNDEFRecord);
+	maIOCtl_case(maNFCGetNDEFPayload);
+	maIOCtl_case(maNFCGetNDEFType);
+	maIOCtl_case(maNFCGetNDEFId);
+	maIOCtl_case(maNFCGetNDEFTnf);
 
 	default:
 		LOG("maIOCtl(%i) unimplemented.\n", function);

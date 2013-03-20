@@ -29,7 +29,16 @@ void setup_filesystem(void) {
 	// first, we must find a temporary directory which we can work out of.
 	// we'll probably want to chroot() to it, too.
 	char newRoot[MAX_PATH] = "";
-	MAASSERT(makeDir(newRoot, 0, "mosync_root/", sizeof(newRoot)));
+	{
+		int res = maGetSystemProperty("mosync.path.local", newRoot, MAX_PATH);
+		if(res > 0) {
+			strcpy(newRoot + res, "mosync_root/");
+			printf("Local root: %s\n", newRoot);
+			MAASSERT(tryToMake(newRoot));
+		} else {
+			MAASSERT(makeDir(newRoot, 0, "mosync_root/", sizeof(newRoot)));
+		}
+	}
 	int newRootLen = strlen(newRoot);
 	MAASSERT(chdir(newRoot) == 0);
 	MAASSERT(chroot(".") == 0);

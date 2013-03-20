@@ -419,6 +419,7 @@ LOADER_URLS_FILE = open(SETTINGS[:htdocs_dir] + 'libc_tests.urls', 'wb') if(SETT
 files.sort.each do |filename, targetName|
 	bn = targetName
 	next if(target && bn != target)
+	targetFound = true
 	if(!File.exists?(filename))
 		puts "Nonexistant: #{bn}"
 		next
@@ -452,7 +453,7 @@ files.sort.each do |filename, targetName|
 	sldFile = ofn.ext('.sld' + suffix)
 	force_rebuild = SETTINGS[:rebuild_failed] && File.exists?(failFile)
 
-	LOADER_URLS_FILE.puts(SETTINGS[:loader_base_url] + bn.ext('.comb'))
+	LOADER_URLS_FILE.puts(SETTINGS[:loader_base_url] + bn.ext('.comb')) if(SETTINGS[:htdocs_dir])
 	#LOADER_URLS_FILE.flush
 
 	next if(!SETTINGS[:retry_failed] && File.exists?(failFile))

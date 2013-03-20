@@ -1340,6 +1340,7 @@ static int maGetSystemProperty(const char* key, char* buf, int size) {
 		len = strlen(cwd);
 		strcpy(cwd + len, "/data/");
 		strncpy(buf, cwd, size);
+		len += 6;
 	} else {
 		return -2;
 	}

@@ -389,11 +389,16 @@ end
 class CopyFileTask < FileTask
 	# name is a String, the destination filename.
 	# src is a FileTask, the source file.
-	# preq is an Array of Tasks, extra prerequisites.
+	# preq is an Array of Tasks, extra prerequisites. Alternatively, :force,
+	# which makes sure the file is copied even if the destination is newer.
 	def initialize(work, name, src, preq = [])
 		super(work, name)
+		if(preq == :force)
+			FileUtils.rm_f(name)
+		else
+			@prerequisites += [src] + preq
+		end
 		@src = src
-		@prerequisites += [src] + preq
 	end
 	def execute
 		puts "copy #{@src} #{@NAME}"

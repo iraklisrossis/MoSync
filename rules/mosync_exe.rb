@@ -372,9 +372,9 @@ module MoSyncExeModule
 		end
 
 		if(INSTALL_DIR)
-			@prerequisites << CopyFileTask.new(self, "#{INSTALL_DIR}/#{File.basename(@TARGET.to_s)}", @TARGET)
+			@prerequisites << CopyFileTask.new(self, "#{INSTALL_DIR}/program", @TARGET, :force)
 			if(!defined?(PACK) && @resourceTask)
-				@prerequisites << CopyFileTask.new(self, "#{INSTALL_DIR}/#{File.basename(@resourceTask.to_s)}", @resourceTask)
+				@prerequisites << CopyFileTask.new(self, "#{INSTALL_DIR}/resources", @resourceTask, :force)
 			end
 		end
 	end

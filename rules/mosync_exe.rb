@@ -371,13 +371,16 @@ module MoSyncExeModule
 				)
 		end
 
-		if(INSTALL_DIR)
-			@prerequisites << CopyFileTask.new(self, "#{INSTALL_DIR}/program", @TARGET, :force)
+		if(installDir)
+			@prerequisites << CopyFileTask.new(self, "#{installDir}/program", @TARGET, :force)
 			if(!defined?(PACK) && @resourceTask)
-				@prerequisites << CopyFileTask.new(self, "#{INSTALL_DIR}/resources", @resourceTask, :force)
+				@prerequisites << CopyFileTask.new(self, "#{installDir}/resources", @resourceTask, :force)
 			end
 		end
 	end
+
+	# make a function to allow overrides.
+	def installDir; INSTALL_DIR; end
 
 	def emuCommandLine
 		if(@resourceTask)

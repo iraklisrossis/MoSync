@@ -390,19 +390,43 @@ class CopyFileTask < FileTask
 	# name is a String, the destination filename.
 	# src is a FileTask, the source file.
 	# preq is an Array of Tasks, extra prerequisites. Alternatively, :force,
-	# which makes sure the file is copied even if the destination is newer.
+	# which makes sure the file is copied if the destination size or date is different.
 	def initialize(work, name, src, preq = [])
 		super(work, name)
 		if(preq == :force)
-			FileUtils.rm_f(name)
+			@force = true
 		else
+			@force = false
 			@prerequisites += [src] + preq
 		end
 		@src = src
 	end
+	def out_of_date?(d, log=true)
+		return super if(!@force)
+		if(File.exist?(@src))
+			if(File.mtime(@src) != d)
+				puts "Because source '#{@src}' has different date:" if(log)
+				return true
+			end
+			if(File.size(@src) != File.size?(@NAME))
+				puts "Because source '#{@src}' has different size:" if(log)
+				return true
+			end
+			return false
+		end
+		return true
+	end
 	def execute
 		puts "copy #{@src} #{@NAME}"
 		FileUtils.copy_file(@src, @NAME, true)
+		if(@force)
+			now = Time.now
+			# Update time to make sure downstream tasks are properly rebuilt.
+			File.utime(now, now, @NAME)
+			# Update source time to prevent file from being re-copied.
+			File.utime(now, now, @src)
+			return
+		end
 		# Work around a bug in Ruby's utime, which is called by copy_file.
 		# Bug appears during Daylight Savings Time, when copying files with dates outside DST.
 		mtime = File.mtime(@src)

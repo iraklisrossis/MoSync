@@ -23,6 +23,7 @@ static void freeze() {
 	Freeze(0);
 }
 
+#if 0
 static void waitForPress() {
 	maUpdateScreen();
 	for(;;) {
@@ -39,6 +40,7 @@ static void waitForPress() {
 		maWait(0);
 	}
 }
+#endif
 
 class MyMoblet : public Moblet, HttpConnectionListener {
 private:
@@ -61,6 +63,7 @@ public:
 			runNextTest();
 		}
 	}
+
 	void keyPressEvent(int keyCode, int nativeCode) {
 		if(keyCode == MAK_0 || keyCode == MAK_BACK)
 			close();
@@ -77,7 +80,7 @@ private:
 		if(store == STERR_NONEXISTENT) {
 			printf("test %i crashed.\n", mState);
 			printf("%s\n", strrchr(getNextTest(), '/'));
-			waitForPress();
+			//waitForPress();
 			return;
 		}
 		TEST(store);

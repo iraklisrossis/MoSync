@@ -13,6 +13,8 @@ if(ARGV.size > 0 && ARGV[0].end_with?('.c'))
 	ARGV.delete_at(0)
 end
 
+ROOT_TARGET = target
+
 require File.expand_path(ENV['MOSYNCDIR']+'/rules/mosync_exe.rb')
 require File.expand_path(ENV['MOSYNCDIR']+'/rules/mosync_lib.rb')
 require 'fileutils'
@@ -115,17 +117,24 @@ clear_filesystem
 def writeResourceFile(name)
 	FileUtils.mkdir_p(File.dirname(name))
 	resFileName = "#{name}.lst"
-	resFile = open("#{resFileName}", 'w')
-	resFile.puts('.res')
-	resFile.puts('.label "start"')
 
-	dir = Dir.new('filesystem/')
-	doResourceDir(resFile, dir, '/', 0)
+	task = MemoryGeneratedFileTask.new(nil, resFileName)
+	task.instance_eval do
+		io = StringIO.new
+		io.puts('.res')
+		io.puts('.label "start"')
 
-	resFile.puts('')
-	resFile.puts('.res')
-	resFile.puts('.label "end"')
-	resFile.close
+		dir = Dir.new('filesystem/')
+		doResourceDir(io, dir, '/', 0)
+
+		io.puts('')
+		io.puts('.res')
+		io.puts('.label "end"')
+		io.close
+		@buf = io.string
+	end
+	task.invoke
+
 	return resFileName
 end
 
@@ -258,7 +267,7 @@ class TTWork < PipeExeWork
 
 		@SPECIFIC_CFLAGS = {
 		}
-		@EXTRA_LINKFLAGS = " -stacksize 512 -heapsize #{10*1024}"
+		@EXTRA_LINKFLAGS = " -stacksize 512 -heapsize #{2*1024}"
 		@EXTRA_EMUFLAGS = ' -noscreen -allowdivzero'
 		@NAME = name
 	end
@@ -279,8 +288,16 @@ class TTWork < PipeExeWork
 	def invoke
 		super
 		return if(!SETTINGS[:htdocs_dir])
-		name = @NAME + '.comb'
+		name = @NAME.ext('.comb')
 		CombTask.new(self, SETTINGS[:htdocs_dir] + name, [@TARGET, @resourceTask]).invoke
+	end
+	def installDir
+		#puts "installDir requested. ROOT_TARGET: #{ROOT_TARGET.inspect}"
+		if(ROOT_TARGET)
+			return INSTALL_DIR
+		else
+			return false
+		end
 	end
 end
 
@@ -481,6 +498,11 @@ files.sort.each do |filename, targetName|
 
 	if(!work)
 		work = TTWork.new(filename, bn)
+	end
+
+	if(!SETTINGS[:run_tests])
+		work.invoke
+		next
 	end
 
 	begin

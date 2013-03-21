@@ -1002,6 +1002,7 @@ public:
 		regs[REG_p2] = Head.HeapSize;
 		regs[REG_p3] = Head.CtorAddress;
 		regs[REG_g0] = Head.DtorAddress;
+		DUMPHEX(Head.DataLen);
 		DUMPHEX(Head.DataSize);
 		DUMPHEX(Head.StackSize);
 		DUMPHEX(Head.HeapSize);
@@ -1033,8 +1034,6 @@ public:
 		DUMPHEX(CODE_SEGMENT_SIZE);
 		rIP = mem_cs + IP;
 
-		DUMPHEX(Head.DataLen);
-		DUMPHEX(Head.DataSize);
 		if(Head.DataLen > 0) {
 			DATA_SEGMENT_SIZE = nextPowerOf2(16, Head.DataSize);
 
@@ -1106,6 +1105,8 @@ public:
 		recompiler.init(this, &VM_Yield, mJniEnv, mJThis);
 #endif
 #endif
+
+		LOG("LoadVM complete.\n");
 
 		return 1; //good load
 	}

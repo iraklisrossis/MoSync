@@ -310,6 +310,7 @@ int main2(int argc, char **argv) {
 #endif
 	atexit(DeleteCore);
 
+	Base::Stream* reloadedStream = NULL;
 	while(1) {
 		try {
 			Core::Run2(gCore);
@@ -320,11 +321,13 @@ int main2(int argc, char **argv) {
 #endif
 				reportIp(0, "LoadProgram");
 				report(REPORT_LOAD_PROGRAM);
-				Base::Stream* stream = Base::gSyscall->resources.extract_RT_BINARY(gReloadHandle);
+				if(reloadedStream != NULL)
+					delete reloadedStream;
+				reloadedStream = Base::gSyscall->resources.extract_RT_BINARY(gReloadHandle);
 				delete gCore;
 				gCore = Core::CreateCore(*syscall);
-				bool res = Core::LoadVMApp(gCore, *stream);
-				delete stream;
+				bool res = Core::LoadVMApp(gCore, *reloadedStream);
+				// must leave the stream alive for resource loading to work.
 				gReloadHandle = 0;
 				if(!res) {
 					BIG_PHAT_ERROR(ERR_PROGRAM_LOAD_FAILED);
@@ -334,6 +337,8 @@ int main2(int argc, char **argv) {
 		}	catch(ReloadException) {
 			LOG("Caught ReloadException.\n");
 			delete gCore;
+			if(reloadedStream != NULL)
+				delete reloadedStream;
 			gCore = Core::CreateCore(*syscall);
 			if(!Core::LoadVMApp(gCore, programFile, resourceFile)) {
 				BIG_PHAT_ERROR(ERR_PROGRAM_LOAD_FAILED);

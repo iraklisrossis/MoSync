@@ -71,7 +71,7 @@ namespace Base {
 		int size = strlen(filename) + 1;
 		mFilename = (char*)malloc(size);
 		memcpy(mFilename, filename, size);
-		
+
 		// SDL_RWFromFile on Windows locks files,
 		// but the glibc test suite requires that they be shared.
 		//rwops = SDL_RWFromFile(filename, "rb");
@@ -96,7 +96,7 @@ namespace Base {
 			int len = end - pos;
 			int res = ::read(mFd, pos, len);
 			if(res == 0) {
-				LOG("Unexpected EOF.\n");
+				LOG("FileStream::read: Unexpected EOF. size %i\n", size);
 				FAIL;
 			}
 			LTEST(res);
@@ -174,7 +174,7 @@ namespace Base {
 			int len = end - pos;
 			int res = ::write(mFd, pos, len);
 			if(res == 0) {
-				LOG("Unexpected EOF.\n");
+				LOG("WriteFileStream::write: Unexpected EOF.\n");
 				FAIL;
 			}
 			LTEST(res);

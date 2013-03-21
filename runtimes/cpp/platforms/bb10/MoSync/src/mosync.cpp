@@ -14,8 +14,10 @@ extern "C" int resource_selector();
 #include <stdio.h>
 #include <helpers/log.h>
 #include <signal.h>
+#include <sys/resource.h>
 #include <bps/bps.h>
 #include "Cascade.h"
+#include "bb10err.h"
 
 using namespace std;
 
@@ -44,6 +46,16 @@ int main(int argc, char** argv) {
 		LOG("SIGQUIT handler installed.\n");
 	}
 
+	{
+		rlimit r;
+		ERRNO(getrlimit(RLIMIT_DATA, &r));
+		LOG("RLIMIT_DATA: cur %lu, max %lu\n", r.rlim_cur, r.rlim_max);
+		ERRNO(getrlimit(RLIMIT_STACK, &r));
+		LOG("RLIMIT_STACK: cur %lu, max %lu\n", r.rlim_cur, r.rlim_max);
+		ERRNO(getrlimit(RLIMIT_AS, &r));
+		LOG("RLIMIT_AS: cur %lu, max %lu\n", r.rlim_cur, r.rlim_max);
+	}
+
 	return runCascadeApp(argc, argv, bpsThreadFunc);
 }
 
@@ -67,17 +79,21 @@ static int bpsThreadFunc(void*) {
 	MYASSERT(Core::LoadVMApp(gCore, "app/native/program", "app/native/resources"), ERR_PROGRAM_LOAD_FAILED);
 	gRunning = true;
 
+	Base::Stream* reloadedStream = NULL;
 	while(1) {
 		Core::Run2(gCore);
 
 		if(gReloadHandle > 0) {
-			Base::Stream* stream = Base::gSyscall->resources.extract_RT_BINARY(gReloadHandle);
-			res = Core::LoadVMApp(gCore, *stream);
-			delete stream;
+			LOG("Reloading from handle 0x%x...\n", gReloadHandle);
+			if(reloadedStream != NULL)
+				delete reloadedStream;
+			reloadedStream = Base::gSyscall->resources.extract_RT_BINARY(gReloadHandle);
+			res = Core::LoadVMApp(gCore, *reloadedStream);
 			gReloadHandle = 0;
 			if(!res) {
 				BIG_PHAT_ERROR(ERR_PROGRAM_LOAD_FAILED);
 			}
+			LOG("Reload complete.\n");
 		}
 	}
 	res = 0;

@@ -57,7 +57,7 @@
 #include "generated/gl.h.cpp"
 #include <EGL/egl.h>
 
-#define HAVE_SCREEN 0
+#define HAVE_SCREEN 1
 
 // using
 using namespace Base;

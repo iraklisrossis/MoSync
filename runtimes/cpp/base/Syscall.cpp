@@ -306,20 +306,18 @@ namespace Base {
 		return true;
 	}
 
-#ifdef SYMBIAN
-	//int resourcesCount;
-#else
-	int resourcesCount = -1;
-	char* resourcesFilename;
-	int *resourceOffset;
-	int *resourceSize;
-	int *resourceType;
-#endif
+	static int sResourcesCount = -1;
+	static char* sResourcesFilename;
+	static int* sResourceOffset;
+	static int* sResourceSize;
+	static int* sResourceType;
+	static Stream* sResource = NULL;
 
 	/*
 	* Loads all resources from the stream, except images, binaries and sprites.
 	*/
 	bool Syscall::loadResources(Stream& file, const char* aFilename)  {
+		LOG("Syscall::loadResources(%s)\n", aFilename ? aFilename : "NULL");
 		bool hasResources = true;
 		if(!file.isOpen())
 			hasResources = false;
@@ -345,12 +343,17 @@ namespace Base {
 		DAR_UVINT(rSize);
 		resources.init(nResources);
 
-		resourcesCount = nResources;
-		resourceOffset = new int[nResources];
-		resourceSize = new int[nResources];
-		resourceType = new int[nResources];
-		resourcesFilename = new char[strlen(aFilename) + 1];
-		strcpy(resourcesFilename, aFilename);
+		sResourcesCount = nResources;
+		sResourceOffset = new int[nResources];
+		sResourceSize = new int[nResources];
+		sResourceType = new int[nResources];
+		if(aFilename) {
+			sResourcesFilename = new char[strlen(aFilename) + 1];
+			strcpy(sResourcesFilename, aFilename);
+		} else {
+			sResourcesFilename = NULL;
+			sResource = &file;
+		}
 
 		// rI is the resource index.
 		int rI = 1;
@@ -367,9 +370,9 @@ namespace Base {
 
 			int index = rI - 1;
 
-			TEST(file.tell(resourceOffset[index]));
-			resourceSize[index] = size;
-			resourceType[index] = type;
+			TEST(file.tell(sResourceOffset[index]));
+			sResourceSize[index] = size;
+			sResourceType[index] = type;
 
 			switch(type) {
 			case RT_UBIN:
@@ -444,14 +447,14 @@ namespace Base {
 			return false;
 		}
 
-		if ((resourceType == NULL) || (resourceSize == NULL) || (resourceOffset == NULL))
+		if ((sResourceType == NULL) || (sResourceSize == NULL) || (sResourceOffset == NULL))
 		{
 			return false;
 		}
 
-		int type = resourceType[originalHandle - 1];
-		int size = resourceSize[originalHandle - 1];
-		int offset = resourceOffset[originalHandle - 1];
+		int type = sResourceType[originalHandle - 1];
+		int size = sResourceSize[originalHandle - 1];
+		int offset = sResourceOffset[originalHandle - 1];
 		int rI = destHandle;
 
 		if ( resources.is_loaded(rI) )
@@ -530,7 +533,7 @@ namespace Base {
 
 	int Syscall::countResources()
 	{
-		return resourcesCount;
+		return sResourcesCount;
 	}
 }	//namespace Base
 
@@ -836,30 +839,26 @@ LOG("cwd: %s\n", getcwd(NULL, 0));
 		return SYSCALL_THIS->loadResourcesFromBuffer(*b, NULL);
 	}
 
-#ifdef SYMBIAN
-	//FileStream* Syscall::resource = NULL;
-#else
-	FileStream* resource = NULL;
-#endif
-
 #ifndef _android
 	SYSCALL(int, maLoadResource(MAHandle handle, MAHandle placeholder, int flag)) {
-		DEBUG_ASSERT(resourcesFilename != NULL);
-		if (((flag & MA_RESOURCE_OPEN) != 0) && (resource == NULL))
-		{
-			resource = new FileStream(resourcesFilename);
+		if(sResourcesFilename == NULL) {
+			flag = 0;
 		}
-		if (resource == NULL)
+		if (((flag & MA_RESOURCE_OPEN) != 0) && (sResource == NULL))
+		{
+			sResource = new FileStream(sResourcesFilename);
+		}
+		if (sResource == NULL)
 		{
 			return 0;
 		}
-		TEST(resource->seek(Seek::Start, 0));
-		int ret = SYSCALL_THIS->loadResource(*resource, handle, placeholder);
+		TEST(sResource->seek(Seek::Start, 0));
+		int ret = SYSCALL_THIS->loadResource(*sResource, handle, placeholder);
 
-		if (((flag & MA_RESOURCE_CLOSE) != 0) && (resource != NULL))
+		if (((flag & MA_RESOURCE_CLOSE) != 0) && (sResource != NULL))
 		{
-			delete resource;
-			resource = NULL;
+			delete sResource;
+			sResource = NULL;
 		}
 
 		return ret;

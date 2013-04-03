@@ -112,6 +112,12 @@ namespace Base {
 		void init(unsigned numResources);
 
 		/**
+		* Destroy all resources.
+		* init() can be called again after this function returns.
+		*/
+		void close();
+
+		/**
 		 * Destructor.
 		 */
 		~ResourceArray();

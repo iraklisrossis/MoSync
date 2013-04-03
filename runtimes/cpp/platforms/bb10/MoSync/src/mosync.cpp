@@ -7,6 +7,7 @@ extern "C" int resource_selector();
 #else
 #define INSIDE_MOSYNC_CORE
 #include <core/Core.h>
+#include <core/mainLoop.h>
 #endif
 
 #include <base/Syscall.h>
@@ -22,10 +23,6 @@ extern "C" int resource_selector();
 using namespace std;
 
 bool gRunning = false;
-
-#if !NATIVE_PROGRAM
-static MAHandle gReloadHandle = 0;
-#endif
 
 static int bpsThreadFunc(void*);
 
@@ -66,36 +63,24 @@ static int bpsThreadFunc(void*) {
 	Base::Syscall* syscall = new Base::Syscall();
 	int res;
 
+	const char* resourceFile = "app/native/resources";
+
 #if NATIVE_PROGRAM
-	Base::FileStream rf("app/native/resources");
-	MYASSERT(syscall->loadResources(rf, "app/native/resources"), ERR_PROGRAM_LOAD_FAILED);
+	Base::FileStream rf(resourceFile);
+	MYASSERT(syscall->loadResources(rf, resourceFile), ERR_PROGRAM_LOAD_FAILED);
 	LOG("resources loaded.\n");
 	res = resource_selector();
 	LOG("resource_selector: %i\n", res);
 	res = MAMain();
 	LOG("MAMain: %i\n", res);
 #else
+	const char* programFile = "app/native/program";
+
 	gCore = Core::CreateCore(*syscall);
-	MYASSERT(Core::LoadVMApp(gCore, "app/native/program", "app/native/resources"), ERR_PROGRAM_LOAD_FAILED);
+	MYASSERT(Core::LoadVMApp(gCore, programFile, resourceFile), ERR_PROGRAM_LOAD_FAILED);
 	gRunning = true;
 
-	Base::Stream* reloadedStream = NULL;
-	while(1) {
-		Core::Run2(gCore);
-
-		if(gReloadHandle > 0) {
-			LOG("Reloading from handle 0x%x...\n", gReloadHandle);
-			if(reloadedStream != NULL)
-				delete reloadedStream;
-			reloadedStream = Base::gSyscall->resources.extract_RT_BINARY(gReloadHandle);
-			res = Core::LoadVMApp(gCore, *reloadedStream);
-			gReloadHandle = 0;
-			if(!res) {
-				BIG_PHAT_ERROR(ERR_PROGRAM_LOAD_FAILED);
-			}
-			LOG("Reload complete.\n");
-		}
-	}
+	mainLoop(syscall, programFile, resourceFile);
 	res = 0;
 #endif
 
@@ -103,11 +88,3 @@ static int bpsThreadFunc(void*) {
 	LOG("main return %i\n", res);
 	return res;
 }
-
-#if !NATIVE_PROGRAM
-SYSCALL(void, maLoadProgram(MAHandle data, int reload)) {
-	Base::gSyscall->VM_Yield();
-	gReloadHandle = data;
-	//gReload |= (reload != 0);
-}
-#endif

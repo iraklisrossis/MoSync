@@ -8,6 +8,11 @@
 #ifndef SYSCALLIMPL_H_
 #define SYSCALLIMPL_H_
 
+#if !NATIVE_PROGRAM
+extern bool gReload;
+void reloadProgram() GCCATTRIB(noreturn);
+#endif
+
 class Syscall {
 public:
 //SDL_Surface* loadImage(MemStream& s);

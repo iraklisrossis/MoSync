@@ -23,7 +23,7 @@ static void freeze() {
 	Freeze(0);
 }
 
-#if 0
+#if 1
 static void waitForPress() {
 	maUpdateScreen();
 	for(;;) {
@@ -80,7 +80,7 @@ private:
 		if(store == STERR_NONEXISTENT) {
 			printf("test %i crashed.\n", mState);
 			printf("%s\n", strrchr(getNextTest(), '/'));
-			//waitForPress();
+			waitForPress();
 			return;
 		}
 		TEST(store);
@@ -106,8 +106,11 @@ private:
 		mState = -1;
 		MAHandle data = maCreatePlaceholder();
 		MAHandle store = maOpenStore(STORE_BASE_NAME "state", 0);
-		if(store == STERR_NONEXISTENT)
+		if(store == STERR_NONEXISTENT) {
+			printf("No state.\n");
+			waitForPress();
 			return;
+		}
 		TEST(store);
 		TEST(maReadStore(store, data));
 		maCloseStore(store, 0);

@@ -178,6 +178,7 @@ namespace Base {
 		bool mPanicOnProgrammerError;
 
 		void VM_Yield();
+		void close();
 
 		int maBtGetNewDevice(MABtDevice* dst);
 		int maBtGetNewService(MABtService* dst);

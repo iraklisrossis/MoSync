@@ -11,7 +11,7 @@ require 'base64'
 def bb10_get_gcc_version_info()
 	need(:@BB10_COMPILER)
 	v = {
-		:string => "4.6.3_#{@BB10_COMPILER}",
+		:string => "4.6.3",
 		:ver => '4.6.3',
 		:arm => false,
 		:clang => false,
@@ -108,6 +108,10 @@ module BB10Mod
 		else
 			raise "Illegal BB10_ARCH '#{BB10_ARCH}'"
 		end
+		default(:BUILDDIR_PREFIX, "")
+		default(:COMMOM_BUILDDDIR_PREFIX, "")
+		@BUILDDIR_PREFIX << "bb10_#{BB10_ARCH}_"
+		@COMMOM_BUILDDDIR_PREFIX << @BUILDDIR_PREFIX
 		super
 	end
 

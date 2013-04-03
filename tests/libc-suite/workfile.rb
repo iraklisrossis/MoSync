@@ -431,7 +431,7 @@ end
 unskippedCount = 0
 wins = 0
 
-LOADER_URLS_FILE = open(SETTINGS[:htdocs_dir] + 'libc_tests.urls', 'wb') if(SETTINGS[:htdocs_dir])
+LOADER_URLS_FILE = open(SETTINGS[:htdocs_dir] + 'libc_tests.urls', 'wb') if(SETTINGS[:htdocs_dir] && !target)
 
 files.sort.each do |filename, targetName|
 	bn = targetName
@@ -470,7 +470,7 @@ files.sort.each do |filename, targetName|
 	sldFile = ofn.ext('.sld' + suffix)
 	force_rebuild = SETTINGS[:rebuild_failed] && File.exists?(failFile)
 
-	LOADER_URLS_FILE.puts(SETTINGS[:loader_base_url] + bn.ext('.comb')) if(SETTINGS[:htdocs_dir])
+	LOADER_URLS_FILE.puts(SETTINGS[:loader_base_url] + bn.ext('.comb')) if(SETTINGS[:htdocs_dir] && !target)
 	#LOADER_URLS_FILE.flush
 
 	next if(!SETTINGS[:retry_failed] && File.exists?(failFile))
@@ -490,7 +490,7 @@ files.sort.each do |filename, targetName|
 
 	winTask = FileTask.new(work, winFile)
 	#winTask.prerequisites << FileTask.new(work, ofn)
-	if(!winTask.needed?(false))
+	if(!winTask.needed?(false) && SETTINGS[:run_tests])
 		#puts "#{bn} won"
 		wins += 1
 		next

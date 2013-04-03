@@ -137,9 +137,21 @@ namespace Base {
 
 	Syscall::~Syscall() {
 		LOGD("~Syscall\n");
-		gStores.close();
+		this->close();
+	}
+
+	void Syscall::close() {
+		// close all files.
+		for(FileMap::TIteratorC itr = gFileHandles.begin(); itr.hasMore(); ) {
+			FileHandle* fh = itr.next().value;
+			DEBUG_ASSERT(fh != NULL);
+			SAFE_DELETE(fh->fs);
+		}
 		gFileHandles.close();
-		platformDestruct();
+
+		gStores.close();
+		this->platformDestruct();
+		resources.close();
 	}
 
 	/*
@@ -307,7 +319,7 @@ namespace Base {
 	}
 
 	static int sResourcesCount = -1;
-	static char* sResourcesFilename;
+	static char* sResourcesFilename = NULL;
 	static int* sResourceOffset;
 	static int* sResourceSize;
 	static int* sResourceType;
@@ -348,8 +360,11 @@ namespace Base {
 		sResourceSize = new int[nResources];
 		sResourceType = new int[nResources];
 		if(aFilename) {
+			if(sResourcesFilename != NULL)
+				delete sResourcesFilename;
 			sResourcesFilename = new char[strlen(aFilename) + 1];
 			strcpy(sResourcesFilename, aFilename);
+			sResource = NULL;
 		} else {
 			sResourcesFilename = NULL;
 			sResource = &file;

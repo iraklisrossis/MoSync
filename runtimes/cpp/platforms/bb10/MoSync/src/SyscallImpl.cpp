@@ -201,12 +201,13 @@ namespace Base
 
 		// request the window be displayed
 		maUpdateScreen();
+
+		BPSERR(screen_request_events(sScreen));
 		LOG("Screen init complete.\n");
 #endif
 		// initialize events
 		BPSERR(navigator_request_events(0));
 		BPSERR(button_request_events(0));
-		//BPSERR(screen_request_events(sScreen));
 
 		// initialize image decoder
 		{
@@ -1338,9 +1339,9 @@ static int maGetSystemProperty(const char* key, char* buf, int size) {
 		char cwd[PATH_MAX+8];
 		NULL_ERRNO(getcwd(cwd, PATH_MAX));
 		len = strlen(cwd);
-		strcpy(cwd + len, "/data/");
+		strcpy(cwd + len, "/data/mpl/");
 		strncpy(buf, cwd, size);
-		len += 6;
+		len += 10;
 	} else {
 		return -2;
 	}
@@ -1570,7 +1571,23 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 void MoSyncExit(int exitCode)
 {
 	LOG("MoSyncExit(%i)\n", exitCode);
-	exit(exitCode);
+	if(gReload) {
+		gReload = false;
+
+		// reset all syscall structures.
+
+#if HAVE_SCREEN
+		// reset the screen
+		maSetDrawTarget(HANDLE_SCREEN);
+		maSetColor(0);
+		maSetClipRect(0, 0, sBackBuffer->width, sBackBuffer->height);
+		maFillRect(0, 0, sBackBuffer->width, sBackBuffer->height);
+#endif
+
+		Base::reloadProgram();
+	} else {
+		exit(exitCode);
+	}
 }
 
 void MoSyncErrorExit(int errorCode)

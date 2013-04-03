@@ -103,13 +103,17 @@ namespace Base {
 	 * Destructor.
 	 */
 	ResourceArray::~ResourceArray() {
+		close();
+	}
+
+	void ResourceArray::close() {
 		// Destroy static resources
 		for(unsigned i=1; i<mResSize; ++i) {
 			LOGD("RA %i\n", i);
 			_destroy(i);
 		}
-		delete[] mRes;
-		delete[] mResTypes;
+		SAFE_DELETE(mRes);
+		SAFE_DELETE(mResTypes);
 
 		// Destroy dynamic resources.
 		for(unsigned i=1; i<mDynResSize; ++i) {
@@ -118,13 +122,18 @@ namespace Base {
 				_destroy(i | DYNAMIC_PLACEHOLDER_BIT);
 			}
 		}
-		if(mDynRes) {
-			delete[] mDynRes;
-			delete[] mDynResTypes;
-		}
-		if(mDynResPool) {
-			delete[] mDynResPool;
-		}
+		SAFE_DELETE(mDynRes);
+		SAFE_DELETE(mDynResTypes);
+		SAFE_DELETE(mDynResPool);
+
+		mResSize = 0;
+		mDynResSize = 1;
+		mDynResCapacity = 1;
+		mDynResPoolSize = 0;
+		mDynResPoolCapacity = 0;
+#ifdef RESOURCE_MEMORY_LIMIT
+		mResmem = 0;
+#endif
 	}
 
 	void ResourceArray::destroy(unsigned index) {

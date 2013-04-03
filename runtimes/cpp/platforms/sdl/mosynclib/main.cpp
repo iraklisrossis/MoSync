@@ -240,3 +240,7 @@ int Base::Syscall::getMemoryProtection() {
 	return 0;
 }
 #endif
+
+namespace Base {
+	bool gReload = false;
+}

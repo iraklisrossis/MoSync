@@ -24,6 +24,7 @@ work.instance_eval do
 	@SOURCES = [".", "#{BD}/runtimes/cpp/core/Recompiler"]
 	@IGNORED_FILES = ["debugger.cpp", 'ashmem.cpp']
 	@EXTRA_SOURCEFILES = ["#{BD}/runtimes/cpp/core/Core.cpp",
+		"#{BD}/runtimes/cpp/core/mainLoop.cpp",
 		"#{BD}/runtimes/cpp/core/sld.cpp",
 		"#{BD}/runtimes/cpp/core/GdbStub.cpp",
 		"#{BD}/runtimes/cpp/core/extensions.cpp",

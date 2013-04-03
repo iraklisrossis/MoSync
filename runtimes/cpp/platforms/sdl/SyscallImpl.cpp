@@ -112,7 +112,6 @@ namespace Base {
 	//***************************************************************************
 
 	Syscall* gSyscall = NULL;
-	bool gReload = false;
 
 #ifndef __USE_FULLSCREEN__
 	static uint screenWidth  = 240;	//176

@@ -33,6 +33,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <sys/stat.h>
 
 #include <core/Core.h>
+#include <core/mainLoop.h>
 #include <core/sld.h>
 #include <core/extensions.h>
 #include <base/Syscall.h>
@@ -51,10 +52,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "Skinning/SkinManager.h"
 #include "Skinning/GenericSkin.h"
-
-static int gReloadHandle = 0;
-
-struct ReloadException { ReloadException() {} };
 
 static void DeleteCore() {
 	Core::DeleteCore(gCore);
@@ -310,55 +307,8 @@ int main2(int argc, char **argv) {
 #endif
 	atexit(DeleteCore);
 
-	Base::Stream* reloadedStream = NULL;
-	while(1) {
-		try {
-			Core::Run2(gCore);
-
-			if(gReloadHandle > 0) {
-#ifdef FAKE_CALL_STACK
-				clearSLD();
-#endif
-				reportIp(0, "LoadProgram");
-				report(REPORT_LOAD_PROGRAM);
-				if(reloadedStream != NULL)
-					delete reloadedStream;
-				reloadedStream = Base::gSyscall->resources.extract_RT_BINARY(gReloadHandle);
-				delete gCore;
-				gCore = Core::CreateCore(*syscall);
-				bool res = Core::LoadVMApp(gCore, *reloadedStream);
-				// must leave the stream alive for resource loading to work.
-				gReloadHandle = 0;
-				if(!res) {
-					BIG_PHAT_ERROR(ERR_PROGRAM_LOAD_FAILED);
-					return 1;
-				}	//if
-			}	//if
-		}	catch(ReloadException) {
-			LOG("Caught ReloadException.\n");
-			delete gCore;
-			if(reloadedStream != NULL)
-				delete reloadedStream;
-			gCore = Core::CreateCore(*syscall);
-			if(!Core::LoadVMApp(gCore, programFile, resourceFile)) {
-				BIG_PHAT_ERROR(ERR_PROGRAM_LOAD_FAILED);
-				return 1;
-			}
-		}
-	}
-}
-
-SYSCALL(void, maLoadProgram(MAHandle data, int reload)) {
-	Base::gSyscall->VM_Yield();
-	gReloadHandle = data;
-	gReload |= (reload != 0);
-}
-
-void Base::reloadProgram() {
-	report(REPORT_RELOAD);
-	gReload = false;
-	LOG("Throwing ReloadException.\n");
-	throw ReloadException();
+	mainLoop(syscall, programFile, resourceFile);
+	return 0;
 }
 
 #ifdef TRANSLATE_PANICS

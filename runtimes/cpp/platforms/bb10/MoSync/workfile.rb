@@ -104,6 +104,7 @@ work.instance_eval do
 	]
 	@EXTRA_SOURCEFILES = [
 		"#{BD}/runtimes/cpp/core/Core.cpp",
+		"#{BD}/runtimes/cpp/core/mainLoop.cpp",
 	]
 	@EXTRA_INCLUDES += [
 		"#{BD}/runtimes/cpp/core",

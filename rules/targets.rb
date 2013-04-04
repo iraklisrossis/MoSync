@@ -92,6 +92,9 @@ class Targets
 		default_const(:TARGET, HOST)
 		default_const(:HAVE_LIBC, USE_NEWLIB || (defined?(MODE) && MODE == 'bb10'))
 		default_const(:BB10_ARCH, DEFAULT_BB10_ARCH)
+		if(USE_NEWLIB && (defined?(MODE) && MODE == 'bb10'))
+			raise 'Newlib is not compatible with native libc.'
+		end
 	end
 
 	# parse ARGV

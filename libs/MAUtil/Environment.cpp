@@ -45,7 +45,17 @@ namespace MAUtil {
 	Environment* Environment::sEnvironment = NULL;
 
 	Environment::Environment()
-		: mBtListener(NULL)
+		: mKeyListeners(false),
+		mPointerListeners(false),
+		mBtListener(NULL),
+		mConnListeners(false),
+		mIdleListeners(false),
+		mTimerEvents(true),
+		mFocusListeners(false),
+		mCustomEventListeners(false),
+		mTextBoxListeners(false),
+		mSensorListeners(false),
+		mOrientationListeners(false)
 	{
 		if(sEnvironment)
 			PANIC_MESSAGE("The application tried to instantiate more than one Environment. "
@@ -223,6 +233,14 @@ namespace MAUtil {
 		mSensorListeners.remove(tl);
 	}
 
+	void Environment::addOrientationListener(OrientationListener* ol) {
+		mOrientationListeners.add(ol);
+	}
+
+	void Environment::removeOrientationListener(OrientationListener* ol) {
+		mOrientationListeners.remove(ol);
+	}
+
 	void Environment::fireFocusGainedEvent() {
 		//MAASSERT(sEnvironment == this);
 		mFocusListeners.setRunning(true);
@@ -373,6 +391,22 @@ namespace MAUtil {
 			i->sensorEvent(a);
 		}
 		mSensorListeners.setRunning(false);
+	}
+
+	void Environment::fireOrientationChangedEvent(int screenOrientation) {
+		mOrientationListeners.setRunning(true);
+		ListenerSet_each(OrientationListener, i, mOrientationListeners) {
+			i->orientationChanged(screenOrientation);
+		}
+		mOrientationListeners.setRunning(false);
+	}
+
+	void Environment::fireOrientationWillChangeEvent() {
+		mOrientationListeners.setRunning(true);
+		ListenerSet_each(OrientationListener, i, mOrientationListeners) {
+			i->orientationWillChange();
+		}
+		mOrientationListeners.setRunning(false);
 	}
 
 	void Environment::runIdleListeners() {

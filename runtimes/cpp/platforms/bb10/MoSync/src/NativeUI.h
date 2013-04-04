@@ -9,6 +9,7 @@ int maWidgetRemoveChild(MAWidgetHandle childHandle);
 int maWidgetModalDialogShow(MAWidgetHandle dialogHandle);
 int maWidgetModalDialogHide(MAWidgetHandle dialogHandle);
 int maWidgetScreenShow(MAWidgetHandle screenHandle);
+int maWidgetScreenShowWithTransition(MAWidgetHandle screenHandle, MAWScreenTransitionType screenTransitionType, int screenTransitionDuration);
 int maWidgetStackScreenPush(MAWidgetHandle stackScreenHandle, MAWidgetHandle screenHandle);
 int maWidgetStackScreenPop(MAWidgetHandle stackScreenHandle);
 int maWidgetSetProperty(MAWidgetHandle handle, const char* property, const char* value);

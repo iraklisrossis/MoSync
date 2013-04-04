@@ -144,6 +144,27 @@ namespace MAUtil {
 	};
 
 	/**
+	 * \brief Controls certain aspects of \link #Downloader \endlink behavior.
+	 */
+	class DownloadController
+	{
+	public:
+		/**
+		 * \brief Handler for HTTP redirection.
+		 *
+		 * This function is called whenever a server responds with a redirect (commonly 301 or 302).
+		 * The purpose is to decide if the redirect should be followed or not.
+		 *
+		 * If a Downloader has no controller, it will follow up to 8 redirects. A 9th will cause #CONNERR_REDIRECT.
+		 *
+		 * \param newLocation C string containing the alternative location provided by the server.
+		 *
+		 * \return If true, the Downloader will follow the redirect. If false, it will raise #CONNERR_REDIRECT.
+		 */
+		virtual bool handleRedirect(const char* newLocation) = 0;
+	};
+
+	/**
 	 * \brief The Downloader class. Use it to simplify asynchronous downloading
 	 * of files to binary resources.
 	 */
@@ -176,6 +197,16 @@ namespace MAUtil {
 		 * \param dl Pointer to the DownloadListener instance.
 		 */
 		void removeDownloadListener(DownloadListener *dl);
+
+		/**
+		 * Sets the controller for this Downloader.
+		 *
+		 * By default, a Downloader has no controller.
+		 * See DownloadController for info on default behavior.
+		 *
+		 * \param dc Pointer to a DownloadController instance, or NULL to remove any existing controller.
+		 */
+		void setDownloadController(DownloadController* dc);
 
 		/**
 		 * Function to begin downloading a file.
@@ -249,6 +280,14 @@ namespace MAUtil {
 		void deleteReader();
 
 		/**
+		 * Performs url redirection if not blocked by the Downloader user
+		 * (via DownloadController).
+		 * \param http A http connection that needs redirection.
+		 *
+		 */
+		void doRedirect(HttpConnection* http);
+
+		/**
 		 * Callback method in HttpConnectionListener.
 		 */
 		virtual void httpFinished(HttpConnection* http, int result);
@@ -271,6 +310,13 @@ namespace MAUtil {
 		 * how the server sends the data to the client.
 		 */
 		DownloaderReader* mReader;
+
+		DownloadController* mController;
+
+		/**
+		 * A counter representing the number of redirection attemps.
+		 */
+		int mRedirectionCounter;
 	};
 
 	/**

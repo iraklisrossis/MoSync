@@ -30,12 +30,15 @@ build-one.rb
 /libs/SDL
 /libs/yajl/
 /libs/stlport/
+/libs/glm
 
 /intlibs/gsm_amr
 /intlibs/sqlite
 /intlibs/dgles-0.5
 /intlibs/demangle
 /intlibs/glew
+
+/runtimes/csharp/windowsphone/ManagedMediaHelpers
 
 /templates
 

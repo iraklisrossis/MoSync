@@ -265,6 +265,12 @@ static int nuiScreenShow(const bps_event_payload_t& payload) {
 	return MAW_RES_OK;
 }
 
+int maWidgetScreenShowWithTransition(MAWidgetHandle screenHandle,
+	MAWScreenTransitionType screenTransitionType, int screenTransitionDuration)
+{
+	DEBIG_PHAT_ERROR;
+}
+
 int maWidgetStackScreenPush(MAWidgetHandle stackScreenHandle, MAWidgetHandle screenHandle) {
 	DEBIG_PHAT_ERROR;
 }

@@ -20,6 +20,7 @@
 #include "Image.h"
 
 using namespace MoSyncError;
+using namespace Base;
 
 _LIT(KDirScrAccTxt, "DirectScreenAccess");
 

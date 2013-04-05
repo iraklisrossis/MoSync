@@ -26,6 +26,6 @@ namespace Base {
 class MemStream;
 }
 
-HRESULT loadImageFromStream(Image **image, const void* data, int len);
+HRESULT loadImageFromStream(Base::Image **image, const void* data, int len);
 
 #endif /* _IMAGE_LOAD_H_ */

@@ -79,7 +79,7 @@ void ConnWaitEvent() {
 		BIG_PHAT_ERROR(ERR_INTERNAL);
 	}
 }
-void ConnPushEvent(MAEvent* ep) {
+void ConnPushEvent(MAEventNative* ep) {
 	PostMessage(g_hwndMain, WM_ADD_EVENT, (WPARAM) ep, 0);
 }
 void DefluxBinPushEvent(MAHandle handle, Stream& s) {

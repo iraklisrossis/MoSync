@@ -25,6 +25,7 @@ using namespace MoSyncError;
 #include "wce_errors.h"
 #include "wce_helpers.h"
 
+using namespace Base;
 
 namespace TextOutput {
 	void drawImage(Image *dst, int x, int y, const unsigned int *src, int w, int h, unsigned int color) {	

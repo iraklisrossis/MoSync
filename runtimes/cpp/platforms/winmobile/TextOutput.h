@@ -22,7 +22,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <windows.h>
 
 namespace TextOutput {
-	void drawText(Image *dst, int x, int y, const void *str, unsigned int color, bool wide);
+	void drawText(Base::Image *dst, int x, int y, const void *str, unsigned int color, bool wide);
 	SIZE getTextSize(const void *str, bool wide);
 }
 

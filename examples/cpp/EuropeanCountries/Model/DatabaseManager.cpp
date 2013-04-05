@@ -44,7 +44,7 @@ namespace EuropeanCountries
 	 */
 	DatabaseManager::DatabaseManager():
 		mFileUtil(NULL),
-		mCountryFileNames(NULL)
+		mCountryFileNames(0)
 	{
 		mFileUtil = new Wormhole::FileUtil();
 	}

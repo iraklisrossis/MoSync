@@ -1571,6 +1571,7 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 void MoSyncExit(int exitCode)
 {
 	LOG("MoSyncExit(%i)\n", exitCode);
+#ifdef INSIDE_MOSYNC_CORE
 	if(gReload) {
 		gReload = false;
 
@@ -1585,7 +1586,9 @@ void MoSyncExit(int exitCode)
 #endif
 
 		Base::reloadProgram();
-	} else {
+	} else
+#endif
+	{
 		exit(exitCode);
 	}
 }

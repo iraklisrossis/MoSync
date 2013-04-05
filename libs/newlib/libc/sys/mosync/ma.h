@@ -43,8 +43,16 @@ typedef int BOOL;
 #define FALSE	0
 #endif
 
-#ifndef NULL
-#define NULL 0
+#if !defined(NULL)
+# ifdef __GNUG__
+#  define NULL __null
+# else
+#  ifndef __cplusplus
+#   define NULL ((void *)0)
+#  else
+#   define NULL 0
+#  endif
+# endif
 #endif
 
 #ifdef __cplusplus

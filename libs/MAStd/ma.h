@@ -40,16 +40,24 @@ typedef unsigned long size_t;
 #endif
 
 #ifdef MAPIP
-#define BOOL	int
-#else //NOT MAPIP
+#define BOOL int
+#else
 typedef int BOOL;
-#endif //MAPIP
+#endif
 
 #define TRUE	1
 #define FALSE	0
 
-#ifndef NULL
-#define NULL 0
+#if !defined(NULL)
+# ifdef __GNUG__
+#  define NULL __null
+# else
+#  ifndef __cplusplus
+#   define NULL ((void *)0)
+#  else
+#   define NULL 0
+#  endif
+# endif
 #endif
 
 #ifdef __cplusplus

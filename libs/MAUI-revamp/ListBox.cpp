@@ -97,6 +97,7 @@ namespace MAUI {
 		ListBoxAnimationType animationType,
 		bool wrapping)
 			: Widget(x, y, width, height),
+			mItemSelectedListeners(false),
 			mWrapping(wrapping),
 			mAnimationType(animationType),
 			mOrientation(orientation),

@@ -42,7 +42,8 @@ Slider::Slider(
 		mMinValue(minValue),
 		mMaxValue(maxValue),
 		mValueChanged(false),
-		mMoveToPoint(false)
+		mMoveToPoint(false),
+		mSliderListeners(false)
 {
 	setValue(defaultValue);
 }

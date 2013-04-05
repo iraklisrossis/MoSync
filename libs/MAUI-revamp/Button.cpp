@@ -25,7 +25,7 @@ namespace MAUI {
 Button::Button(int x, int y, int width, int height, const String& caption)
 	: Label(x, y, width, height, caption), mPressed(false),
 		mSkinFocusedPressed(NULL), mSkinFocusedReleased(NULL),
-		mSkinUnfocusedReleased(NULL)
+		mSkinUnfocusedReleased(NULL), mListeners(false)
 {
 	this->setHorizontalAlignment(Label::HA_CENTER);
 	this->setVerticalAlignment(Label::VA_CENTER);

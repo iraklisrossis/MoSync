@@ -7,7 +7,7 @@ work.instance_eval do
 	@SOURCES = ["."]
 	@EXTRA_CFLAGS = " -Wno-unreachable-code"
 	if(USE_NEWLIB)
-		@EXTRA_LINKFLAGS = " -datasize=256000 -heapsize=128000 -stacksize=16000"
+		@EXTRA_LINKFLAGS = standardMemorySettings(8)
 	end
 	@NAME = "MAStx"
 end

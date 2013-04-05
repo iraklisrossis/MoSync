@@ -37,6 +37,7 @@ inline uint32_t rgb16_to_rgb32(int a, int redMask, int greenMask, int blueMask, 
 	return (r << 16) | (g << 8) | (b);
 }
 
+namespace Base {
 
 /* should make it refcounted. */
 class Image {
@@ -142,5 +143,7 @@ unsigned char* initMulTable();
 void initMulTable();
 void initRecipLut();
 #endif
+
+}	// namespace Base
 
 #endif /* _IMAGE_ */

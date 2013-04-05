@@ -23,7 +23,7 @@ MA 02110-1301, USA.
  * Implementation of system calls made from JavaScript.
  */
 
-#include <conprint.h>
+#include <mastring.h>
 #include <Wormhole/FileUtil.h>
 #include "FileMessageHandler.h"
 

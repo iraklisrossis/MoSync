@@ -63,7 +63,7 @@
 			dbProduct.getProductID().c_str(),
 			dbProduct.getDate());
 		printf("Insert statement = %s", buffer);
-		int result = maDBExecSQL(mDatabase, buffer);
+		maDBExecSQL(mDatabase, buffer);
 	}
 
 	/**
@@ -121,7 +121,7 @@
 		sprintf(buffer, "CREATE TABLE IF NOT EXISTS %s (productid TEXT, date INTEGER)",
 			TABLE_NAME);
 		printf("create table query = %s", buffer);
-		int result = maDBExecSQL(mDatabase, buffer);
+		maDBExecSQL(mDatabase, buffer);
 	}
 
 	/**

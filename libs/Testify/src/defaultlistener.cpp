@@ -33,7 +33,7 @@ NAMESPACE_BEGIN( Testify )
  */
 DefaultListener::DefaultListener ( void )
 {
-	m_indent[0] = NULL;
+	m_indent[0] = 0;
 	m_nestLevel = 0;
 }
 
@@ -152,7 +152,7 @@ void DefaultListener::indentInc ( void )
 		return;
 
 	m_indent[m_nestLevel++] = ' ';
-	m_indent[m_nestLevel] = NULL;
+	m_indent[m_nestLevel] = 0;
 }
 
 /**
@@ -165,7 +165,7 @@ void DefaultListener::indentDec ( void )
 		return;
 
 	m_nestLevel--;
-	m_indent[m_nestLevel] = NULL;
+	m_indent[m_nestLevel] = 0;
 }
 
 

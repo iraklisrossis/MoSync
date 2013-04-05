@@ -26,6 +26,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "base_errors.h"
 using namespace MoSyncError;
+using namespace Base;
 
 typedef s64 int64_t;
 
@@ -145,11 +146,11 @@ static ClipResult clipRightLine(Point &a, Point &b, Point& out, int right) {
 #endif	//SYMBIAN
 
 #ifdef SYMBIAN
-unsigned char* initMulTable() {
+unsigned char* Base::initMulTable() {
 	unsigned char* mulTable = new unsigned char[256*256];
 #else
 static unsigned char mulTable[256*256];
-void initMulTable() {
+void Base::initMulTable() {
 #endif
 	for(int i = 0; i < 256; i++) {
 		for(int j = 0; j < 256; j++) {
@@ -1219,7 +1220,7 @@ bool Image::clipPolygon() {
 #define RECIP_LUT_SIZE 2048
 static int recipLut[RECIP_LUT_SIZE];
 
-void initRecipLut() {
+void Base::initRecipLut() {
 	recipLut[0] = FP_MASK;
 	for(int i = 1; i < RECIP_LUT_SIZE; i++) {
 		recipLut[i] = FP_MASK/i;

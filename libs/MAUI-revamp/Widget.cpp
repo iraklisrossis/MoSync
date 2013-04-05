@@ -42,6 +42,7 @@ namespace MAUI {
 		mFocused(false),
 		mFocusable(true),
 		mEnabled(true),
+		mWidgetListeners(false),
 		mPaddingLeft(0),
 		mPaddingTop(0),
 		mPaddingBottom(0),

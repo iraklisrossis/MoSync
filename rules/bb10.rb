@@ -2,6 +2,10 @@
 require "#{File.dirname(__FILE__)}/exe.rb"
 require "#{File.dirname(__FILE__)}/native_lib.rb"
 require "#{File.dirname(__FILE__)}/targets.rb"
+
+# Older versions of Ruby require this in order to be able to load 'zip'.
+require 'rubygems'
+
 require 'zip/zip'
 require 'erb'
 require 'digest'

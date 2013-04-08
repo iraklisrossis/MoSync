@@ -15,6 +15,7 @@ def setup_common
 		@LIBRARIES = ["wsock32", "ws2_32", "Opengl32"]
 		@LOCAL_DLLS << 'gsm_amr'
 		@EXTRA_INCLUDES = ["../../../base", ".."]
+		@EXTRA_LINKFLAGS = ' -Wl,--enable-stdcall-fixup'
 	elsif(HOST == :linux) then
 		@EXTRA_CPPFLAGS = ""
 		@IGNORED_FILES = []

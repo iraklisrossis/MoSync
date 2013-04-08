@@ -38,7 +38,7 @@ work.instance_eval do
 		@SPECIFIC_CFLAGS["sld.cpp"] = " -Wno-unreachable-code"
 	end
 	if(HOST == :win32)
-		@EXTRA_LINKFLAGS = ' -mwindows'
+		@EXTRA_LINKFLAGS << ' -mwindows'
 		@EXTRA_OBJECTS = [WindresTask.new(work, '../sdl.rc')]
 	end
 	if(HOST == :darwin)

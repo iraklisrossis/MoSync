@@ -196,6 +196,10 @@ class GccWork < BuildWork
 		@TARGET
 	end
 
+	def target_platform
+		@TARGET_PLATFORM
+	end
+
 	private
 
 	def isPipeWork; false; end

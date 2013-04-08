@@ -25,7 +25,9 @@ class DllTask < NativeGccLinkTask
 		libflags = ""
 		#puts "libflags: #{libflags}"
 		if(whole_libs.size > 0)
-			if(@TARGET_PLATFORM == :darwin)
+			puts "Whole libs detected. Target platform:"
+			p work.target_platform
+			if(work.target_platform == :darwin)
 				libflags += " #{whole_libs.join(' ')}"
 			else
 				libflags += " -Wl,--whole-archive #{whole_libs.join(' ')} -Wl,--no-whole-archive"
@@ -40,7 +42,7 @@ class DllTask < NativeGccLinkTask
 			#libflags += " -s"
 			#puts "libflags: #{libflags}"
 		end
-		if(@TARGET_PLATFORM == :win32)
+		if(work.target_platform == :win32)
 			implib = " -Wl,--out-implib=#{libfile}"
 		end
 		@FLAGS = " -shared#{implib}" + libflags + linkflags

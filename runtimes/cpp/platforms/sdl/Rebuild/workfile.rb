@@ -47,7 +47,7 @@ work.instance_eval do
 			'',
 	}
 	if(HOST == :win32)
-		@EXTRA_LINKFLAGS = ' -mwindows'
+		@EXTRA_LINKFLAGS << ' -mwindows'
 	end
 
 	@LOCAL_LIBS = ["mosync_sdl"] + @LOCAL_LIBS

@@ -417,7 +417,7 @@ class CopyFileTask < FileTask
 		return true
 	end
 	def execute
-		puts "copy #{@src} #{@NAME}"
+		puts "Copy #{@src} #{@NAME}"
 		FileUtils.copy_file(@src, @NAME, true)
 		if(@force)
 			now = Time.now
@@ -431,7 +431,7 @@ class CopyFileTask < FileTask
 		# Bug appears during Daylight Savings Time, when copying files with dates outside DST.
 		mtime = File.mtime(@src)
 		if(!mtime.isdst && Time.now.isdst)
-			mtime += mtime.utc_offset
+			mtime += Time.now.utc_offset - mtime.utc_offset
 			File.utime(mtime, mtime, @NAME)
 		end
 	end

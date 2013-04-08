@@ -253,8 +253,9 @@ gTelephony(NULL),
 gNetworkRegistrationPckg(gNetworkRegistration),
 #endif
 gBtDeviceArray(8, 0),
-resourcesCount(-1),
-resource(NULL)
+sResourcesCount(-1),
+sResourcesFilename(NULL),
+sResource(NULL)
 {
 	init();
 	ClearNetworkingVariables();

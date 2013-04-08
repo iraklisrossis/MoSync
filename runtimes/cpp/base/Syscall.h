@@ -57,13 +57,12 @@ namespace Base {
 		void platformDestruct();
 
 #ifdef SYMBIAN
-		int resourcesCount;
-		char* resourcesFilename;
-		int *resourceOffset;
-		int *resourceSize;
-		int *resourceType;
-
-		FileStream* resource;
+		int sResourcesCount;
+		char* sResourcesFilename;
+		int* sResourceOffset;
+		int* sResourceSize;
+		int* sResourceType;
+		Stream* sResource;
 #endif
 
 /*

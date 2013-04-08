@@ -318,12 +318,14 @@ namespace Base {
 		return true;
 	}
 
+#ifndef SYMBIAN
 	static int sResourcesCount = -1;
 	static char* sResourcesFilename = NULL;
 	static int* sResourceOffset;
 	static int* sResourceSize;
 	static int* sResourceType;
 	static Stream* sResource = NULL;
+#endif
 
 	/*
 	* Loads all resources from the stream, except images, binaries and sprites.

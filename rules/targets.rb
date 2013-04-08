@@ -86,13 +86,14 @@ class Targets
 		default_const(:USE_NEWLIB, false)
 		default_const(:USE_ARM, false)
 		default_const(:FULLSCREEN, HOST == :linux ? (HOST_PLATFORM == :moblin ? "true" : "false") : "false")
-		default_const(:NATIVE_RUNTIME, false)
+		default_const(:NATIVE_RUNTIME, false)	# Used by MoRE/Moblin runtime.
 		default_const(:PROFILING, false)
 		default_const(:ELIM, false)
 		default_const(:TARGET, HOST)
-		default_const(:HAVE_LIBC, USE_NEWLIB || (defined?(MODE) && MODE == 'bb10'))
+		default_const(:MOSYNC_NATIVE, (defined?(MODE) && MODE == 'bb10'))
+		default_const(:HAVE_LIBC, USE_NEWLIB || MOSYNC_NATIVE)
 		default_const(:BB10_ARCH, DEFAULT_BB10_ARCH)
-		if(USE_NEWLIB && (defined?(MODE) && MODE == 'bb10'))
+		if(USE_NEWLIB && MOSYNC_NATIVE)
 			raise 'Newlib is not compatible with native libc.'
 		end
 	end

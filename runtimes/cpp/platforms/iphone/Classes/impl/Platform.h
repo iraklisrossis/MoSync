@@ -57,8 +57,8 @@ public:
 	Surface(CGImageRef image) : image(image), context(NULL), data(NULL), mOwnData(false), orientation(1) {
 		CGDataProviderRef dpr = CGImageGetDataProvider(image);
 		mDataRef = CGDataProviderCopyData(dpr);
-		
-		this->data = (char *)CFDataGetBytePtr(mDataRef);		
+
+		this->data = (char *)CFDataGetBytePtr(mDataRef);
 		width = CGImageGetWidth(image);
 		height = CGImageGetHeight(image);
 		rowBytes = CGImageGetBytesPerRow(image);
@@ -93,9 +93,9 @@ public:
 				}
 			}
 		}
-		
+
 		createImageDrawer();
-		
+
 		if((bInfo&kCGBitmapByteOrderMask)==kCGBitmapByteOrder32Host) {
 			for(int i = 0; i < height; i++) {
 				for(int j = 0; j < width; j++) {
@@ -105,17 +105,17 @@ public:
 				}
 			}
 		}
-        
+
 		if(noAlpha) {
 			mImageDrawer->alphaMask = 0;
-			mImageDrawer->alphaBits = 0;	
+			mImageDrawer->alphaBits = 0;
 		}
 	}
-	
+
 	void createImageDrawer() {
-		mImageDrawer = new Image((unsigned char*)data, NULL, width, height, rowBytes, Image::PIXELFORMAT_ARGB8888, false, false);
+		mImageDrawer = new Base::Image((unsigned char*)data, NULL, width, height, rowBytes, Base::Image::PIXELFORMAT_ARGB8888, false, false);
 	}
-	
+
 	void initFont() {
 		if(!context) return;
 		CGContextSelectFont(context, "Arial", height/40, kCGEncodingMacRoman);
@@ -123,7 +123,7 @@ public:
 														1.0,  0.0,
 														0.0, -1.0,
 														0.0,  0.0);
-		CGContextSetTextMatrix(context, xform);	
+		CGContextSetTextMatrix(context, xform);
 	}
 
 	Surface(int width, int height, char *data=NULL, CGBitmapInfo bitmapInfo=kCGImageAlphaNoneSkipLast, int rowBytes=-1) : mDataRef(NULL), orientation(1) {
@@ -145,32 +145,32 @@ public:
 			this->data = data;
 			mOwnData = false;
 		}
-		
+
 		context = CGBitmapContextCreate(this->data, width, height, 8, rowBytes, colorSpace, bitmapInfo);
-		
+
 		CGDataProviderRef dataProvider = CGDataProviderCreateWithData(NULL, this->data, rowBytes * height, NULL);
-		image = CGImageCreate(width, height, 8, 32, rowBytes, colorSpace, bitmapInfo, 
+		image = CGImageCreate(width, height, 8, 32, rowBytes, colorSpace, bitmapInfo,
 							  dataProvider, NULL, false, kCGRenderingIntentDefault);
 		CGDataProviderRelease(dataProvider);
 		CGColorSpaceRelease(colorSpace);
-		
+
 		CGContextSetAllowsAntialiasing (context, false);
-		
+
 		rect = CGRectMake(0, 0, width, height);
 
 		initFont();
-		
+
 		CGContextSaveGState(context);
-		
+
 		createImageDrawer();
-        
+
 		if(bitmapInfo==kCGImageAlphaNoneSkipLast) {
 			mImageDrawer->alphaMask = 0;
-			mImageDrawer->alphaBits = 0;		
+			mImageDrawer->alphaBits = 0;
 		}
 	}
-	
-	
+
+
 	~Surface() {
 		if(image) CGImageRelease(image);
 		if(context) CGContextRelease(context);
@@ -178,7 +178,7 @@ public:
 		if(mImageDrawer) delete mImageDrawer;
 		if(mDataRef) CFRelease(mDataRef);
 	}
-	
+
 	int width, height, rowBytes, orientation;
 	CGImageRef image;
 	CGContextRef context;
@@ -186,8 +186,8 @@ public:
 	bool mOwnData;
 	char *data;
 	CFDataRef mDataRef;
-	
-	Image *mImageDrawer;
+
+	Base::Image *mImageDrawer;
 };
 
 
@@ -203,12 +203,12 @@ public:
 		pthread_cond_init(&mCond, NULL);
 		pthread_mutex_init(&mMutex, NULL);
 	}
-	
+
 	~EventQueue() {
 		pthread_cond_destroy(&mCond);
 		pthread_mutex_destroy(&mMutex);
 	}
-	
+
 	void handleInternalEvent(int type, void *e);
 
 	bool getAndProcess(MAEvent& event) {
@@ -252,16 +252,16 @@ public:
 		if(count()==0) {
 			if(ms>0) {
 				struct timeval now;
-				struct timespec timeout;	
+				struct timespec timeout;
 				gettimeofday(&now, NULL);
 				timeout.tv_sec = now.tv_sec + (ms/1000);
-				timeout.tv_nsec = now.tv_usec * 1000 + (ms%1000)*1000000;				
+				timeout.tv_nsec = now.tv_usec * 1000 + (ms%1000)*1000000;
 				pthread_cond_timedwait(&mCond, &mMutex, &timeout);
 			} else {
 				pthread_cond_wait(&mCond, &mMutex);
 			}
 		}
-		pthread_mutex_unlock(&mMutex);	
+		pthread_mutex_unlock(&mMutex);
 	}
 
 	void addPointerEvent(int x, int y, int touchId, int type) {
@@ -278,21 +278,21 @@ public:
 			event.point.y = y;
 			event.touchId = touchId;
 			put(event);
-		}		
+		}
 	}
-	
+
 	void addScreenChangedEvent() {
 		MAEvent event;
 		event.type = EVENT_TYPE_SCREEN_CHANGED;
-		put(event);	
+		put(event);
 	}
-	
+
 	void addCloseEvent() {
 		MAEvent event;
 		event.type = EVENT_TYPE_CLOSE;
-		put(event);	
+		put(event);
 	}
-	
+
 	void addInternalEvent(int type, void* data) {
 		MAEvent event;
 		event.type = type;
@@ -306,7 +306,7 @@ private:
 
 	bool mEventOverflow;
 	bool mWaiting;
-	
+
 };
 
 namespace Base

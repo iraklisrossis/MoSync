@@ -63,11 +63,6 @@
     BOOL isProximitySensorRunning;
 
     /**
-     * The flag is set is the orientation sensor is started.
-     */
-    BOOL isOrientationSensorRunning;
-
-    /**
      * The flag is set is the magnetometer sensor is started.
      */
     BOOL isMagnetometerSensorRunning;
@@ -135,18 +130,6 @@
  * @return SENSOR_ERROR_NONE if the sensor has been stopped, or a code error otherwise.
  */
 -(int) stopProximity;
-
-/**
- * Start the proximity sensor.
- * @return SENSOR_ERROR_NONE if the sensor has been started, or a code error otherwise.
- */
--(int)startOrientation;
-
-/**
- * Stop the orientation sensor.
- * @return SENSOR_ERROR_NONE if the sensor has been stopped, or a code error otherwise.
- */
--(int) stopOrientation;
 
 /**
  * Start the magnetometer sensor.

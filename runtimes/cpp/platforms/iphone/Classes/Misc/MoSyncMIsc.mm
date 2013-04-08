@@ -89,12 +89,12 @@ void initTimeStamps()
     gTimeStart = mach_absolute_time();
 }
 
-SYSCALL(int, maTime())
+SYSCALL(longlong, maTime())
 {
-    return (int)time(NULL);
+    return time(NULL);
 }
 
-SYSCALL(int, maLocalTime())
+SYSCALL(longlong, maLocalTime())
 {
     time_t t = time(NULL);
     tm* lt = localtime(&t);

@@ -25,9 +25,9 @@
 // Time related
 void initTimeStamps();
 
-SYSCALL(int, maTime());
+SYSCALL(longlong, maTime());
 
-SYSCALL(int, maLocalTime());
+SYSCALL(longlong, maLocalTime());
 
 SYSCALL(int, maGetMilliSecondCount());
 

@@ -116,7 +116,7 @@ SYSCALL(void, maFillRect(int left, int top, int width, int height))
 
 SYSCALL(void, maFillTriangleStrip(const MAPoint2d *points, int count))
 {
-	Base::SYSCALL_THIS->ValidateMemRange(points, sizeof(MAPoint2d) * count);
+	SYSCALL_THIS->ValidateMemRange(points, sizeof(MAPoint2d) * count);
 	CHECK_INT_ALIGNMENT(points);
 	MYASSERT(count >= 3, ERR_POLYGON_TOO_FEW_POINTS);
 	for(int i = 2; i < count; i++) {
@@ -133,7 +133,7 @@ SYSCALL(void, maFillTriangleStrip(const MAPoint2d *points, int count))
 
 SYSCALL(void, maFillTriangleFan(const MAPoint2d *points, int count))
 {
-	Base::SYSCALL_THIS->ValidateMemRange(points, sizeof(MAPoint2d) * count);
+	SYSCALL_THIS->ValidateMemRange(points, sizeof(MAPoint2d) * count);
 	CHECK_INT_ALIGNMENT(points);
 	MYASSERT(count >= 3, ERR_POLYGON_TOO_FEW_POINTS);
 	for(int i = 2; i < count; i++) {
@@ -269,19 +269,19 @@ SYSCALL(MAHandle, maSetDrawTarget(MAHandle handle))
 {
 	MAHandle temp = gDrawTargetHandle;
 	if(gDrawTargetHandle != HANDLE_SCREEN) {
-		Base::SYSCALL_THIS->resources.extract_RT_FLUX(gDrawTargetHandle);
-		ROOM(Base::SYSCALL_THIS->resources.add_RT_IMAGE(gDrawTargetHandle, gDrawTarget));
+		SYSCALL_THIS->resources.extract_RT_FLUX(gDrawTargetHandle);
+		ROOM(SYSCALL_THIS->resources.add_RT_IMAGE(gDrawTargetHandle, gDrawTarget));
 		gDrawTargetHandle = HANDLE_SCREEN;
 	}
 	if(handle == HANDLE_SCREEN) {
 		gDrawTarget = gBackbuffer;
 	} else {
-		Surface* img = Base::SYSCALL_THIS->resources.extract_RT_IMAGE(handle);
+		Surface* img = SYSCALL_THIS->resources.extract_RT_IMAGE(handle);
 		if(!img->data)
 			BIG_PHAT_ERROR(ERR_RES_INVALID_TYPE);
 
 		gDrawTarget = img;
-		ROOM(Base::SYSCALL_THIS->resources.add_RT_FLUX(handle, NULL));
+		ROOM(SYSCALL_THIS->resources.add_RT_FLUX(handle, NULL));
 	}
 	gDrawTargetHandle = handle;
 	return temp;

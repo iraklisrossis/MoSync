@@ -155,7 +155,7 @@ NETSYSCALL(int) maConnGetAddr(MAHandle conn, Address addr) throws Exception {
 		MAUdpConn mauc = (MAUdpConn)mac;
 		MYASSERT(mauc.dConn != null);
 		WINT(addr, CONN_FAMILY_INET4);
-		writeInet4AddressToMemory(addr+4, mauc.dConn.getLocalAddress());
+		writeInet4AddressToMemory(mauc.dConn.getLocalAddress(), addr+4);
 		WINT(addr+8, mauc.dConn.getLocalPort());
 		return 1;
 	}
@@ -163,7 +163,8 @@ NETSYSCALL(int) maConnGetAddr(MAHandle conn, Address addr) throws Exception {
 }
 
 final void writeInet4AddressToMemory(String s, Address dst) {
-	WINT(dst, parseIpv4(s, 0, s.length));
+	INIT_MEMDS;
+	WINT(dst, parseIpv4(s, 0, s.length()));
 }
 
 private final int parseIpv4(String a, int start, int end) {

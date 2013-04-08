@@ -714,9 +714,12 @@ namespace Base {
 			FSS.MkDir(KMAStorePath16);
 		LOGD("MkDir %i\n", res);
 #elif defined(__IPHONE__)
-#else
-		int res = _mkdir(STORE_PATH);
-		LOG("_mkdir(%s): %i (errno %i (%s))\n", STORE_PATH, res, errno, strerror(errno));
+#else	//SYMBIAN
+#ifdef DEBUGGING_MODE
+		int res =
+#endif
+			_mkdir(STORE_PATH);
+		LOGD("_mkdir(%s): %i (errno %i (%s))\n", STORE_PATH, res, errno, strerror(errno));
 #endif	//_WIN32_WCE
 
 #ifdef SYMBIAN

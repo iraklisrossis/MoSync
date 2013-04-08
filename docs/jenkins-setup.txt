@@ -8,6 +8,11 @@ Starting with Mint 13 (Maya)/Cinnamon/x64:
 
 sudo apt-get install git ruby g++ libsdl1.2-dev libbluetooth-dev libssl-dev libexpat1-dev libglew1.6-dev libgtk2.0-dev libsdl-image1.2-dev libsdl-ttf2.0-dev libfreeimage-dev gperf bison flex libgmp-dev libmpfr-dev libmpc-dev libc6-dev-i386 lib32z1-dev rubygems ruby-sqlite3 default-jdk
 
+Install libzip-ruby:
+Run 'ruby -v'.
+If you have Ruby 1.8: 'sudo apt-get install libzip-ruby1.8'
+If you have Ruby 1.9: 'sudo apt-get install libzip-ruby1.9.1'
+
 Run 'ssh-keygen', if ~/.ssh/id_rsa doesn't exist.
 Add id_rsa.pub to ~/.ssh/authorized_keys on relevant servers, so the scripts can login automatically later.
 
@@ -100,6 +105,8 @@ Compile and install it into mingw. (Binutils needs it.)
 
 mingw-get install libz msys-bison msys-flex mpfr mpc gmp
 
+gem install zip
+
 Generate an SSH keypair. For example, you can use PuttyGen and its Export OpenSSH.
 Store id_rsa in C:\Users\<username>\.ssh\, so Git can use it.
 
@@ -129,5 +136,6 @@ Tested on 10.6, SHOULD work on 10.7, MAY work on 10.8.
 
 * Install ruby gems:
  * sudo gem install nokogiri
+ * sudo gem install zip
 
 Start Jenkins slave.

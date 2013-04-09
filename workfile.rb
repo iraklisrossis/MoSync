@@ -129,7 +129,7 @@ target :default => :main do
 end
 
 target :libs => :base do
-	Work.invoke_subdirs(PIPE_DIRS)
+	Work.invoke_subdir('tools/DefaultSkinGenerator')
 	Work.invoke_subdirs_ex(true, LIB_DIRS)
 end
 

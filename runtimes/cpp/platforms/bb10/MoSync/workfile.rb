@@ -17,6 +17,11 @@ class MocTask < FileTask
 	end
 end
 
+if(!File.exist?("src/config_platform.h"))
+  CopyFileTask.new(work, "src/config_platform.h",
+	  FileTask.new(work, "src/config_platform.h.example")).invoke
+end
+
 mosync_base = BB10LibWork.new
 mosync_base.instance_eval do
 	@SOURCES = [

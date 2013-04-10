@@ -17,10 +17,15 @@ class MocTask < FileTask
 	end
 end
 
-if(!File.exist?("src/config_platform.h"))
-  CopyFileTask.new(work, "src/config_platform.h",
-	  FileTask.new(work, "src/config_platform.h.example")).invoke
+def doExampleFile(path)
+	if(!File.exist?(path))
+	  CopyFileTask.new(nil, path,
+		  FileTask.new(nil, "#{path}.example")).invoke
+	end
 end
+
+doExampleFile('src/config_platform.h')
+doExampleFile("#{BD}/intlibs/bluetooth/config_bluetooth.h")
 
 mosync_base = BB10LibWork.new
 mosync_base.instance_eval do
@@ -48,7 +53,7 @@ mosync_base.instance_eval do
 		"#{BD}/runtimes/cpp/platforms/sdl/netImpl.cpp",
 		"#{BD}/intlibs/filelist/filelist-linux.c",
 	]
-	@EXTRA_PREREQUSITES = [
+	@PREREQUISITES = [
 		MocTask.new(self, 'src/slots.h'),
 	]
 	@EXTRA_INCLUDES += [

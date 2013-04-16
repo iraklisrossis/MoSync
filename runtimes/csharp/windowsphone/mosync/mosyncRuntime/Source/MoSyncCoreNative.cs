@@ -137,6 +137,11 @@ namespace MoSync
 				i0 = MoSync.Util.ConvertToInt((float)d);
 			}
 
+			protected void FLOATS_DIDF(int i0, int i1, out double d)
+			{
+				d = MoSync.Util.ConvertToDouble(i0, i1);
+			}
+
 			protected double sqrt(double d)
 			{
 				return Math.Sqrt(d);

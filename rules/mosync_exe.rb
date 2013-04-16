@@ -62,12 +62,18 @@ end
 
 # Generates C++ or C# code from an ELF file.
 class Mapip2RebuildSourceTask < MultiFileTask
-	def initialize(work, name, objects, libs, linkflags, mode)
+	def initialize(work, name, objects, libs, linkflags, mode, rename)
 		@elfTask = Mapip2LinkTask.new(work, name, objects, libs, linkflags)
-		@name = name
 		@mode = mode
-		@dataSectionName = name + '.data_section.bin'
-		super(work, name + '.rebuild.' + mode, [
+		@rename = rename
+		if(rename)
+			@dataSectionName = name + '.data_section.bin'
+			nm = name + '.rebuild.' + mode
+		else
+			nm = "#{File.dirname(@elfTask)}/rebuild.build.#{@mode}"
+			@dataSectionName = "#{File.dirname(@elfTask)}/data_section.bin"
+		end
+		super(work, nm, [
 			@dataSectionName,
 		])
 		@prerequisites << @elfTask
@@ -75,21 +81,38 @@ class Mapip2RebuildSourceTask < MultiFileTask
 	end
 	def dataSectionName; @dataSectionName; end
 	def execute
-		sh "#{mosyncdir}/bin/elfStabSld -#{@mode} #{@elfTask} rebuild.build.#{@mode}"
-		FileUtils.mv("rebuild.build.#{@mode}", @NAME)
+		if(@rename)
+			fn = "rebuild.build.#{@mode}"
+		else
+			fn = @NAME
+		end
+		sh "#{mosyncdir}/bin/elfStabSld -#{@mode} \"#{@elfTask}\" \"#{fn}\""
+		if(File.size(fn) == 0)
+			rm fn
+			raise 'elfStabSld failed silently!'
+		end
 		FileUtils.mv('data_section.bin', @dataSectionName)
+		if(@rename)
+			FileUtils.mv(fn, @NAME)
+		end
+	end
+end
+
+class Mapip2IosCppTask < Mapip2RebuildSourceTask
+	def initialize(work, name, objects, libs, linkflags)
+		super(work, name, objects, libs, linkflags, 'cpp', false)
 	end
 end
 
 class Mapip2CppTask < Mapip2RebuildSourceTask
 	def initialize(work, name, objects, libs, linkflags)
-		super(work, name, objects, libs, linkflags, 'cpp')
+		super(work, name, objects, libs, linkflags, 'cpp', true)
 	end
 end
 
 class Mapip2CsTask < Mapip2RebuildSourceTask
 	def initialize(work, name, objects, libs, linkflags)
-		super(work, name, objects, libs, linkflags, 'cs')
+		super(work, name, objects, libs, linkflags, 'cs', false)
 	end
 end
 
@@ -147,6 +170,37 @@ class Mapip2RebuildTask < Task
 	end
 end
 
+class GenKeyTask < FileTask
+	def execute
+		sh "#{mosyncdir}/bin/openssl genrsa -rand -des -passout pass:default -out \"#{@NAME}\" 1024"
+	end
+end
+
+class GenCertTask < FileTask
+	def initialize(work, name, key)
+		super(work, name)
+		@key = key
+		@prerequisites << key
+	end
+	def execute
+		sh "#{mosyncdir}/bin/openssl req -new -x509 -nodes -sha1 -days 3650"+
+			" -key \"#{@key}\" -batch -config \"#{mosyncdir}/bin/openssl.cnf\" -out \"#{@NAME}\""
+	end
+end
+
+class EtcDirWork < CopyDirWork
+	def initialize
+		# Copy whatever default_etc files are missing.
+		super(mosyncdir, 'etc', "#{mosyncdir}/bin/default_etc")
+	end
+	def setup
+		super
+		# Generate default.cert and key.
+		@prerequisites << GenCertTask.new(self, "#{mosyncdir}/etc/default.cert",
+			GenKeyTask.new(self, "#{mosyncdir}/etc/default.key"))
+	end
+end
+
 # Packs a MoSync program for installation.
 # resource can be nil. all other parameters must be valid.
 class MoSyncPackTask < Task
@@ -156,6 +210,7 @@ class MoSyncPackTask < Task
 		@o[:packpath] = @o[:buildpath] + @o[:model] if(!@o[:packpath])
 		@prerequisites = [@o[:program], DirTask.new(work, @o[:packpath])]
 		@prerequisites << @o[:resource] if(@o[:resource])
+		@prerequisites << EtcDirWork.new
 		@o[:vendor] = 'Built with MoSync' if(!@o[:vendor])
 	end
 	def execute
@@ -166,12 +221,15 @@ class MoSyncPackTask < Task
 		p = File.expand_path(@o[:program])
 		d = File.expand_path(@o[:packpath])
 		co = File.expand_path(@o[:cppOutput])
+		iconArg = " --icon #{@o[:icon]}" if(@o[:icon])
 		FileUtils.cd(@o[:tempdir], :verbose => true) do
 			sh "#{mosyncdir}/bin/package -p \"#{p}\"#{resArg} -m \"#{@o[:model]}\""+
 				" -d \"#{d}\" -n \"#{@o[:name]}\" --vendor \"#{@o[:vendor]}\""+
 				" --version #{@o[:version]}"+
+				"#{iconArg}"+
 				" --ios-cert \"#{@o[:iosCert]}\""+
 				" --cpp-output \"#{co}\" --ios-project-only"+
+				" --wp-project-only"+
 				" --android-package \"#{@o[:androidPackage]}\""+
 				" --android-version-code \"#{@o[:androidVersionCode]}\""+
 				" --android-keystore \"#{@o[:androidKeystore]}\""+
@@ -280,7 +338,7 @@ module MoSyncExeModule
 			return Mapip2RebuildTask if(MODE == 'rebuild')
 			raise "Invalid MODE #{MODE}" if(MODE != 'default')
 		end
-		return (isPackingForIOS ? Mapip2CppTask : super)
+		return (isPackingForIOS ? Mapip2IosCppTask : super)
 	end
 	def libTask(lib)
 		return FileTask.new(self, "#{mosync_libdir}/#{@COMMON_BUILDDIR_NAME}/#{lib}#{libFileEnding}")
@@ -322,6 +380,7 @@ module MoSyncExeModule
 		if(defined?(PACK))
 			default(:PACK_MODEL, PACK)
 			default(:PACK_VERSION, '1.0')
+			default(:PACK_ICON, mosyncdir+'/etc/default.icon')
 			default(:PACK_IOS_CERT, 'iPhone developer')
 			default(:PACK_CPP_OUTPUT, @buildpath)
 			default(:PACK_ANDROID_PACKAGE, "com.mosync.app_#{@NAME}")
@@ -359,6 +418,7 @@ module MoSyncExeModule
 				:name => @NAME,
 				:vendor => @VENDOR,
 				:version => @PACK_VERSION,
+				:icon => @PACK_ICON,
 				:iosCert => @PACK_IOS_CERT,
 				:cppOutput => @PACK_CPP_OUTPUT,
 				:androidPackage => @PACK_ANDROID_PACKAGE,

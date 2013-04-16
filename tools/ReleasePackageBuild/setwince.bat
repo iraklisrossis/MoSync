@@ -1,2 +1,0 @@
-set MOSYNC_RUNTIME_HAVE=%MOSYNC_RUNTIME_HAVE% -have-sp2003 -have-winmobile
-set MOSYNC_RUNTIME_BUILD=%MOSYNC_RUNTIME_BUILD% -build-sp2003 -build-winmobile

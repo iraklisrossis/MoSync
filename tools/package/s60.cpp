@@ -58,14 +58,13 @@ void packageS60v3(const SETTINGS& s, const RuntimeInfo& ri) {
 	TemplateMap tm;
 	tm["app-name"] = s.name;
 	tm["uid"] = uid;
-	tm["resource-header"] = "#include \""+string(uid)+".rsg\"";
 
-	// use template .prs
+	// use template .prs to generate .rss.
 	string templateRssName = runtimePath + "MoSync_3rd_template.prs";
 	string genRssName = rscBaseName + ".rss";
 	applyTemplate(genRssName.c_str(), templateRssName.c_str(), tm);
 
-	// call rcomp
+	// call rcomp. Input: genRssName. Outputs: mainRscName (binary) and rsgName (header).
 	string mainRscName = rscBaseName + ".rsc";
 	string regRscName = rscBaseName + "_reg.rsc";
 
@@ -74,18 +73,19 @@ void packageS60v3(const SETTINGS& s, const RuntimeInfo& ri) {
 		"\" \"-s"<<genRssName<<"\"";
 	sh(cmd.str().c_str(), s.silent);
 
-	// use template reg.prs
+	// use template reg.prs to generate .reg
+	tm["resource-header"] = readFileToString(rsgName.c_str());
 	string templateRegName = runtimePath + "MoSync_reg_template.prs";
 	string prsName = rscBaseName + "_reg.prs";
 	applyTemplate(prsName.c_str(), templateRegName.c_str(), tm);
 
-	// call cpp to process the RSG include.
+	// call cpp to process the RSG include. Input: prsName. Output: genRegName.
 	string genRegName = rscBaseName + "_reg.rss";
 	cmd.str("");
-	cmd << mosyncdir()<<"/bin/cpp \""<<prsName<<"\" \""<<genRegName<<"\"";
+	cmd << mosyncdir()<<"/libexec/gcc/mapip2/4.6.3/cc1 -E -quiet \""<<prsName<<"\" -o \""<<genRegName<<"\"";
 	sh(cmd.str().c_str(), s.silent);
 
-	// call rcomp again
+	// call rcomp again. Input: genRegName. Output: regRscName.
 	cmd.str("");
 	cmd << mosyncdir()<<"/bin/rcomp -u \"-o"<<regRscName<<
 		"\" \"-s"<<genRegName<<"\"";

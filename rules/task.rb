@@ -463,13 +463,14 @@ end
 
 # Copies a directory, its contents and subdirectories.
 class CopyDirWork < Work
-	def initialize(dstRoot, name)
+	def initialize(dstRoot, name, srcName = name)
 		@NAME = name
 		@dstRoot = dstRoot
+		@srcName = srcName
 	end
 	def setup
 		@prerequisites = []
-		glob("#{@dstRoot}/#{@NAME}", @NAME)
+		glob("#{@dstRoot}/#{@NAME}", @srcName)
 	end
 	def glob(dst, src)
 		@prerequisites << DirTask.new(self, dst)

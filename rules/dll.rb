@@ -25,8 +25,6 @@ class DllTask < NativeGccLinkTask
 		libflags = ""
 		#puts "libflags: #{libflags}"
 		if(whole_libs.size > 0)
-			puts "Whole libs detected. Target platform:"
-			p work.target_platform
 			if(work.target_platform == :darwin)
 				libflags += " #{whole_libs.join(' ')}"
 			else

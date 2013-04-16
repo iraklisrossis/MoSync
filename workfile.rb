@@ -44,21 +44,23 @@ MORE_DIRS = [
 	"runtimes/cpp/platforms/sdl",
 	"runtimes/cpp/platforms/sdl/mosynclib",
 	"runtimes/cpp/platforms/sdl/MoRE"
-	]
+]
 
 BASE_DIRS = MORE_DIRS + PLATFORM_TOOLS
 
 PIPE_DIRS = ['tools/elfStabSld',
 	"tools/protobuild", "tools/pipe-tool", "tools/DefaultSkinGenerator"]
 EXAM_DIRS = ["tests/unitTest", "examples"]
-TOOL_DIRS = ["tools/FontGenerator", "tools/PanicDoc", "tools/Bundle",
+TOOL_DIRS = [
+	'tools/ReleasePackageBuild',
+	"tools/FontGenerator", "tools/PanicDoc", "tools/Bundle",
 	"tests/unitTestServer", "tools/iphone-builder", "tools/icon-injector", "tools/e32hack",
 	"tools/winphone-builder",
 	"tools/mx-invoker",
 	"tools/mx-config",
 	"tools/profiledb", "tools/rescomp",
 	"tools/mifconv", "tools/rcomp", "tools/package", "tools/uidcrc",
-	]
+]
 
 MAIN_DIRS = BASE_DIRS + TOOL_DIRS + PIPE_DIRS
 ALL_DIRS = MAIN_DIRS + EXAM_DIRS

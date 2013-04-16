@@ -329,6 +329,8 @@ static void fromTemplate(const char* templateFile, const char* filename, const S
 	MustacheParser parser(true);
 	AndroidContext root(NULL, ri.androidVersion);
 	root.setParameter("debug", s.debug ? "debug" : "");
+	if(s.icon)
+		root.setParameter("hasIcon", s.icon ? "hasIcon" : "");
 	root.setParameter("package-name", packageName);
 	root.setParameter("version-code", versionCode);
 	root.setParameter("version", version);

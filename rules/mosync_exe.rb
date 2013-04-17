@@ -170,9 +170,17 @@ class Mapip2RebuildTask < Task
 	end
 end
 
+def openssl
+	if(HOST == :linux)
+		return 'openssl'
+	else
+		return "#{mosyncdir}/bin/openssl -config \"#{mosyncdir}/bin/openssl.cnf\""
+	end
+end
+
 class GenKeyTask < FileTask
 	def execute
-		sh "#{mosyncdir}/bin/openssl genrsa -rand -des -passout pass:default -out \"#{@NAME}\" 1024"
+		sh "#{openssl} genrsa -rand -des -passout pass:default -out \"#{@NAME}\" 1024"
 	end
 end
 
@@ -183,8 +191,8 @@ class GenCertTask < FileTask
 		@prerequisites << key
 	end
 	def execute
-		sh "#{mosyncdir}/bin/openssl req -new -x509 -nodes -sha1 -days 3650"+
-			" -key \"#{@key}\" -batch -config \"#{mosyncdir}/bin/openssl.cnf\" -out \"#{@NAME}\""
+		sh "#{openssl} req -new -x509 -nodes -sha1 -days 3650"+
+			" -key \"#{@key}\" -batch -out \"#{@NAME}\""
 	end
 end
 

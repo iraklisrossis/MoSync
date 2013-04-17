@@ -33,6 +33,8 @@
 #include "cwrite.h"
 #endif
 
+#include <inttypes.h>
+
 long sizefile( char *filename );
 int number_of_datablocks( int nof );
 char *strippath( char *filename );
@@ -51,19 +53,26 @@ char *outputfile;
    could've used stat here, but returns blocksize */
 long sizefile( char *filename )
 {
-        long size=0;
-        FILE *fp = fopen(filename,"rb");
-        if(!fp)
-        {
-                printf("Error: could not open %s\n", filename);
-                exit(1);
-        }
-        while(fgetc(fp)!=EOF)
-        {
-                ++size;
-        }
-        fclose(fp);
-        return size;
+	long size=0;
+	FILE *fp = fopen(filename,"rb");
+	if(!fp)
+	{
+		printf("Error: could not open %s\n", filename);
+		exit(1);
+	}
+	if(fseek(fp, 0, SEEK_END) != 0)
+	{
+		printf("Error: could not seek %s\n", filename);
+		exit(1);
+	}
+	size = ftell(fp);
+	if(size < 0)
+	{
+		printf("Error: could not tell %s\n", filename);
+		exit(1);
+	}
+	fclose(fp);
+	return size;
 }
 
 /* calculate the number of datablocks we will need:
@@ -119,10 +128,17 @@ int maketempfile( int nof, FILE *fp )
 		else
 		{
 			int res;
-			tmp = (byte *) calloc( sizefile( inputfiles[i] ), sizeof( byte ) );
-			res = fread( tmp, sizefile( inputfiles[i] ), 1, fp2 );
-			if(res != 1)
+			long size = sizefile(inputfiles[i]);
+			if(size == 0) {
+				fclose( fp2 );
+				continue;
+			}
+			tmp = (byte *) calloc( size, sizeof( byte ) );
+			res = fread( tmp, size, 1, fp2 );
+			if(res != 1) {
+				printf("fread of %s (%" PRIuPTR " bytes) failed.\n", inputfiles[i], size);
 				abort();
+			}
 			fwrite( (byte *) tmp, sizefile( inputfiles[i] ), 1, fp );
 			free( tmp );
 			fclose( fp2 );

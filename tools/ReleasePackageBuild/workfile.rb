@@ -21,7 +21,6 @@ def copyIndependentFiles()
 	filenames = [
 		'maspec.fon',
 		'default_maprofile.h',
-		'pcab.conf.template',
 		'unifont-5.1.20080907.ttf',
 		'MoSyncOnlineDocs.URL',
 		'javame/JadTool.jar',
@@ -29,6 +28,14 @@ def copyIndependentFiles()
 	DirTask.new(nil, mosyncdir+'/bin/javame').invoke
 	filenames.each do |f|
 		cft(mosyncdir+'/bin/'+f, 'build_package_tools/mosync_bin/'+f)
+	end
+
+	# from osx_bin
+	[
+		'pcab.pl',
+		'pcab.conf.template',
+	].each do |f|
+		cft(mosyncdir+'/bin/'+f, 'build_package_tools/osx_bin/'+f)
 	end
 end
 
@@ -51,4 +58,5 @@ else
 	raise "Unsupported HOST: #{HOST}"
 end
 
+# Copy platforms.
 CopyDirWork.new(mosyncdir, 'profiles/platforms', '../../platforms').invoke

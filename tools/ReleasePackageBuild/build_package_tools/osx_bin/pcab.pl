@@ -585,7 +585,7 @@ sub main()
         # Copy the data files.
         my $munged_files = " $setupxml";
         my $i = 0;
-	`mkdir munged`;
+	`mkdir -p munged`;
         foreach my $file (get_value_sorted_keys %file_ids) {
                 my $munged_file = munge_filename $file, ++$i;
                 print "$file: $munged_file\n" if $verbose;
@@ -597,6 +597,7 @@ sub main()
 
         # Create the cab.
         print "$cab_filename: $munged_files\n" if $verbose;
+				print "$ENV{'MOSYNCDIR'}/bin/lcab -r -n manifest.000 munged $setupxml \"$cab_filename\"\n";
         my $lcab_output = `$ENV{'MOSYNCDIR'}/bin/lcab -r -n manifest.000 munged $setupxml "$cab_filename"`;
         exit $? >> 8 if $? > 0;
         print $lcab_output if $verbose;
@@ -619,8 +620,8 @@ pocketpc-cab - build an installable Pocket PC cabinet file
 B<pocketpc-cab> [I<OPTION>]... I<INPUTFILE> I<CABINET>
 
 =head1 DESCRIPTION
-                                                                                
-                                                        
+
+
 Read the INPUTFILE, which is a list of filenames and destination
 directories, and create CABINET, a cabinet file, that will install
 those files into the specified directories.

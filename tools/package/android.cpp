@@ -139,7 +139,12 @@ void packageAndroid(const SETTINGS& s, const RuntimeInfo& ri) {
 	_mkdir(classes.c_str());
 
 	cmd.str("");
-	cmd <<getBinary("unzip")<<
+#ifdef LINUX
+	cmd <<"unzip";
+#else
+	cmd <<getBinary("unzip");
+#endif
+	cmd <<
 		" -o -q \""<<ri.path<<"MoSyncRuntime"<<(s.debug ? "D" : "")<<".zip\""
 		" -d \""<<classes<<"\"";
 	sh(cmd.str().c_str());

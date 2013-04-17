@@ -205,7 +205,7 @@ LPWSTR TempFileName(LPCWSTR fileName)
 		// now create a unique sub-directory
 		for (WORD i=0; i<10000;i++)
 			{
-			(void)swprintf(tmpPath, sizeof(tmpPath), L"%S/MKS%d",tmpDir,i);
+			(void)swprintf(tmpPath, MAX_PATH, L"%S/MKS%d",tmpDir,i);
 			if (::CreateDirectoryW(tmpPath,NULL)) break;
 			}
 #else
@@ -234,13 +234,13 @@ LPWSTR TempFileName(LPCWSTR fileName)
 		if(index > 0)
 			fileName = &fileName[index+1];
 
-		(void)swprintf(tmpFileName, sizeof(tmpFileName), L"%S/%S",tmpPath,fileName);
+		(void)swprintf(tmpFileName, MAX_PATH, L"%S/%S",tmpPath,fileName);
 		for (WORD i=0; i<10000;i++)
 			{
 			hFile = ::MakeSISOpenFile(tmpFileName, GENERIC_READ, OPEN_EXISTING);
 			if (hFile==INVALID_HANDLE_VALUE) break;
 			CloseHandle(hFile);
-			(void)swprintf(tmpFileName, sizeof(tmpFileName), L"%S/%S%d",tmpPath,fileName,i);
+			(void)swprintf(tmpFileName, MAX_PATH, L"%S/%S%d",tmpPath,fileName,i);
 			}
 		/** Convert backslash to underscore for the generated filename */
 /*

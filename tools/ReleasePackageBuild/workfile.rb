@@ -1,4 +1,6 @@
 
+require File.expand_path('../../rules/dynlibconv.rb')
+
 # Create and populate default_etc.
 DirTask.new(nil, mosyncdir+'/bin/default_etc').invoke
 def jni(name, subDir = '')
@@ -11,6 +13,10 @@ jni('icon.svg', 'AndroidProject/res/drawable/')
 
 CopyDirWork.new("#{mosyncdir}/bin", 'Batik', "build_package_tools/bin/Batik").invoke
 
+def cft(dst, src)
+	CopyFileTask.new(nil, dst, FileTask.new(nil, src)).invoke
+end
+
 def copyIndependentFiles()
 	filenames = [
 		'maspec.fon',
@@ -22,23 +28,27 @@ def copyIndependentFiles()
 	]
 	DirTask.new(nil, mosyncdir+'/bin/javame').invoke
 	filenames.each do |f|
-		CopyFileTask.new(nil, mosyncdir+'/bin/'+f, FileTask.new(nil, 'build_package_tools/mosync_bin/'+f)).invoke
+		cft(mosyncdir+'/bin/'+f, 'build_package_tools/mosync_bin/'+f)
 	end
 end
 
 # Populate bin.
 case(HOST)
 when :win32
-	src = 'mosync_bin'
+	CopyDirWork.new(mosyncdir, 'bin', "build_package_tools/mosync_bin").invoke
 when :darwin
-	src = 'osx_bin'
+	CopyDirWork.new(mosyncdir, 'bin', "build_package_tools/osx_bin").invoke
+	cft("#{mosyncdir}/bin/zip", '/usr/bin/zip')
+	cft("#{mosyncdir}/bin/unzip", '/sw/bin/unzip')
+	cft("#{mosyncdir}/bin/openssl", '/opt/local/bin/openssl')
+	cft("#{mosyncdir}/bin/ImageMagick/convert", '/opt/local/bin/convert')
+
+	DynLibConv.run("/sw/lib", "@loader_path", "#{mosyncdir}/bin/openssl")
+	DynLibConv.run("/opt/local/lib", "@loader_path", "#{mosyncdir}/bin/openssl")
 when :linux
 	copyIndependentFiles()
-	exit(0)
 else
 	raise "Unsupported HOST: #{HOST}"
 end
-
-CopyDirWork.new(mosyncdir, 'bin', "build_package_tools/#{src}").invoke
 
 CopyDirWork.new(mosyncdir, 'profiles/platforms', '../../platforms').invoke

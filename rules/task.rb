@@ -463,10 +463,11 @@ end
 
 # Copies a directory, its contents and subdirectories.
 class CopyDirWork < Work
-	def initialize(dstRoot, name, srcName = name)
+	def initialize(dstRoot, name, srcName = name, copySubdirs = true)
 		@NAME = name
 		@dstRoot = dstRoot
 		@srcName = srcName
+		@copySubdirs = copySubdirs
 	end
 	def setup
 		@prerequisites = []
@@ -477,7 +478,7 @@ class CopyDirWork < Work
 		sources = Dir["#{src}/*"]
 		sources.each do |s|
 			if(File.directory?(s))
-				glob("#{dst}/#{File.basename(s)}", s)
+				glob("#{dst}/#{File.basename(s)}", s) if(@copySubdirs)
 			else
 				@prerequisites << CopyFileTask.new(self, "#{dst}/#{File.basename(s)}",
 					FileTask.new(self, s))

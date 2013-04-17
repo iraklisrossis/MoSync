@@ -16,6 +16,7 @@
 
 require "#{File.dirname(__FILE__)}/native_gcc.rb"
 require "#{File.dirname(__FILE__)}/flags.rb"
+require "#{File.dirname(__FILE__)}/dynlibconv.rb"
 
 # Base class.
 # Links object files together to form an native executable or shared library.
@@ -38,9 +39,14 @@ class NativeGccLinkTask < FileTask
 
 	def execute
 		execFlags
-		#puts "objects: #{@objects.join(' ')}"
-		#puts "flags: #{@FLAGS}"
-		sh "#{@linker} #{cFlags} -o \"#{@NAME}\""
+		# Use a temporary name so the file gets rebuilt in case of error in the DynLibConv step.
+		tmpName = @NAME
+		tmpName << '.tmp' if(@work.target_platform == :darwin)
+		sh "#{@linker} #{cFlags} -o \"#{tmpName}\""
+		if(@work.target_platform == :darwin)
+			DynLibConv.run("/opt/local/lib", "@loader_path", tmpName)
+			FileUtils.mv(tmpName, @NAME)
+		end
 	end
 
 	include FlagsChanged

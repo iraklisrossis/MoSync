@@ -462,7 +462,8 @@ module MoSyncExeModule
 		else
 			sldArg = " -sld \"#{@SLD}\""
 		end
-		return "#{mosyncdir}/bin/MoRE -program \"#{@TARGET}\"#{sldArg}#{resArg}#{extArg}#{@EXTRA_EMUFLAGS}"
+		prefix = "LD_LIBRARY_PATH=#{mosyncdir}/bin:$LD_LIBRARY_PATH " if(HOST == :linux)
+		return "#{prefix}#{mosyncdir}/bin/MoRE -program \"#{@TARGET}\"#{sldArg}#{resArg}#{extArg}#{@EXTRA_EMUFLAGS}"
 	end
 	def run
 		if(!defined?(MODE))

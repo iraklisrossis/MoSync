@@ -28,13 +28,23 @@ class NativeGccLinkTask < FileTask
 		@linker = linker
 	end
 
-	def needed?(log = true)
-		return true if(super(log))
-		return flagsNeeded?(log)
-	end
-
 	def cFlags
-		return "\"#{@objects.join('" "')}\"#{@FLAGS}"
+		if(@work.target_platform == :linux)
+			obj = ''
+			@objects.each do |o|
+				o = o.to_s
+				# This should make shared libraries easier to distribute.
+				if(o.end_with?('.so') && o.start_with?('lib'))
+					lib = File.basename(o).slice(3 .. -4)
+					obj << " \"-L#{File.dirname(o)}\" -l#{lib}"
+				else
+					obj << " \"#{o}\""
+				end
+			end
+		else
+			obj = "\"#{@objects.join('" "')}\""
+		end
+		return "#{obj}#{@FLAGS}"
 	end
 
 	def execute
@@ -72,7 +82,9 @@ class NativeGccLinkWork < NativeGccWork
 			@EXTRA_LINKFLAGS += " -pg"
 		end
 		llo = @LOCAL_LIBS.collect { |ll| FileTask.new(self, @COMMON_BUILDDIR + ll + ".a") }
-		lld = @LOCAL_DLLS.collect { |ld| FileTask.new(self, @COMMON_BUILDDIR + ld + DLL_FILE_ENDING) }
+		lldPrefix = ''
+		lldPrefix = 'lib' if(@TARGET_PLATFORM == :linux)
+		lld = @LOCAL_DLLS.collect { |ld| FileTask.new(self, @COMMON_BUILDDIR + lldPrefix + ld + DLL_FILE_ENDING) }
 		wlo = @WHOLE_LIBS.collect { |ll| FileTask.new(self, @COMMON_BUILDDIR + ll + ".a") }
 		applyLibraries
 		need(:@NAME)

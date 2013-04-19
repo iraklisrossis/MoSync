@@ -41,7 +41,7 @@ class NativeGccLinkTask < FileTask
 		execFlags
 		# Use a temporary name so the file gets rebuilt in case of error in the DynLibConv step.
 		tmpName = @NAME
-		tmpName << '.tmp' if(@work.target_platform == :darwin)
+		tmpName += '.tmp' if(@work.target_platform == :darwin)
 		sh "#{@linker} #{cFlags} -o \"#{tmpName}\""
 		if(@work.target_platform == :darwin)
 			DynLibConv.run("/opt/local/lib", "@loader_path", tmpName)

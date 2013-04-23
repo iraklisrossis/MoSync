@@ -100,7 +100,7 @@ static void lua_streamHelperApi(
  */
 void lua_outputHeaderFile(
 	const Interface& maapi,
-	const vector<string>& ixs,
+	const vector<Ix>& ixs,
 	const char* destinationFile)
 {
 	ofstream luaHeaderFile(destinationFile);
@@ -112,7 +112,7 @@ void lua_outputHeaderFile(
 	{
 		// This is how we include an extension.
 		// We want to include NativeUI and OpenGL.
-		string s = ixs[i];
+		string s = ixs[i].name;
 		if (s == "IX_WIDGET" ||
 			s == "IX_OPENGL_ES")
 		{
@@ -466,7 +466,7 @@ static void js_streamConstants(
  */
 void js_outputBindingFile(
 	const Interface& maapi,
-	const vector<string>& ixs,
+	const vector<Ix>& ixs,
 	const char* destinationFile)
 {
 	ofstream stream(destinationFile);
@@ -484,7 +484,7 @@ void js_outputBindingFile(
 	{
 		// This is where to include an extension.
 		// We want to include NativeUI for now.
-		string s = ixs[i];
+		string s = ixs[i].name;
 		if (s == "IX_WIDGET"
 			// || s == "IX_OPENGL_ES"
 			)

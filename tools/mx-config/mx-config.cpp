@@ -59,11 +59,11 @@ int main(int argc, const char** argv) {
 }
 
 static int generateConfig(const char* output, vector<ExtensionSpec>& vext) {
-	vector<string> dummy;
+	vector<Ix> dummyIxs;
 	try {
 		int fnOffset = 0;
 		for(size_t i=0; i<vext.size(); i++) {
-			vext[i].inf = new Interface(parseInterface(dummy, vext[i].idlFile));
+			vext[i].inf = new Interface(parseInterface(dummyIxs, vext[i].idlFile));
 			outputMxHeader(output, *vext[i].inf, fnOffset);
 			fnOffset += vext[i].inf->functions.size();
 		}

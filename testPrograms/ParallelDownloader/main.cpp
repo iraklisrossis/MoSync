@@ -33,12 +33,12 @@ public:
 	void startDownloads()
 	{
 		mFinishedDownloaders = 0;
-		MAUtil::String url = "http://www.mosync.com/miles/Web%20Scottish%20Loch.jpg";
+		MAUtil::String url = "http://www.mosync.com/sites/all/themes/mosync/css/img/banner-nov12-devices.png";
 		mBatchNumber++;
 		printf("STARTING DOWNLOAD BATCH %d", mBatchNumber);
 		for(int i = 0; i < NUM_DOWNLOADS; i++)
 		{
-			webImageDownloader * imagedownload = new webImageDownloader(url, "newdataname1", this);
+			new webImageDownloader(url, "newdataname1", this);
 		}
 	}
 
@@ -60,8 +60,8 @@ public:
 		}
 	}
 
-	void myMoblet::init() {}
-	void myMoblet::draw() {}
+	void init() {}
+	void draw() {}
 
 	/**
 	 * Destructor.

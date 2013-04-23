@@ -67,8 +67,9 @@ int maNFCStart(void) {
 	return 0;
 }
 
-void maNFCStop(void) {
+int maNFCStop(void) {
 	BPSERR(nfc_stop_events());
+	return 0;
 }
 
 void handleNfcEvent(bps_event_t* e, int event_id) {
@@ -136,7 +137,7 @@ MAHandle maNFCReadTag(MAHandle nfcContext) {
 	return h;
 }
 
-void maNFCDestroyTag(MAHandle tagHandle) {
+int maNFCDestroyTag(MAHandle tagHandle) {
 	auto itr = sTargets.find(tagHandle);
 	DEBUG_ASSERT(itr != sTargets.end());
 	NfcTarget& t(itr->second);
@@ -156,6 +157,7 @@ void maNFCDestroyTag(MAHandle tagHandle) {
 		t.messages.pop();
 	}
 	sTargets.erase(itr);
+	return 0;
 }
 
 int maNFCIsType(MAHandle tagHandle, int type) {

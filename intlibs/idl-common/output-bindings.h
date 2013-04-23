@@ -28,12 +28,12 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 void lua_outputHeaderFile(
 	const Interface& maapi, 
-	const vector<string>& ixs,
+	const vector<Ix>& ixs,
 	const char* destinationFile);
 
 void js_outputBindingFile(
 	const Interface& maapi,
-	const vector<string>& ixs,
+	const vector<Ix>& ixs,
 	const char* destinationFile);
 
 #endif

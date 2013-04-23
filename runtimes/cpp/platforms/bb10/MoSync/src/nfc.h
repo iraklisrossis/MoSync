@@ -2,16 +2,16 @@
 #include <bps/event.h>
 
 int maNFCStart(void);
-void maNFCStop(void);
+int maNFCStop(void);
 MAHandle maNFCReadTag(MAHandle nfcContext);
-void maNFCDestroyTag(MAHandle tagHandle);
-void maNFCConnectTag(MAHandle tagHandle);
-void maNFCCloseTag(MAHandle tagHandle);
+int maNFCDestroyTag(MAHandle tagHandle);
+int maNFCConnectTag(MAHandle tagHandle);
+int maNFCCloseTag(MAHandle tagHandle);
 int maNFCIsType(MAHandle tagHandle, int type);
 MAHandle maNFCGetTypedTag(MAHandle tagHandle, int type);
 int maNFCBatchStart(MAHandle tagHandle);
-void maNFCBatchCommit(MAHandle tagHandle);
-void maNFCBatchRollback(MAHandle tagHandle);
+int maNFCBatchCommit(MAHandle tagHandle);
+int maNFCBatchRollback(MAHandle tagHandle);
 int maNFCTransceive(MAHandle tag, const void* src, int srcLen, void* dst, int* dstLen);
 int maNFCSetReadOnly(MAHandle tag);
 int maNFCIsReadOnly(MAHandle tag);

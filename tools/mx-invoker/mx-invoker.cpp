@@ -47,9 +47,9 @@ int main(int argc, const char** argv) {
 }
 
 static int generateInvoker(const char* input, const char* output) {
-	vector<string> dummy;
+	vector<Ix> dummyIxs;
 	try {
-		Interface inf = parseInterface(dummy, input);
+		Interface inf = parseInterface(dummyIxs, input);
 		outputInvoker(output, inf);
 		outputNativeHeader(output, inf);
 	} catch(exception& e) {

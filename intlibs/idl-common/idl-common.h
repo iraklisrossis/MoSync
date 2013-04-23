@@ -127,6 +127,11 @@ struct Interface {
 	vector<Group> groups;
 };
 
+struct Ix {
+	string name;
+	bool hasVoid;
+};
+
 typedef unsigned int uint32;
 typedef unsigned short uint16;
 typedef unsigned char uint8;
@@ -134,7 +139,7 @@ typedef unsigned char uint8;
 #define MAIN_INTERFACE (-1)
 
 //doesn't set Interface.path
-Interface parseInterface(const vector<string>& ixs, const string& filename);
+Interface parseInterface(const vector<Ix>& ixs, const string& filename);
 
 void dumpInterfaces(const vector<Interface>& infs);
 uint32 calculateChecksum(const vector<Interface>& infs);
@@ -142,8 +147,8 @@ uint32 calculateChecksum(const Interface& inf);
 
 void streamHash(ostream& stream, const Interface& inf);
 
-void streamHeaderFile(ostream& stream, const Interface& inf, const vector<string>& ixs, int ix);
-void streamCppDefsFile(ostream& stream, const Interface& inf, const vector<string>& ixs, int ix);
+void streamHeaderFile(ostream& stream, const Interface& inf, const vector<Ix>& ixs, int ix);
+void streamCppDefsFile(ostream& stream, const Interface& inf, const vector<Ix>& ixs, int ix);
 void streamJavaDefinitionFile(
 	ostream& stream,
 	const string& className,

@@ -25,7 +25,7 @@ public:
 	virtual ~webImageDownloader();
 
     void notifyProgress(Downloader *dl, int downloadedBytes, int totalBytes);
-    void error(Downloader* dl, int code);
+    void error(Downloader* dl, int code) GCCATTRIB(noreturn);
     void downloadCancelled(Downloader* dl);
 
 	void finishedDownloading(Downloader *dl, MAHandle data);
@@ -35,7 +35,6 @@ public:
 	MAHandle mImageResource;
 	Downloader * imageDownloader;
 
-	DownloadListener * listener;
 	webImageDownloaderListener *mWebListener;
 };
 

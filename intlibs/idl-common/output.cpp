@@ -180,12 +180,12 @@ void streamGroups(ostream& stream, const vector<Group>& groups, int ix) {
 	stream << "\n";
 }
 
-void streamHeaderFile(ostream& stream, const Interface& inf, const vector<string>& ixs, int ix) {
+void streamHeaderFile(ostream& stream, const Interface& inf, const vector<Ix>& ixs, int ix) {
 	string headerName;
 	if(ix == MAIN_INTERFACE)
 		headerName = toupper(getFilenameFromPath(inf.name));
 	else
-		headerName = toupper(ixs[ix]);
+		headerName = toupper(ixs[ix].name);
 
 	stream << "#ifndef " << headerName << "_H\n";
 	stream << "#define " << headerName << "_H\n\n";
@@ -932,12 +932,12 @@ void streamIoctlFunction(ostream& stream, const Interface& inf, const Function& 
 	stream << "}\n\n";
 }
 
-void streamCppDefsFile(ostream& stream, const Interface& inf, const vector<string>& ixs, int ix) {
+void streamCppDefsFile(ostream& stream, const Interface& inf, const vector<Ix>& ixs, int ix) {
 	string headerName;
 	if(ix == MAIN_INTERFACE)
 		headerName = toupper(getFilenameFromPath(inf.name));
 	else
-		headerName = toupper(ixs[ix]);
+		headerName = toupper(ixs[ix].name);
 
 	stream << "#ifndef " << headerName << "_DEFS_H\n";
 	stream << "#define " << headerName << "_DEFS_H\n\n";

@@ -33,21 +33,21 @@ static Interface* sInf = NULL;
 static int sNextAnonStructNum = 1;
 
 static void processIncludes(ostream& os, istream& is, const string& inPath, int level=0);
-static int findIx(const string& token, const vector<string>& ixs);
+static int findIx(const string& token, const vector<Ix>& ixs);
 
-static ConstSet parseConstSet(const vector<string>& ixs, int currentIx, Group* group);
+static ConstSet parseConstSet(const vector<Ix>& ixs, int currentIx, Group* group);
 static Function parseFunction(const string& retType, size_t maxArgs, Group *group);
 static Struct parseStruct(const string& type, const string& name, int currentIx, Group *group);
 static Member parseAnonymousUnion(int currentIx, Group* group);
 static PlainOldData parseAnonStruct(int currentIx, Group* group);
 static PlainOldData parsePOD(const string& type);
-static Ioctl parseIoctl(const vector<string>& ixs, Interface& inf, Group* group);
+static Ioctl parseIoctl(const vector<Ix>& ixs, Interface& inf, Group* group);
 static Typedef parseTypedef(int currentIx, Group *group);
 static Define parseDefine(int currentIx, Group *group);
-static bool parseInterfaceStatement(Interface& inf, const vector<string>& ixs, int& currentIx, Ioctl* ioctl, Group* group=NULL);
+static bool parseInterfaceStatement(Interface& inf, const vector<Ix>& ixs, int& currentIx, Ioctl* ioctl, Group* group=NULL);
 static int findGroup(Interface& inf, const string& id);
 void setGroup(Statement* s, Group* group);
-static void parseGroup(Interface& inf, const vector<string>& ixs, int& currentIx, Ioctl* ioctl, Group* parentGroup);
+static void parseGroup(Interface& inf, const vector<Ix>& ixs, int& currentIx, Ioctl* ioctl, Group* parentGroup);
 
 
 #if 1
@@ -68,15 +68,15 @@ void setGroup(Statement* s, Group* group) {
 	}
 }
 
-static void parseGroup(Interface& inf, const vector<string>& ixs, int& currentIx, Ioctl* ioctl, Group* parentGroup) {
+static void parseGroup(Interface& inf, const vector<Ix>& ixs, int& currentIx, Ioctl* ioctl, Group* parentGroup) {
 	Group g;
-	string id;			
+	string id;
 	readTextToken(id);
-				
+
 	Group *group = &g;
-	
+
 	int groupIndex = findGroup(inf, id);
-	
+
 	if(groupIndex == -1) {
 		group->groupId = id;
 		group->comment = getComment();
@@ -84,14 +84,14 @@ static void parseGroup(Interface& inf, const vector<string>& ixs, int& currentIx
 		//readTextToken(group->groupPrettyName);
 	} else {
 		group = &inf.groups[groupIndex];
-		group->comment += getComment();		
+		group->comment += getComment();
 	}
 
 
 	doExact("{");
 	while(parseInterfaceStatement(inf, ixs, currentIx, ioctl, group)) {
 	}
-	
+
 	if(parentGroup) {
 		if(groupIndex == -1) {
 			group->isRoot = false;
@@ -109,7 +109,7 @@ static void parseGroup(Interface& inf, const vector<string>& ixs, int& currentIx
 }
 #endif
 
-bool parseInterfaceStatement(Interface& inf, const vector<string>& ixs, int& currentIx, Ioctl* ioctl, Group* group) {
+bool parseInterfaceStatement(Interface& inf, const vector<Ix>& ixs, int& currentIx, Ioctl* ioctl, Group* group) {
 		string token;
 		readToken(token);
 		if(token == "constset") {	//constset
@@ -138,9 +138,14 @@ bool parseInterfaceStatement(Interface& inf, const vector<string>& ixs, int& cur
 				TASSERT(currentIx == MAIN_INTERFACE);
 				inf.functions.push_back(parseFunction(token, 256, group)); // 256 arguments should be enough :)
 			} else {
+				bool hasVoid = false;
+				if(currentIx != MAIN_INTERFACE) {
+					hasVoid = ixs[currentIx].hasVoid;
+				}
 				IoctlFunction f;
 				f.f = parseFunction(token, 256, group); // 256 should be enough :)
 				f.ix = currentIx;
+				TASSERT(hasVoid || f.f.returnType != "void");
 				ioctl->functions.push_back(f);
 			}
 		} else if(token == "}") {
@@ -149,7 +154,7 @@ bool parseInterfaceStatement(Interface& inf, const vector<string>& ixs, int& cur
 			if(!ioctl) doEOF();
 			return false;
 		} else if(token == "#if") {
-			TASSERT(currentIx == MAIN_INTERFACE);	
+			TASSERT(currentIx == MAIN_INTERFACE);
 			readTextToken(token);
 			currentIx = findIx(token, ixs);
 		} else if(token == "#endif") {
@@ -158,12 +163,12 @@ bool parseInterfaceStatement(Interface& inf, const vector<string>& ixs, int& cur
 		} else {
 			tokenError(token);
 		}
-		
+
 	return true;
 }
 
 /*
-bool parseIoctlStatement(Interface& inf, const vector<string>& ixs, int& currentIx, Ioctl& ioctl) {
+bool parseIoctlStatement(Interface& inf, const vector<Ix>& ixs, int& currentIx, Ioctl& ioctl) {
 		string token;
 		readToken(token);
 		if(token == "constset") {	//constset
@@ -194,12 +199,12 @@ bool parseIoctlStatement(Interface& inf, const vector<string>& ixs, int& current
 		} else {
 			tokenError(token);
 		}
-		
+
 	return true;
 }
 */
 
-Interface parseInterface(const vector<string>& ixs, const string& path) {
+Interface parseInterface(const vector<Ix>& ixs, const string& path) {
 	ifstream stream(path.c_str());
 
 	if(!stream.good())
@@ -224,7 +229,7 @@ Interface parseInterface(const vector<string>& ixs, const string& path) {
 		inf.comment = getComment();
 		while(parseInterfaceStatement(inf, ixs, currentIx, NULL)) {
 		}
-		
+
 		//check for dupe constsets
 		for(size_t i=0; (i+1)<inf.constSets.size(); i++) {
 			const ConstSet& cs1(inf.constSets[i]);
@@ -243,9 +248,9 @@ Interface parseInterface(const vector<string>& ixs, const string& path) {
 	return inf;
 }
 
-static int findIx(const string& token, const vector<string>& ixs) {
+static int findIx(const string& token, const vector<Ix>& ixs) {
 	for(size_t i=0; i<ixs.size(); i++) {
-		if(token == ixs[i])
+		if(token == ixs[i].name)
 			return i;
 	}
 	throwException(token + " not found!");
@@ -290,7 +295,7 @@ static void processIncludes(ostream& os, istream& is, const string& inPath, int 
 	}
 }
 
-static Ioctl parseIoctl(const vector<string>& ixs, Interface& inf, Group* group)
+static Ioctl parseIoctl(const vector<Ix>& ixs, Interface& inf, Group* group)
 {
 
 	int currentIx = MAIN_INTERFACE;
@@ -326,7 +331,7 @@ static Ioctl parseIoctl(const vector<string>& ixs, Interface& inf, Group* group)
 
 	while(parseInterfaceStatement(inf, ixs, currentIx, &ioctl, group)) {
 	}
-		
+
 	sNextFuncNum = mainNextFuncNum;	//restore
 	return ioctl;
 }
@@ -398,15 +403,15 @@ static PlainOldData parseAnonStruct(int currentIx, Group *group) {
 	return pod;
 }
 
-static ConstSet parseConstSet(const vector<string>& ixs, int currentIx, Group *group) {
+static ConstSet parseConstSet(const vector<Ix>& ixs, int currentIx, Group *group) {
 	ConstSet cs;
-	
+
 	//doExact("int");
 	string constSetType;
 	readToken(constSetType);
-	if(constSetType != "int" && constSetType != "MAString") 
+	if(constSetType != "int" && constSetType != "MAString")
 		tokenError(constSetType);
-		
+
 	readTextToken(cs.name);
 
 	doExact("{");
@@ -429,7 +434,7 @@ static ConstSet parseConstSet(const vector<string>& ixs, int currentIx, Group *g
 		c.ix = currentIx;
 		c.name = token;
 		c.type = constSetType;
-		
+
 		setGroup(&c, group);
 
 		doExact("=");
@@ -488,13 +493,13 @@ static Function parseFunction(const string& retType, size_t maxArgs, Group *grou
 		}
 		f.args.push_back(a);
 	}
-	
+
 	readToken(token);
 	if(token == "range") {
 		readRange(f.returnTypeRange);
 		readToken(token);
 	}
-	
+
 	if(token != ";") {
 		tokenError(token);
 	}

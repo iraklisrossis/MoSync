@@ -2151,21 +2151,24 @@ interface MAAPI {
 		* Any attempt to write to that piece of memory will raise a panic.
 		* \param 'start' The start address of the memory piece to protect.
 		* \param 'length' The length of the memory piece to protect.
+		* \returns 0.
 		*/
-		void maProtectMemory(in MAAddress start, in int length);
+		int maProtectMemory(in MAAddress start, in int length);
 
 		/**
 		* Unprotects a piece of the data memory.
 		* \param 'start' The start address of the memory piece to unprotect.
 		* \param 'length' The length of the memory piece to unprotect.
+		* \returns 0.
 		*/
-		void maUnprotectMemory(in MAAddress start, in int length);
+		int maUnprotectMemory(in MAAddress start, in int length);
 
 		/**
 		* Toggles memory protection.
 		* \param 'enable' If 1 turns on memory protection, if 0 turns of memory protection.
+		* \returns 0.
 		*/
-		void maSetMemoryProtection(in int enable);
+		int maSetMemoryProtection(in int enable);
 
 		/**
 		* Returns if memory protection is enabled or not.
@@ -4125,8 +4128,9 @@ group OpenGLES "OpenGLES" {
 
 		/**
 		 * Logs information about the state of all current resources.
+		 * \returns 0.
 		 */
-		void maReportResourceInformation();
+		int maReportResourceInformation();
 
 		/**
 		 * @deprecated use #maAlert instead.
@@ -4134,8 +4138,9 @@ group OpenGLES "OpenGLES" {
 		 * \param title The title of the message box shown
 		 * \param message The message should be short, not more than 40 characters,
 		 * to ensure its visibility on all screen sizes.
+		 * \returns 0.
 		 */
-		void maMessageBox(in MAString title, in MAString message);
+		int maMessageBox(in MAString title, in MAString message);
 
 		/**
 		* Displays a message to the user.
@@ -4149,8 +4154,9 @@ group OpenGLES "OpenGLES" {
 		* \param button1 The text on the first button. On Android it indicates a positive selection.
 		* \param button2 The text on the second button. On Android it indicates a neutral selection.
 		* \param button3 The text on the third button. On Android it indicates that a negative selection.
+		* \returns 0.
 		*/
-		void maAlert(in MAString title, in MAString message, in MAString button1, in MAString button2, in MAString button3);
+		int maAlert(in MAString title, in MAString message, in MAString button1, in MAString button2, in MAString button3);
 
 		/**
 		*
@@ -4160,7 +4166,7 @@ group OpenGLES "OpenGLES" {
 			LONG = 1; //3.5sec
 		}
 
-		/** TODO see if IOCTl needed.
+		/**
 		* \brief A toast is a view containing a quick little message for the user.
 		* A toast provides simple feedback about an operation in a small popup.
 		* It only fills the amount of space required for the message and the current
@@ -4173,6 +4179,7 @@ group OpenGLES "OpenGLES" {
 		* \param duration One of the next constants:
 		* - #MA_TOAST_DURATION_SHORT
 		* - #MA_TOAST_DURATION_LONG
+		* \returns 0.
 		*/
 		int maToast(in MAString message, in int duration);
 
@@ -4200,8 +4207,9 @@ group OpenGLES "OpenGLES" {
 		* Displays an image picker to the user.
 		* It's display depends on the platform.
 		* Note: when a selection is made a #EVENT_TYPE_IMAGE_PICKER event is sent.
+		* \returns 0.
 		*/
-		void maImagePickerOpen();
+		int maImagePickerOpen();
 
 		/**
 		* Displays an image picker to the user and sets the event return type.
@@ -4210,8 +4218,9 @@ group OpenGLES "OpenGLES" {
 		* \param eventType One of the next constants:
 		* - #MA_IMAGE_PICKER_EVENT_RETURN_TYPE_IMAGE_HANDLE
 		* - #MA_IMAGE_PICKER_EVENT_RETURN_TYPE_IMAGE_DATA
+		* \returns 0.
 		*/
-		void maImagePickerOpenWithEventReturnType(in int eventReturnType);
+		int maImagePickerOpenWithEventReturnType(in int eventReturnType);
 
 		/**
 		* Displays a special kind of dialog that has a list of possible choices.
@@ -4224,8 +4233,9 @@ group OpenGLES "OpenGLES" {
 		* \param cancelButtonTitle The dialog's Cancel button text. If left empty, the dialog is not cancelable.
 		* \param otherButtonTitles The address to the buffer that stores the list of options.
 		* \param otherButtonTitlesSize The size of the buffer, in bytes.
+		* \returns 0.
 		*/
-		void maOptionsBox(in MAWString title,in MAWString destructiveButtonTitle, in MAWString cancelButtonTitle,
+		int maOptionsBox(in MAWString title,in MAWString destructiveButtonTitle, in MAWString cancelButtonTitle,
 								 in MAAddress otherButtonTitles, in int otherButtonTitlesSize);
 
 group SensorAPI "Sensor API" {
@@ -4318,8 +4328,9 @@ group NFCAPI "NFC API" {
 
 		/**
 		* Stop listening to NFC events.
+		* \returns 0.
 		*/
-		void maNFCStop();
+		int maNFCStop();
 
 		/**
 		* Reads the next available tag.
@@ -4330,20 +4341,23 @@ group NFCAPI "NFC API" {
 		/**
 		* Destroys the tag. Clients are responsible for calling
 		* this function for every corresponding maNFCReadTag.
+		* \returns 0.
 		*/
-		void maNFCDestroyTag(in MAHandle tagHandle);
+		int maNFCDestroyTag(in MAHandle tagHandle);
 
 		/**
 		* Connects to a tag, enabling further I/O operations to be
 		* performed on it.
+		* \returns 0.
 		*/
-		void maNFCConnectTag(in MAHandle tagHandle);
+		int maNFCConnectTag(in MAHandle tagHandle);
 
 		/**
 		* Closes I/O operations for a tag, disabling further I/O operations to be
 		* performed on it.
+		* \returns 0.
 		*/
-		void maNFCCloseTag(in MAHandle tagHandle);
+		int maNFCCloseTag(in MAHandle tagHandle);
 
 		/**
 		* Determines whether a tag is of a certain type.
@@ -4383,14 +4397,16 @@ group NFCAPI "NFC API" {
 		* delivered will be of the EVENT_TYPE_NFC_BATCH_OP type and
 		* with an MANFCEventData containing the tag's handle.
 		* \param The handle to the tag that is in batch mode.
+		* \returns 0.
 		*/
-		void maNFCBatchCommit(in MAHandle tagHandle);
+		int maNFCBatchCommit(in MAHandle tagHandle);
 
 		/**
 		* Cancels all operations of the current batch.
 		* \param The handle to the tag that is in batch mode.
+		* \returns 0.
 		*/
-		void maNFCBatchRollback(in MAHandle tagHandle);
+		int maNFCBatchRollback(in MAHandle tagHandle);
 
 		/**
 		* Sends a message to a tag. The response will come as
@@ -6340,8 +6356,9 @@ group NotificationAPI "Notification API" {
 		*
 		*\param applicationIconBadgeNumber Set to zero to hide the badge number. The default is zero.
 		* If this value is negative the syscall will do nothing.
+		* \returns 0.
 		*/
-		void maNotificationSetIconBadge(in int applicationIconBadgeNumber);
+		int maNotificationSetIconBadge(in int applicationIconBadgeNumber);
 
 		/**
 		* \brief Get the number currently set as the badge of the application icon in Springboard.

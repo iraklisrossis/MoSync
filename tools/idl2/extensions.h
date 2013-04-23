@@ -27,8 +27,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define IX_AUDIOBUFFER
 #define IX_SEGMENTED_DATA
 #define IX_PIM
-#define IX_OPENGL_ES
-#define IX_GL1
-#define IX_GL2
-#define IX_GL_OES_FRAMEBUFFER_OBJECT
+#define IX_OPENGL_ES HAS_VOID
+#define IX_GL1 HAS_VOID
+#define IX_GL2 HAS_VOID
+#define IX_GL_OES_FRAMEBUFFER_OBJECT HAS_VOID
 #define IX_WIDGET

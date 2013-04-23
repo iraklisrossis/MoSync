@@ -31,10 +31,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 using namespace std;
 
-static vector<string> readExtensions(const char* filename);
-static void outputMaapi(const vector<string>& ixs, const Interface& maapi);
-static void outputMaapiJavascript(const vector<string>& ixs, const Interface& maapi);
-static void outputMaapiCSharp(const vector<string>& ixs, const Interface& maapi);
+static vector<Ix> readExtensions(const char* filename);
+static void outputMaapi(const vector<Ix>& ixs, const Interface& maapi);
+static void outputMaapiJavascript(const vector<Ix>& ixs, const Interface& maapi);
+static void outputMaapiCSharp(const vector<Ix>& ixs, const Interface& maapi);
 static void outputRuntimeBuilderFiles(const Interface& maapi);
 static void outputCpp(const Interface& maapi);
 static void outputAsmConfigLst(const Interface& maapi);
@@ -125,7 +125,7 @@ int main() {
 		_mkdir("Output");
 
 		// Read and parse the extensions and idl files.
-		vector<string> ixs = readExtensions("extensions.h");
+		vector<Ix> ixs = readExtensions("extensions.h");
 		Interface maapi = parseInterface(ixs, "maapi.idl");
 
 		// Generate files for the MoSync API.
@@ -196,13 +196,14 @@ int main() {
 		copy("Output/constSets.h", "../../intlibs/helpers/");
 
 		for(size_t i=0; i<ixs.size(); i++) {
-			copy("Output/CPP_" + ixs[i] + ".h", "../../intlibs/helpers/");
-			copy("Output/" + ixs[i] + ".h", "../../libs/MAStd/");
-			copy("Output/" + ixs[i] + ".h", "../../libs/newlib/libc/sys/mosync/");
-			copy("Output/" + ixs[i] + "_CONSTS.h", "../../runtimes/java/Shared/generated/");
+			const string& name(ixs[i].name);
+			copy("Output/CPP_" + name + ".h", "../../intlibs/helpers/");
+			copy("Output/" + name + ".h", "../../libs/MAStd/");
+			copy("Output/" + name + ".h", "../../libs/newlib/libc/sys/mosync/");
+			copy("Output/" + name + "_CONSTS.h", "../../runtimes/java/Shared/generated/");
 
 			// Copy generated Android files.
-			copy("Output/" + ixs[i] + ".java",
+			copy("Output/" + name + ".java",
 				"../../runtimes/java/platforms/androidJNI/AndroidProject/src/com/mosync/internal/generated/");
 		}
 
@@ -213,13 +214,14 @@ int main() {
 	}
 }
 
-static vector<string> readExtensions(const char* filename) {
-	vector<string> ixs;
+static vector<Ix> readExtensions(const char* filename) {
+	vector<Ix> ixs;
 	ifstream file(filename);
 	setTokenStream(&file);
 	string token;
+	readToken(token);
 	for(;;) {
-		readToken(token);
+		bool hasVoid = false;
 		if(!file.good())
 			break;
 		if(token != "#define")
@@ -227,7 +229,14 @@ static vector<string> readExtensions(const char* filename) {
 		readTextToken(token);
 		if(!file.good())
 			Error("syntax", "Unexpected end of file");
-		ixs.push_back(token);
+		string name = token;
+		readToken(token);
+		if(token == "HAS_VOID") {
+			hasVoid = true;
+			readToken(token);
+		}
+		Ix ix = { name, hasVoid };
+		ixs.push_back(ix);
 	}
 	return ixs;
 }
@@ -235,7 +244,7 @@ static vector<string> readExtensions(const char* filename) {
 /**
  * Generate files for the MoSync API.
  */
-static void outputMaapi(const vector<string>& ixs, const Interface& maapi) {
+static void outputMaapi(const vector<Ix>& ixs, const Interface& maapi) {
 	// Generate files for the main API.
 	{
 		ofstream ccpDefsFile("Output/cpp_defs.h");
@@ -256,17 +265,18 @@ static void outputMaapi(const vector<string>& ixs, const Interface& maapi) {
 
 	// Generate files for API extensions.
 	for (size_t i=0; i<ixs.size(); i++) {
-		ofstream ccpDefsFile(("Output/CPP_" + toupper(ixs[i]) + ".h").c_str());
+		const string& name(ixs[i].name);
+		ofstream ccpDefsFile(("Output/CPP_" + toupper(name) + ".h").c_str());
 		streamCppDefsFile(ccpDefsFile, maapi, ixs, i);
 
-		outputConsts("Output/" + toupper(ixs[i]) + "_CONSTS.h", maapi, i);
+		outputConsts("Output/" + toupper(name) + "_CONSTS.h", maapi, i);
 
-		ofstream headerFile(("Output/" + toupper(ixs[i]) + ".h").c_str());
+		ofstream headerFile(("Output/" + toupper(name) + ".h").c_str());
 		streamHeaderFile(headerFile, maapi, ixs, i);
 
 		// Generate Java definition file for extension (used by
 		// the Android runtime).
-		string className = toupper(ixs[i]);
+		string className = toupper(name);
 		ofstream javaFile(("Output/" + className + ".java").c_str());
 		streamJavaDefinitionFile(javaFile, className, maapi, i);
 	}
@@ -301,7 +311,7 @@ static void outputJavascriptIoctlArg(ofstream& maapiFile, int i) {
 	}
 }
 
-static void outputMaapiJavascript(const vector<string>& ixs, const Interface& maapi) {
+static void outputMaapiJavascript(const vector<Ix>& ixs, const Interface& maapi) {
 	ofstream maapiFile("Output/maapi.js");
 
 	maapiFile << "MoSyncGenerated = {};\n\n";
@@ -411,7 +421,7 @@ static void outputMaapiJavascript(const vector<string>& ixs, const Interface& ma
 	maapiFile << "};\n";
 }
 
-static void outputMaapiCSharp(const vector<string>& ixs, const Interface& maapi) {
+static void outputMaapiCSharp(const vector<Ix>& ixs, const Interface& maapi) {
 	ofstream maapiFile("Output/maapi.cs");
 
 	maapiFile << "using System;\n";

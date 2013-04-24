@@ -242,35 +242,40 @@ SYSCALL(MAExtent, maGetScrSize())
     return EXTENT(width, height);
 }
 
-SYSCALL(void, maMessageBox(const char* title, const char* message))
+SYSCALL(int, maMessageBox(const char* title, const char* message))
 {
-    MoSyncUIUtils_ShowAlert(title, message, "OK", NULL, NULL);
+	MoSyncUIUtils_ShowAlert(title, message, "OK", NULL, NULL);
+	return 0;
 }
 
-SYSCALL(void, maImagePickerOpen())
+SYSCALL(int, maImagePickerOpen())
 {
-    MoSyncUIUtils_ShowImagePicker();
+	MoSyncUIUtils_ShowImagePicker();
+	return 0;
 }
 
-SYSCALL(void, maImagePickerOpenWithEventReturnType(int returnType))
+SYSCALL(int, maImagePickerOpenWithEventReturnType(int returnType))
 {
-    MoSyncUIUtils_ShowImagePicker(returnType);
+	MoSyncUIUtils_ShowImagePicker(returnType);
+	return 0;
 }
 
 //Shows an alert box with up to three buttons
-SYSCALL(void, maAlert(const char* title, const char* message, const char* button1, const char* button2, const char* button3))
+SYSCALL(int, maAlert(const char* title, const char* message, const char* button1, const char* button2, const char* button3))
 {
-    MoSyncUIUtils_ShowAlert(title, message, button1, button2, button3);
+	MoSyncUIUtils_ShowAlert(title, message, button1, button2, button3);
+	return 0;
 }
 
-SYSCALL(void, maOptionsBox(const wchar* title, const wchar* destructiveButtonTitle, const wchar* cancelButtonTitle,
-                           const void* otherButtonTitles, const int otherButtonTitlesSize))
+SYSCALL(int, maOptionsBox(const wchar* title, const wchar* destructiveButtonTitle, const wchar* cancelButtonTitle,
+	const void* otherButtonTitles, const int otherButtonTitlesSize))
 {
-    [[OptionsDialogView getInstance] show:title
-                   destructiveButtonTitle:destructiveButtonTitle
-                        cancelButtonTitle:cancelButtonTitle
-                        otherButtonTitles:otherButtonTitles
-                    otherButtonTitlesSize:otherButtonTitlesSize];
+	[[OptionsDialogView getInstance] show:title
+		destructiveButtonTitle:destructiveButtonTitle
+		cancelButtonTitle:cancelButtonTitle
+		otherButtonTitles:otherButtonTitles
+		otherButtonTitlesSize:otherButtonTitlesSize];
+	return 0;
 }
 
 int maTextBox(const wchar* title, const wchar* inText, wchar* outText, int maxSize, int constraints)

@@ -24,9 +24,10 @@ SYSCALL(int, maPurchaseSupported())
 	return [[PurchaseManager getInstance] isPurchaseSupported];
 }
 
-SYSCALL(void, maPurchaseCreate(MAHandle productHandle, const char* productID))
+SYSCALL(int, maPurchaseCreate(MAHandle productHandle, const char* productID))
 {
 	[[PurchaseManager getInstance] createProduct:productHandle productID:productID];
+	return 0;
 }
 
 SYSCALL(int, maPurchaseDestroy(MAHandle productHandle))
@@ -34,9 +35,10 @@ SYSCALL(int, maPurchaseDestroy(MAHandle productHandle))
 	return [[PurchaseManager getInstance] destroyProduct:productHandle];
 }
 
-SYSCALL(void, maPurchaseRequest(MAHandle productHandle, const int quantity))
+SYSCALL(int, maPurchaseRequest(MAHandle productHandle, const int quantity))
 {
 	[[PurchaseManager getInstance] requestProduct:productHandle quantity:quantity];
+	return 0;
 }
 
 SYSCALL(int, maPurchaseGetName(MAHandle productHandle, char* buffer, const int bufferSize))
@@ -46,14 +48,16 @@ SYSCALL(int, maPurchaseGetName(MAHandle productHandle, char* buffer, const int b
 										   bufferSize:bufferSize];
 }
 
-SYSCALL(void, maPurchaseSetStoreURL(const char* url))
+SYSCALL(int, maPurchaseSetStoreURL(const char* url))
 {
 	[[PurchaseManager getInstance] setStoreURL:url];
+	return 0;
 }
 
-SYSCALL(void, maPurchaseVerifyReceipt(MAHandle productHandle))
+SYSCALL(int, maPurchaseVerifyReceipt(MAHandle productHandle))
 {
 	[[PurchaseManager getInstance] verifyReceipt:productHandle];
+	return 0;
 }
 
 SYSCALL(int, maPurchaseGetField(MAHandle productHandle, const char* fieldName,
@@ -65,7 +69,8 @@ SYSCALL(int, maPurchaseGetField(MAHandle productHandle, const char* fieldName,
 											   bufferSize:bufferSize];
 }
 
-SYSCALL(void, maPurchaseRestoreTransactions())
+SYSCALL(int, maPurchaseRestoreTransactions())
 {
 	[[PurchaseManager getInstance] restoreTransactions];
+	return 0;
 }

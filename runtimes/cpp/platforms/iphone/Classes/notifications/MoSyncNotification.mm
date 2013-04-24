@@ -82,9 +82,10 @@ SYSCALL(int, maNotificationPushDestroy(MAHandle pushNotificationHandle))
 	return [[NotificationManager getInstance] pushNotificationDestroy:pushNotificationHandle];
 }
 
-SYSCALL(void, maNotificationSetIconBadge(const int applicationIconBadgeNumber))
+SYSCALL(int, maNotificationSetIconBadge(const int applicationIconBadgeNumber))
 {
 	[[NotificationManager getInstance] setApplicationIconBadgeNumber:applicationIconBadgeNumber];
+	return 0;
 }
 
 SYSCALL(int, maNotificationGetIconBadge())

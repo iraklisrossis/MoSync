@@ -51,15 +51,15 @@ int maGetSystemProperty(const char *key, char *buf, int size);
 // UI related
 SYSCALL(MAExtent, maGetScrSize());
 
-SYSCALL(void, maMessageBox(const char* title, const char* message));
+SYSCALL(int, maMessageBox(const char* title, const char* message));
 
-SYSCALL(void, maImagePickerOpen());
+SYSCALL(int, maImagePickerOpen());
 
-SYSCALL(void, maImagePickerOpenWithEventReturnType(int returnType));
+SYSCALL(int, maImagePickerOpenWithEventReturnType(int returnType));
 
-SYSCALL(void, maAlert(const char* title, const char* message, const char* button1, const char* button2, const char* button3));
+SYSCALL(int, maAlert(const char* title, const char* message, const char* button1, const char* button2, const char* button3));
 
-SYSCALL(void, maOptionsBox(const wchar* title, const wchar* destructiveButtonTitle, const wchar* cancelButtonTitle,
+SYSCALL(int, maOptionsBox(const wchar* title, const wchar* destructiveButtonTitle, const wchar* cancelButtonTitle,
                            const void* otherButtonTitles, const int otherButtonTitlesSize));
 
 int maTextBox(const wchar* title, const wchar* inText, wchar* outText, int maxSize, int constraints);

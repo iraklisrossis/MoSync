@@ -37,5 +37,5 @@ SYSCALL(int, maNotificationPushGetData(MAHandle pushNotificationHandle,
 									   MAPushNotificationData* pushNotificationData));
 SYSCALL(int, maNotificationPushGetRegistration(char* buffer, const int size));
 SYSCALL(int, maNotificationPushDestroy(MAHandle pushNotificationHandle));
-SYSCALL(void, maNotificationSetIconBadge(const int applicationIconBadgeNumber));
+SYSCALL(int, maNotificationSetIconBadge(const int applicationIconBadgeNumber));
 SYSCALL(int, maNotificationGetIconBadge());

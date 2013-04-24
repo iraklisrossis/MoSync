@@ -22,13 +22,13 @@
 #include "Syscall.h"
 
 SYSCALL(int, maPurchaseSupported());
-SYSCALL(void, maPurchaseCreate(MAHandle productHandle, const char* productID));
+SYSCALL(int, maPurchaseCreate(MAHandle productHandle, const char* productID));
 SYSCALL(int, maPurchaseDestroy(MAHandle productHandle));
-SYSCALL(void, maPurchaseRequest(MAHandle productHandle, const int quantity));
+SYSCALL(int, maPurchaseRequest(MAHandle productHandle, const int quantity));
 SYSCALL(int, maPurchaseGetName(MAHandle productHandle, char* buffer, const int bufferSize));
-SYSCALL(void, maPurchaseSetStoreURL(const char* url));
-SYSCALL(void, maPurchaseVerifyReceipt(MAHandle productHandle));
+SYSCALL(int, maPurchaseSetStoreURL(const char* url));
+SYSCALL(int, maPurchaseVerifyReceipt(MAHandle productHandle));
 SYSCALL(int, maPurchaseGetField(MAHandle productHandle, const char* fieldName,
 								char* buffer, const int bufferSize));
-SYSCALL(void, maPurchaseRestoreTransactions());
-SYSCALL(void, maPurchaseVerifyReceipt(MAHandle productHandle));
+SYSCALL(int, maPurchaseRestoreTransactions());
+SYSCALL(int, maPurchaseVerifyReceipt(MAHandle productHandle));

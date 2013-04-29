@@ -49,14 +49,7 @@ class NativeGccLinkTask < FileTask
 
 	def execute
 		execFlags
-		# Use a temporary name so the file gets rebuilt in case of error in the DynLibConv step.
-		tmpName = @NAME
-		tmpName += '.tmp' if(@work.target_platform == :darwin)
-		sh "#{@linker} #{cFlags} -o \"#{tmpName}\""
-		if(@work.target_platform == :darwin)
-			DynLibConv.run("/opt/local/lib", "@loader_path", tmpName)
-			FileUtils.mv(tmpName, @NAME)
-		end
+		sh "#{@linker} #{cFlags} -o \"#{@NAME}\""
 	end
 
 	include FlagsChanged
@@ -68,6 +61,15 @@ end
 # In addition to the variables used by GccWork, this class uses the following:
 # @NAME, @LOCAL_LIBS, @LOCAL_DLLS, @WHOLE_LIBS, @LIBRARIES, @COMMON_BUILDDIR, @BUILDDIR and @TARGETDIR.
 class NativeGccLinkWork < NativeGccWork
+	# Filename prefix for local DLLs.
+	def lldPrefix
+		if(@TARGET_PLATFORM == :win32)
+			return ''
+		else
+			return 'lib'
+		end
+	end
+
 	private
 
 	def linkerName(have_cppfiles); have_cppfiles ? 'g++' : 'gcc'; end
@@ -82,8 +84,6 @@ class NativeGccLinkWork < NativeGccWork
 			@EXTRA_LINKFLAGS += " -pg"
 		end
 		llo = @LOCAL_LIBS.collect { |ll| FileTask.new(self, @COMMON_BUILDDIR + ll + ".a") }
-		lldPrefix = ''
-		lldPrefix = 'lib' if(@TARGET_PLATFORM == :linux)
 		lld = @LOCAL_DLLS.collect { |ld| FileTask.new(self, @COMMON_BUILDDIR + lldPrefix + ld + DLL_FILE_ENDING) }
 		wlo = @WHOLE_LIBS.collect { |ll| FileTask.new(self, @COMMON_BUILDDIR + ll + ".a") }
 		applyLibraries

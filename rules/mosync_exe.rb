@@ -171,7 +171,7 @@ class Mapip2RebuildTask < Task
 end
 
 def openssl
-	if(HOST == :linux)
+	if(HOST != :win32)
 		return 'openssl'
 	else
 		return "#{mosyncdir}/bin/openssl -config \"#{mosyncdir}/bin/openssl.cnf\""

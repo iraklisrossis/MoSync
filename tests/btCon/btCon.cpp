@@ -36,6 +36,13 @@ void MoSyncErrorExit(int code) {
 	exit(code);
 }
 
+int Connection::readFrom(void* dst, int max, MAConnAddr& src) {
+	BIG_PHAT_ERROR(0);
+}
+int Connection::writeTo(const void* src, int len, const MAConnAddr& dst) {
+	BIG_PHAT_ERROR(0);
+}
+
 int main2() {
 	BtSppServer server;
 	MAUUID uuid = {{ 1,2,3,4 }};

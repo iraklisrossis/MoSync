@@ -52,6 +52,8 @@ when :darwin
 
 	DynLibConv.run("/sw/lib", "@loader_path", "#{mosyncdir}/bin/openssl")
 	DynLibConv.run("/opt/local/lib", "@loader_path", "#{mosyncdir}/bin/openssl")
+
+	copyIndependentFiles()
 when :linux
 	copyIndependentFiles()
 else

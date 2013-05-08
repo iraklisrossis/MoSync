@@ -249,7 +249,7 @@ namespace MoSync
 					{
 						int maValidity = args.Position.Location.IsUnknown ?
 							MoSync.Constants.MA_LOC_INVALID : MoSync.Constants.MA_LOC_QUALIFIED;
-						Memory evt = new Memory(4 + 4 * 8 + 4);
+						Memory evt = new Memory(4 + 4 * 8 + 4 * 3);
 						GeoCoordinate l = args.Position.Location;
 						evt.WriteInt32(MoSync.Struct.MALocation.state, maValidity);
 						evt.WriteDouble(MoSync.Struct.MALocation.lat, l.Latitude);
@@ -257,6 +257,8 @@ namespace MoSync
 						evt.WriteDouble(MoSync.Struct.MALocation.horzAcc, l.HorizontalAccuracy);
 						evt.WriteDouble(MoSync.Struct.MALocation.vertAcc, l.VerticalAccuracy);
 						evt.WriteFloat(MoSync.Struct.MALocation.alt, (float)l.Altitude);
+						evt.WriteFloat(MoSync.Struct.MALocation.heading, (float)l.Course);
+						evt.WriteFloat(MoSync.Struct.MALocation.speed, (float)l.Speed);
 						runtime.PostCustomEvent(MoSync.Constants.EVENT_TYPE_LOCATION, evt);
 					};
 

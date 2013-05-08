@@ -2457,7 +2457,8 @@ interface MAAPI {
 #endif	//IX_WLAN
 
 		/**
-		* \brief A geographical location specified by latitude and longitude, horizontal and vertical accuracy, and altitude.
+		* \brief A geographical location specified by latitude and longitude,
+		* horizontal and vertical accuracy, altitude, heading and speed.
 		*
 		* Only if \a state equals #MA_LOC_QUALIFIED do the other members contain valid data.
 		*
@@ -2496,6 +2497,8 @@ interface MAAPI {
 			double lon;
 			double horzAcc;
 			double vertAcc;
+			float heading;	/// Degrees westward from north. Is NaN, or in the range (0, 360]
+			float speed;	/// Meters per second. May be NaN, if speed is not known.
 		}
 
 		constset int MA_LOC_ {

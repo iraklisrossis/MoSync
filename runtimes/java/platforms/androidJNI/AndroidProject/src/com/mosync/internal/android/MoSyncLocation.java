@@ -40,7 +40,7 @@ public class MoSyncLocation
 	 * The MoSync thread object.
 	 */
 	MoSyncThread mMoSyncThread;
-	
+
 	LocationEventThread mLocationEventThread = null;
 
 	/**
@@ -59,7 +59,7 @@ public class MoSyncLocation
 	{
 		return mMoSyncThread.getActivity();
 	}
-	
+
 	public int maLocationStart()
 	{
 		if (null == mLocationEventThread)
@@ -67,10 +67,10 @@ public class MoSyncLocation
 			mLocationEventThread = new LocationEventThread();
 			mLocationEventThread.start();
 		}
-		
+
 		return 1;
 	}
-	
+
 	public int maLocationStop()
 	{
 		if (null != mLocationEventThread)
@@ -78,19 +78,19 @@ public class MoSyncLocation
 			mLocationEventThread.kill();
 			mLocationEventThread = null;
 		}
-		
+
 		return 0;
 	}
-	
+
 	class LocationEventThread extends Thread implements LocationListener
 	{
 		LocationManager mLocationManager;
 		Looper mLooper;
-	
+
 		public LocationEventThread()
 		{
 		}
-	
+
 		public void kill()
 		{
 			mLocationManager.removeUpdates(this);
@@ -99,7 +99,7 @@ public class MoSyncLocation
 				mLooper.quit();
 			}
 		}
-		
+
 		void postOutOfServiceMessage()
 		{
 			int[] event = new int[2];
@@ -107,35 +107,35 @@ public class MoSyncLocation
 			event[1] = MA_LPS_OUT_OF_SERVICE;
 			mMoSyncThread.postEvent(event);
 		}
-		
+
 		public void run()
 		{
 			try
 			{
 				Looper.prepare();
-	
+
 				mLooper = Looper.myLooper();
-			
-				mLocationManager = (LocationManager) 
+
+				mLocationManager = (LocationManager)
 					getActivity().getSystemService(Context.LOCATION_SERVICE);
-				if (mLocationManager == null) 
+				if (mLocationManager == null)
 				{
 					postOutOfServiceMessage();
 					return;
 				}
-			
+
 				if (!mLocationManager.isProviderEnabled(
 						LocationManager.GPS_PROVIDER))
 				{
 					postOutOfServiceMessage();
 					return;
 				}
-	
+
 				mLocationManager.requestLocationUpdates(
 					LocationManager.GPS_PROVIDER, 0, 0, this);
 				mLocationManager.requestLocationUpdates(
 					LocationManager.NETWORK_PROVIDER, 0, 0, this);
-				
+
 				Looper.loop();
 			}
 			catch (Throwable e)
@@ -144,38 +144,41 @@ public class MoSyncLocation
 				postOutOfServiceMessage();
 			}
 		}
-	
+
 		public void onLocationChanged(Location location)
 		{
-			int[] event = new int[11];
+			int[] event = new int[13];
 			event[0] = EVENT_TYPE_LOCATION;
 			event[1] = MA_LOC_QUALIFIED;
-	
+
 			// LATITUDE
 			long lat = Double.doubleToLongBits(location.getLatitude());
-			event[2] = (int)lat; 
+			event[2] = (int)lat;
 			event[3] = ((int)(lat >> 32));
-			
+
 			// LONGITUDE
 			long lon = Double.doubleToLongBits(location.getLongitude());
-			event[4] = (int)lon; 
+			event[4] = (int)lon;
 			event[5] = ((int)(lon >> 32));
-			
+
 			// ACCURACCY
 			long acc = Double.doubleToLongBits(location.getAccuracy());
 			// Latitude accuraccy
-			event[6] = (int)acc; 
+			event[6] = (int)acc;
 			event[7] = ((int)(acc >> 32));
 			// Longitude accuraccy (same value)
-			event[8] = (int)acc; 
+			event[8] = (int)acc;
 			event[9] = ((int)(acc >> 32));
-			
+
 			// ALTITUDE
 			event[10] = (int) Float.floatToIntBits((float)location.getAltitude());
-	
+
+			event[11] = (int) Float.floatToIntBits(location.getBearing());
+			event[12] = (int) Float.floatToIntBits(location.getSpeed());
+
 			mMoSyncThread.postEvent(event);
 		}
-		
+
 		public void onProviderDisabled(String provider)
 		{
 			if (provider.equals(LocationManager.GPS_PROVIDER))
@@ -183,7 +186,7 @@ public class MoSyncLocation
 				postOutOfServiceMessage();
 			}
 		}
-		
+
 		public void onProviderEnabled(String provider)
 		{
 			if (provider.equals(LocationManager.GPS_PROVIDER))
@@ -194,30 +197,30 @@ public class MoSyncLocation
 				mMoSyncThread.postEvent(event);
 			}
 		}
-	
+
 		public void onStatusChanged(String provider, int status, Bundle extras)
 		{
 			if (provider.equals(LocationManager.GPS_PROVIDER))
 			{
 				int[] event = new int[2];
-				
+
 				event[0] = EVENT_TYPE_LOCATION_PROVIDER;
-				
+
 				switch (status)
 				{
-					case LocationProvider.OUT_OF_SERVICE: 
-						event[1] = MA_LPS_OUT_OF_SERVICE; 
+					case LocationProvider.OUT_OF_SERVICE:
+						event[1] = MA_LPS_OUT_OF_SERVICE;
 						break;
-					case LocationProvider.TEMPORARILY_UNAVAILABLE: 
-						event[1] = MA_LPS_TEMPORARILY_UNAVAILABLE; 
+					case LocationProvider.TEMPORARILY_UNAVAILABLE:
+						event[1] = MA_LPS_TEMPORARILY_UNAVAILABLE;
 						break;
-					case LocationProvider.AVAILABLE: 
-						event[1] = MA_LPS_AVAILABLE; 
+					case LocationProvider.AVAILABLE:
+						event[1] = MA_LPS_AVAILABLE;
 						break;
-					default: 
-						event[1] = MA_LPS_TEMPORARILY_UNAVAILABLE; 
+					default:
+						event[1] = MA_LPS_TEMPORARILY_UNAVAILABLE;
 				}
-				
+
 				mMoSyncThread.postEvent(event);
 			}
 		}

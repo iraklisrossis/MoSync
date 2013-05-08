@@ -448,6 +448,8 @@ static void bpsWait(int timeout) {
 					loc->lon = geolocation_event_get_longitude(event_bps);
 					loc->horzAcc = geolocation_event_get_accuracy(event_bps);
 					loc->vertAcc = geolocation_event_get_altitude_accuracy(event_bps);
+					loc->heading = (float)geolocation_event_get_heading(event_bps);
+					loc->speed = (float)geolocation_event_get_speed(event_bps);
 					event.data = loc;
 				}
 				break;

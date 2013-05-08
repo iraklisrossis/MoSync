@@ -2836,6 +2836,8 @@ public
 		writeDouble(event, 6, qcoor.getHorizontalAccuracy());
 		writeDouble(event, 8, qcoor.getVerticalAccuracy());
 		event[10] = Float.floatToIntBits(qcoor.getAltitude());
+		event[11] = Float.floatToIntBits(location.getCourse());
+		event[12] = Float.floatToIntBits(location.getSpeed());
 
 		return MA_LOC_QUALIFIED;
 	}

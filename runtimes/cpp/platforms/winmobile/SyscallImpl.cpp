@@ -2554,6 +2554,7 @@ DWORD GetScreenOrientation()
 		pos.dwSize=sizeof(GPS_POSITION);
 
 		MALocation* posEventData = new MALocation;
+		memset(posEventData, -1, sizeof(MALocation));	// set all values to NaN.
 		MAEvent posEvent;
 		posEvent.type = EVENT_TYPE_LOCATION;
 
@@ -2576,7 +2577,14 @@ retry:
 
 				if(pos.dwValidFields&GPS_VALID_ALTITUDE_WRT_ELLIPSOID)
 					posEventData->alt = pos.flAltitudeWRTEllipsoid;
-				
+
+				if(pos.dwValidFields & GPS_VALID_HEADING)
+					posEventData->heading = pos.flHeading;
+
+				// flSpeed is in knots. 1 knot is 0.514444 m/s.
+				if(pos.dwValidFields & GPS_VALID_SPEED)
+					posEventData->speed = pos.flSpeed * 0.514444f;
+
 				if(pos.FixQuality == GPS_FIX_QUALITY_UNKNOWN) {
 					posEventData->state = MA_LOC_UNQUALIFIED;
 				} else {

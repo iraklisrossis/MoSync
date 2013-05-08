@@ -144,7 +144,7 @@ private:
 #ifdef __S60_50__
 	RPositioner gPositioner;
 	RPositionServer gPositionServer;
-	TPositionInfo gPositionInfo;
+	TPositionCourseInfo gPositionInfo;
 #endif
 
 #if defined(SUPPORT_MOSYNC_SERVER) || defined(__S60_50__)
@@ -153,7 +153,7 @@ private:
 	int maLocationStart();
 	int maLocationStop();
 	void LocationHandlerL(TInt status);
-	void AddLocationEvent(const TPosition&);
+	void AddLocationEvent(const TPosition&, const TCourse&);
 #endif
 
 	int maAutostartOn();

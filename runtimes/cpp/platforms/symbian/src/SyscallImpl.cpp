@@ -2343,7 +2343,7 @@ void Syscall::LocationHandlerL(TInt status) {
 		return;
 
 	//send event
-	AddLocationEvent(gServer.Position());
+	AddLocationEvent(gServer.Position(), TCourse());
 
 	//wait for the next location
 	gServer.LocationGet(*gLocationSync->Status());
@@ -2352,7 +2352,7 @@ void Syscall::LocationHandlerL(TInt status) {
 #endif	//SUPPORT_MOSYNC_SERVER && !__S60_50__
 
 #if defined(SUPPORT_MOSYNC_SERVER) || defined(__S60_50__)
-void Syscall::AddLocationEvent(const TPosition& p) {
+void Syscall::AddLocationEvent(const TPosition& p, const TCourse& c) {
 	MALocation* loc = new MALocation;
 	loc->state = p.Datum() == KPositionDatumWgs84 ?
 		MA_LOC_QUALIFIED : MA_LOC_INVALID;
@@ -2365,6 +2365,8 @@ void Syscall::AddLocationEvent(const TPosition& p) {
 	loc->horzAcc = p.HorizontalAccuracy();
 	loc->vertAcc = p.VerticalAccuracy();
 	loc->alt = p.Altitude();
+	loc->heading = c.Heading();
+	loc->speed = c.Speed();
 
 	MAEvent e;
 	e.type = EVENT_TYPE_LOCATION;
@@ -2414,7 +2416,9 @@ void Syscall::LocationHandlerL(TInt status) {
 	//send event
 	TPosition p;
 	gPositionInfo.GetPosition(p);
-	AddLocationEvent(p);
+	TCourse c;
+	gPositionInfo.GetCourse(c);
+	AddLocationEvent(p, c);
 
 	//wait for the next location
 	gPositioner.NotifyPositionUpdate(gPositionInfo, *gLocationSync->Status());

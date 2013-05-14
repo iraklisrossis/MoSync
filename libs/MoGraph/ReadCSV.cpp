@@ -26,7 +26,7 @@ MA 02110-1301, USA.
  * @param resource,		to a text file.
  * @return	char *,		return the text buffer
  */
-char* GetString(MAHandle resource)
+static char* GetString(MAHandle resource)
 {
     // Get the length of the string data.
     int length = maGetDataSize(resource);

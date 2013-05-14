@@ -39,7 +39,7 @@ MA 02110-1301, USA.
 * @return index of shader element
 */
 
-GLuint CreateTexture(MAHandle resource)
+static GLuint CreateTexture(MAHandle resource)
 {
 	GLuint textureHandle;
 
@@ -197,7 +197,7 @@ BMFont::ParseBMFont BMFont::getBMType(std::string &header)
  * @param keyValue e.g. "label = 10"
  * @return returns the value part of = XX e.g. int 10
  */
-int GetValue(std::string &keyValue)
+static int GetValue(std::string &keyValue)
 {
 	std::vector<std::string> key_value = Utils::split(keyValue,'=',true);
 	return atoi((key_value[1]).c_str());
@@ -211,7 +211,7 @@ int GetValue(std::string &keyValue)
  * @param key output e.g. key = "label"
  * @param value output e.g. value = 10
  */
-void GetKeyValueFrom(std::string &keyValue,std::string &key, std::string &value)
+static void GetKeyValueFrom(std::string &keyValue,std::string &key, std::string &value)
 {
 	std::vector<std::string> key_value = Utils::split(keyValue,'=',true);
 	key		= key_value[0];
@@ -465,7 +465,7 @@ bool BMFont::LoadFontData(MAHandle resource)
 
 				if ((m_chars.insert(Int_BMChar_Pair(bmchar.m_id, bmchar))).second == false)  //      [bmchar.m_id] = bmchar;
 					lprintfln("BMFont::LoadFontData PBM_CHARS double entry detected");
-				BMChar bmchar2 = m_chars[bmchar.m_id];
+				//BMChar bmchar2 = m_chars[bmchar.m_id];
 /*
 				if (memcmp(&bmchar2,&bmchar,sizeof(BMChar)) == 0)
 					lprintfln("Testing id = %d, OK",bmchar.m_id);
@@ -510,8 +510,8 @@ bool BMFont::LoadFontData(MAHandle resource)
 //					lprintfln("first entry");
 				}
 
-				std::vector<BMKerning> &table = m_kernings[bmkerning.m_first];
-				BMKerning bmkerning2 = table[table.size()-1];
+				//std::vector<BMKerning> &table = m_kernings[bmkerning.m_first];
+				//BMKerning bmkerning2 = table[table.size()-1];
 	/*			if (memcmp(&bmkerning,&bmkerning2,sizeof(BMKerning)) == 0 )
 					lprintfln("BMKerning parsed OK");
 				break;
@@ -627,11 +627,11 @@ float BMFont::getTextProperties(const char* sentence, float drawX, float drawY, 
 		}
 		else
 		{
-			float w,h,ox,oy,posX,posY,ax,ks;
+			float /*w,*/h,ox,oy,posX,posY,ax,ks;
 			// positions and relative ofsets etc.
 			ox = ((float)bc->m_xoffset) 	* scaleX;
 			oy = ((float)bc->m_yoffset) 	* scaleY;
-			w  = ((float)bc->m_width) 		* scaleX;
+			//w  = ((float)bc->m_width) 		* scaleX;
 			h  = ((float)bc->m_height) 		* scaleY;
 			ax = ((float)bc->m_xadvance)	* scaleX;
 			ks = 0.0f;

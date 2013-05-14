@@ -15,7 +15,7 @@
 namespace MoGraph
 {
 
-	const char *getFormatDecimalStr(int d)
+	static const char *getFormatDecimalStr(int d)
 	{
 		switch (d)
 		{

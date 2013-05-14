@@ -250,7 +250,7 @@ MA 02110-1301, USA.
 	 * @param isUsingTexCoord	input bool ctrl flag for if using texture coord. requires separate init
 	 * @return program object index, 0 = failure
 	 */
-	GLuint loadShaders(const char *shader_vtx, const char *shader_frg, bool isUsingTexCoord)
+	static GLuint loadShaders(const char *shader_vtx, const char *shader_frg, bool isUsingTexCoord)
 	{
 		GLuint vertexShader;
 		GLuint fragmentShader;

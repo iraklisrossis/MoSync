@@ -2,6 +2,8 @@
 
 require File.expand_path(ENV['MOSYNCDIR']+'/rules/mosync_exe.rb')
 
+raise unless(USE_NEWLIB)
+
 work = PipeExeWork.new
 work.instance_eval do
 	@SOURCES = ['.', 'UIFramework']
@@ -12,4 +14,4 @@ work.instance_eval do
 	@NAME = 'Graphun'
 end
 
-work.invoke if(USE_NEWLIB)
+work.invoke

@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2011 MoSync AB
+/* Copyright (C) 2011 MoSync AB
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License,
@@ -91,8 +91,14 @@ namespace MoSync
              */
             private const int DifferenceSpacer = 23;
 
+            // Image handle for MAW_IMAGE_BUTTON_IMAGE property.
+            protected int mForegroundImageHandle = 0;
+
             // File image path for MAW_IMAGE_BUTTON_IMAGE_PATH property.
             protected String mForegroundImagePath = "";
+
+            // Image handle for MAW_IMAGE_BUTTON_BACKGROUND_IMAGE property.
+            protected int mBackgroundImageHandle = 0;
 
             // File image path for MAW_IMAGE_BUTTON_BACKGROUND_IMAGE_PATH property.
             protected String mBackgroundImagePath = "";
@@ -204,7 +210,11 @@ namespace MoSync
 
                 mBackgroundImage.Stretch = mStretchBackground;
 
-                mView = mGrid;
+                // We need to make this view a ContentControl in order to have System.Windows.Controls::Control properties enabled.
+                ContentControl contentControl = new System.Windows.Controls.ContentControl();
+                contentControl.Content = mGrid;
+
+                View = contentControl;
 
                 // the MouseEnter handle for the ImageButton. Used for switching background image.
                 mGrid.MouseEnter += new System.Windows.Input.MouseEventHandler(delegate(Object from, System.Windows.Input.MouseEventArgs evt)
@@ -357,7 +367,7 @@ namespace MoSync
                 set
                 {
                     Resource res = mRuntime.GetResource(MoSync.Constants.RT_IMAGE, value);
-                    if (null != res && res.GetInternalObject() != null)
+                    if (null != res && null != res.GetInternalObject())
                     {
                         /**
                          * Set the height and width of the foreground image
@@ -372,9 +382,14 @@ namespace MoSync
                             (System.Windows.Media.Imaging.BitmapSource)(res.GetInternalObject());
 
                         mForegroundImage.Source = bmpSource;
+                        mForegroundImageHandle = value;
                         mForegroundImagePath = "";
                     }
                     else throw new InvalidPropertyValueException();
+                }
+                get
+                {
+                    return mForegroundImageHandle;
                 }
             }
 
@@ -388,16 +403,21 @@ namespace MoSync
                 set
                 {
                     Resource res = mRuntime.GetResource(MoSync.Constants.RT_IMAGE, value);
-                    if (null != res && res.GetInternalObject() != null)
+                    if (null != res && null != res.GetInternalObject())
                     {
                         System.Windows.Media.Imaging.BitmapSource bmpSource =
                             (System.Windows.Media.Imaging.BitmapSource)(res.GetInternalObject());
 
                         mBackgroundImage.Source = bmpSource;
 
+                        mBackgroundImageHandle = value;
                         mBackgroundImagePath = "";
                     }
                     else throw new InvalidPropertyValueException();
+                }
+                get
+                {
+                    return mBackgroundImageHandle;
                 }
             }
 
@@ -411,7 +431,7 @@ namespace MoSync
                 set
                 {
                     Resource res = mRuntime.GetResource(MoSync.Constants.RT_IMAGE, value);
-                    if (null != res && res.GetInternalObject() != null)
+                    if (null != res && null != res.GetInternalObject())
                     {
                         System.Windows.Media.Imaging.BitmapSource bmpSource =
                             (System.Windows.Media.Imaging.BitmapSource)(res.GetInternalObject());
@@ -454,16 +474,25 @@ namespace MoSync
                     //Verify that the file exists on the isolated storage
                     if (f.FileExists(value))
                     {
-                        //Create a file stream for the required file
-                        IsolatedStorageFileStream fs = new IsolatedStorageFileStream(value, System.IO.FileMode.Open, f);
+                        try
+                        {
+                            //Create a file stream for the required file
+                            IsolatedStorageFileStream fs = new IsolatedStorageFileStream(value, System.IO.FileMode.Open, f);
 
-                        //Set the stream as a source for a new bitmap image
-                        var image = new System.Windows.Media.Imaging.BitmapImage();
-                        image.SetSource(fs);
+                            //Set the stream as a source for a new bitmap image
+                            var image = new System.Windows.Media.Imaging.BitmapImage();
+                            image.SetSource(fs);
 
-                        //Set the newly created bitmap image for the image widget
-                        mForegroundImage.Source = image;
-                        mForegroundImagePath = value;
+                            //  Set the newly created bitmap image for the image widget
+                            mForegroundImage.Source = image;
+                            mForegroundImagePath = value;
+                            mForegroundImageHandle = 0;
+                        }
+                        catch
+                        {
+                            // There was a problem reading the image file.
+                            throw new InvalidPropertyValueException();
+                        }
                     }
                     //If the file does not exist throw an invalid property value exception
                     else throw new InvalidPropertyValueException();
@@ -486,16 +515,25 @@ namespace MoSync
                     //Verify that the file exists on the isolated storage
                     if (f.FileExists(value))
                     {
-                        //Create a file stream for the required file
-                        IsolatedStorageFileStream fs = new IsolatedStorageFileStream(value, System.IO.FileMode.Open, f);
+                        try
+                        {
+                            //Create a file stream for the required file
+                            IsolatedStorageFileStream fs = new IsolatedStorageFileStream(value, System.IO.FileMode.Open, f);
 
-                        //Set the stream as a source for a new bitmap image
-                        var image = new System.Windows.Media.Imaging.BitmapImage();
-                        image.SetSource(fs);
+                            //Set the stream as a source for a new bitmap image
+                            var image = new System.Windows.Media.Imaging.BitmapImage();
+                            image.SetSource(fs);
 
-                        //Set the newly created bitmap image for the image widget
-                        mBackgroundImage.Source = image;
-                        mBackgroundImagePath = value;
+                            //Set the newly created bitmap image for the image widget
+                            mBackgroundImage.Source = image;
+                            mBackgroundImagePath = value;
+                            mBackgroundImageHandle = 0;
+                        }
+                        catch
+                        {
+                            // There was a problem reading the image file.
+                            throw new InvalidPropertyValueException();
+                        }
                     }
                     //If the file does not exist throw an invalid property value exception
                     else throw new InvalidPropertyValueException();
@@ -518,17 +556,25 @@ namespace MoSync
                     //Verify that the file exists on the isolated storage
                     if (f.FileExists(value))
                     {
-                        //Create a file stream for the required file
-                        IsolatedStorageFileStream fs = new IsolatedStorageFileStream(value, System.IO.FileMode.Open, f);
+                        try
+                        {
+                            //Create a file stream for the required file
+                            IsolatedStorageFileStream fs = new IsolatedStorageFileStream(value, System.IO.FileMode.Open, f);
 
-                        //Set the stream as a source for a new bitmap image
-                        var image = new System.Windows.Media.Imaging.BitmapImage();
-                        image.SetSource(fs);
+                            //Set the stream as a source for a new bitmap image
+                            var image = new System.Windows.Media.Imaging.BitmapImage();
+                            image.SetSource(fs);
 
-                        //Set the newly created bitmap image for the image widget
-                        mPressedBackgroundImageSource = image;
-                        mPressedImagePath = value;
-                        mPressedImageHandle = 0;
+                            //Set the newly created bitmap image for the image widget
+                            mPressedBackgroundImageSource = image;
+                            mPressedImagePath = value;
+                            mPressedImageHandle = 0;
+                        }
+                        catch
+                        {
+                            // There was a problem reading the image file.
+                            throw new InvalidPropertyValueException();
+                        }
                     }
                     //If the file does not exist throw an invalid property value exception
                     else throw new InvalidPropertyValueException();
@@ -538,6 +584,27 @@ namespace MoSync
                     return mPressedImagePath;
                 }
             }
-        }
-	}
-}
+
+            #region Property validation methods
+
+            /**
+             * Validates a property based on the property name and property value.
+             * @param propertyName The name of the property to be checked.
+             * @param propertyValue The value of the property to be checked.
+             * @returns true if the property is valid, false otherwise.
+             */
+            public new static bool ValidateProperty(string propertyName, string propertyValue)
+            {
+                bool isBasePropertyValid = WidgetBaseWindowsPhone.ValidateProperty(propertyName, propertyValue);
+                if (isBasePropertyValid == false)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            #endregion
+        } // end of ImageButton class
+    } // end of NativeUI namespace
+} // end of MoSync namespace

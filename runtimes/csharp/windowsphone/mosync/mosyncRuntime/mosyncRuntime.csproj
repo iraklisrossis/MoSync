@@ -78,6 +78,7 @@
     <Compile Include="Source\CustomPickerDataSources.cs" />
     <Compile Include="Source\gen-core.cs" />
     <Compile Include="Source\maapi.cs" />
+    <Compile Include="Source\Modules\Audio\MoSyncMp3Audio.cs" />
     <Compile Include="Source\Modules\Audio\MoSyncAudio.cs" />
     <Compile Include="Source\Modules\Audio\MoSyncAudioData.cs" />
     <Compile Include="Source\Modules\Audio\MoSyncAudioInstance.cs" />
@@ -103,6 +104,7 @@
     <Compile Include="Source\Modules\MoSyncScreenOrientationModule.cs" />
     <Compile Include="Source\Modules\MoSyncSensorsModule.cs" />
     <Compile Include="Source\Modules\MoSyncSoundModule.cs" />
+    <Compile Include="Source\Modules\NativeUI\MoSyncNativeUIAsync.cs" />
     <Compile Include="Source\Modules\NativeUI\MoSyncScreenTransitions.cs" />
     <Compile Include="Source\Modules\NativeUI\ListView\ListViewModel\ListItem.cs" />
     <Compile Include="Source\Modules\NativeUI\ListView\ListViewModel\ListSection.cs" />

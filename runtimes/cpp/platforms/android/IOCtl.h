@@ -283,17 +283,35 @@ namespace Base
 	int _maWidgetGetProperty(int memStart, int widget, const char *property,
 								int memBuffer, int memBufferSize,
 								JNIEnv* jNIEnv, jobject jThis);
+	int _maWidgetStackScreenPush(int stackScreenWidget, int newScreen, JNIEnv* jNIEnv, jobject jThis);
+
+	int _maWidgetStackScreenPop(int stackScreenWidget, JNIEnv* jNIEnv, jobject jThis);
 
 	int _maWidgetScreenAddOptionsMenuItem(int widget, const char* title,
 											const char* iconPath, int iconPredefined,
 											JNIEnv* jNIEnv, jobject jThis);
 
 	int _maWidgetScreenShow(int screenWidget, JNIEnv* jNIEnv, jobject jThis);
+
 	int _maWidgetScreenShowWithTransition(int screenWidget, int screenTransitionType, int screenTransitionDuration,
 											JNIEnv* jNIEnv, jobject jThis);
 
-	int _maWidgetStackScreenPush(int stackScreenWidget, int newScreen, JNIEnv* jNIEnv, jobject jThis);
-	int _maWidgetStackScreenPop(int stackScreenWidget, JNIEnv* jNIEnv, jobject jThis);
+	// Action Bar
+	int _maActionBarSetEnabled(int state, JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarAddMenuItem(int screenHandle, const char* title, int iconPredefinedId, int iconHandle,
+								int displayFlag, JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarRemoveMenuItem(int screenHandle, int itemHandle, JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarSetVisibility(int visibility, JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarGetHeight(JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarIsShowing(JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarSetTitle(const char* title, JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarSetIcon(int iconHandle, JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarSetDisplayHomeAsUpEnabled(int enableUp, JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarShowTitleEnabled(int enable, JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarShowLogoEnabled(int enable, JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarSetHomeButtonEnabled(int state, JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarRefresh(JNIEnv* jNIEnv, jobject jThis);
+	int _maActionBarSetBackgroundImage(int imageHandle, JNIEnv* jNIEnv, jobject jThis);
 
 	// Open GL API
 	/**
@@ -539,6 +557,18 @@ namespace Base
 	* \returns 0.
 	*/
 	int _maFileListClose(MAHandle list, JNIEnv* jNIEnv, jobject jThis);
+
+	/**
+	 * Saves an image in the photo gallery of the device.
+	 *
+	 * returns #MA_MEDIA_RES_OK if the input was correct and the operation started
+	 * or #MA_MEDIA_RES_IMAGE_EXPORT_FAILED otherwise.
+	 */
+	int _maSaveImageToDeviceGallery(
+			MAHandle imageHandle,
+			const char* imageName,
+			JNIEnv* jNIEnv,
+			jobject jThis);
 
 	/**
 	* Returns a handle to one of the default fonts of the device, in the style and size you specify.
@@ -795,7 +825,7 @@ namespace Base
 
 	int _maCameraSnapshot(int formatIndex, MAHandle placeHolder, JNIEnv* jNIEnv, jobject jThis);
 
-	int _maCameraSnapshotAsync(int formatIndex, JNIEnv* jNIEnv, jobject jThis);
+	int _maCameraSnapshotAsync(int dataPlaceholder, int sizeIndex, JNIEnv* jNIEnv, jobject jThis);
 
 	int _maCameraRecord(int flag, JNIEnv* jNIEnv, jobject jThis);
 

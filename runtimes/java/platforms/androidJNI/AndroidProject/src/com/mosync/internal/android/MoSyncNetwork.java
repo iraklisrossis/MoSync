@@ -63,6 +63,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.UUID;
@@ -193,14 +194,6 @@ public class MoSyncNetwork
 				e.printStackTrace();
 			}
 		}
-	}
-
-	/**
-	 * @return The MoSync data section memory buffer.
-	 */
-	public ByteBuffer getMemDataSection()
-	{
-		return mMoSyncThread.mMemDataSection;
 	}
 
 	/**
@@ -623,8 +616,8 @@ public class MoSyncNetwork
 	 */
 	void copyBytesToMemory(int address, byte[] bytes)
 	{
-		getMemDataSection().position(address);
-		getMemDataSection().put(bytes);
+		ByteBuffer buffer = mMoSyncThread.getMemorySlice(address, bytes.length);
+		buffer.put(bytes);
 	}
 
 	/**
@@ -633,8 +626,8 @@ public class MoSyncNetwork
 	 */
 	void copyBytesToMemory(int address, byte[] bytes, int offset, int length)
 	{
-		getMemDataSection().position(address);
-		getMemDataSection().put(bytes, offset, length);
+		ByteBuffer buffer = mMoSyncThread.getMemorySlice(address, length);
+		buffer.put(bytes, offset, length);
 	}
 
 	/**
@@ -642,8 +635,8 @@ public class MoSyncNetwork
 	 */
 	void readBytesFromMemory(int address, byte[] bytes)
 	{
-		getMemDataSection().position(address);
-		getMemDataSection().get(bytes);
+		ByteBuffer buffer = mMoSyncThread.getMemorySlice(address, bytes.length);
+		buffer.get(bytes);
 	}
 
 	/**
@@ -651,11 +644,11 @@ public class MoSyncNetwork
 	 */
 	void copyIntToMemory(int address, int value)
 	{
-		getMemDataSection().position(address);
+		ByteBuffer buffer = mMoSyncThread.getMemorySlice(address, 4).order(null);
 		//ByteOrder oldOrder = getMemDataSection().order();
 		//getMemDataSection().order(ByteOrder.LITTLE_ENDIAN);
 		//getMemDataSection().asIntBuffer().put(value);
-		getMemDataSection().putInt(value);
+		buffer.putInt(value);
 		//getMemDataSection().order(oldOrder);
 	}
 
@@ -666,7 +659,7 @@ public class MoSyncNetwork
 	{
 		//ByteOrder oldOrder = mMemDataSection.order();
 		//mMemDataSection.order(ByteOrder.LITTLE_ENDIAN);
-		int value = getMemDataSection().getInt(address);
+		int value = mMoSyncThread.getMemorySlice(address, 4).order(null).getInt();
 		//mMemDataSection.order(oldOrder);
 
 		return value;
@@ -677,9 +670,10 @@ public class MoSyncNetwork
 	 */
 	void copyStringToMemory(int address, String str)
 	{
-		getMemDataSection().position(address);
-		getMemDataSection().put(str.getBytes());
-		getMemDataSection().put((byte)0); // Terminating null char.
+		byte[] strAsBytes = str.getBytes();
+		ByteBuffer buffer = mMoSyncThread.getMemorySlice(address, strAsBytes.length + 1);
+		buffer.put(str.getBytes());
+		buffer.put((byte)0); // Terminating null char.
 	}
 
 	/**

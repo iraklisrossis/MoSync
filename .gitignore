@@ -46,6 +46,8 @@ rebuild.build.cpp
 .settings
 xcuserdata
 
+xcuserdata
+
 config_platform.h
 
 wormhole.js

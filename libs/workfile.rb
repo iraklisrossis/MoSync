@@ -34,4 +34,8 @@ end
 SUBDIRS = stdlibs + ["MAUtil", "MTXml", "MAUI", "MAUI-revamp", "MATest", "MAP",
 	"Testify", "MAFS", "yajl", "Ads", "Facebook", "NativeUI", "Notification", "Wormhole", "Purchase"]
 
+if(USE_NEWLIB)
+	SUBDIRS << "MoGraph"
+end
+
 Targets.invoke

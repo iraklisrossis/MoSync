@@ -68,6 +68,15 @@ build-one.rb
 # files
 
 /examples/parse_example_list.rb
+/examples/cpp/MoGraph/MoGraphWave/resources/Font.fnt
+/examples/cpp/MoGraph/MoGraphWave2/resources/Font.fnt
+/examples/cpp/MoGraph/MoGraphFinance/resources/Font.fnt
+
+/examples/html5/WormholeDemo/LocalFiles/js/jqtouch.js
+/examples/html5/WormholeDemo/LocalFiles/themes/css/jqtouch.css
+/examples/html5/WormholeDemo/LocalFiles/themes/css/apple.css
+/examples/html5/WormholeDemo/LocalFiles/themes/css/vanilla.css
+
 
 /libs/MAStd/api_areas.h
 /libs/MAStd/e_acos.c

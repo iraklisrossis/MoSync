@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2011 MoSync AB
+/* Copyright (C) 2011 MoSync AB
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License,
@@ -48,6 +48,9 @@ namespace MoSync
             //Standard stretch object
             protected System.Windows.Media.Stretch mStretch;
 
+            // Image handle for MAW_IMAGE_IMAGE property.
+            protected int mImageHandle = 0;
+
             // File image path for MAW_IMAGE_PATH property.
             protected String mImagePath;
 
@@ -79,7 +82,7 @@ namespace MoSync
                 {
                     //Get the resource with the specified handle
                     Resource res = mRuntime.GetResource(MoSync.Constants.RT_IMAGE, value);
-                    if (null != res)
+                    if (null != res && null != res.GetInternalObject())
                     {
                         //Create a BitmapSource object from the internal object of the resource loaded
                         System.Windows.Media.Imaging.BitmapSource bmpSource = (System.Windows.Media.Imaging.BitmapSource)(res.GetInternalObject());
@@ -87,9 +90,14 @@ namespace MoSync
                         //The image standard object gets that as a source
                         mImage.Source = bmpSource;
 
+                        mImageHandle = value;
                         mImagePath = "";
                     }
                     else throw new InvalidPropertyValueException();
+                }
+                get
+                {
+                    return mImageHandle;
                 }
             }
 
@@ -130,25 +138,55 @@ namespace MoSync
                     //Verify that the file exists on the isolated storage
                     if(f.FileExists(value))
                     {
-                        //Create a file stream for the required file
-                        IsolatedStorageFileStream fs = new IsolatedStorageFileStream(value, System.IO.FileMode.Open, f);
+                        try
+                        {
+                            //Create a file stream for the required file
+                            IsolatedStorageFileStream fs = new IsolatedStorageFileStream(value, System.IO.FileMode.Open, f);
 
-                        //Set the stream as a source for a new bitmap image
-                        var image = new System.Windows.Media.Imaging.BitmapImage();
-                        image.SetSource(fs);
+                            //Set the stream as a source for a new bitmap image
+                            var image = new System.Windows.Media.Imaging.BitmapImage();
+                            image.SetSource(fs);
 
-                        //Set the newly created bitmap image for the image widget
-                        mImage.Source = image;
-                        mImagePath = value;
+                            //Set the newly created bitmap image for the image widget
+                            mImage.Source = image;
+                            mImagePath = value;
+                            mImageHandle = 0;
+                        }
+                        catch
+                        {
+                            // There was a problem reading the image file.
+                            throw new InvalidPropertyValueException();
+                        }
                     }
                     //If the file does not exist throw an invalid property value exception
-                    else throw new InvalidPropertyValueException();
+                   else throw new InvalidPropertyValueException();
                 }
                 get
                 {
                     return mImagePath;
                 }
             }
-        }
-    }
-}
+
+            #region Property validation methods
+
+            /**
+             * Validates a property based on the property name and property value.
+             * @param propertyName The name of the property to be checked.
+             * @param propertyValue The value of the property to be checked.
+             * @returns true if the property is valid, false otherwise.
+             */
+            public new static bool ValidateProperty(string propertyName, string propertyValue)
+            {
+                bool isBasePropertyValid = WidgetBaseWindowsPhone.ValidateProperty(propertyName, propertyValue);
+                if (isBasePropertyValid == false)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            #endregion
+        } // end of Image class
+    } // end of NativeUI namespace
+} // end of MoSync namespace

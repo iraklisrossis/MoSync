@@ -47,6 +47,7 @@ import static com.mosync.internal.generated.MAAPI_consts.MA_RESOURCE_CLOSE;
 
 import static com.mosync.internal.generated.MAAPI_consts.MA_WAKE_LOCK_ON;
 import static com.mosync.internal.generated.MAAPI_consts.MA_CAMERA_RES_OK;
+import static com.mosync.internal.generated.MAAPI_consts.MA_CAMERA_RES_SNAPSHOT_IN_PROGRESS;
 
 import static com.mosync.internal.generated.MAAPI_consts.MA_TOAST_DURATION_SHORT;
 import static com.mosync.internal.generated.MAAPI_consts.MA_TOAST_DURATION_LONG;
@@ -122,6 +123,7 @@ import com.mosync.java.android.TextBox;
 import com.mosync.nativeui.ui.widgets.MoSyncCameraPreview;
 import com.mosync.nativeui.ui.widgets.ScreenWidget;
 import com.mosync.nativeui.util.AsyncWait;
+import com.mosync.nativeui.util.MediaManager;
 
 /**
  * Thread that runs the MoSync virtual machine and handles all syscalls.
@@ -270,7 +272,7 @@ public class MoSyncThread extends Thread
 
 	// Various variables, should be moved to subsystems
 	// along with the syscalls.
-	public ByteBuffer mMemDataSection;
+	private ByteBuffer mMemDataSection;
 	ByteBuffer mResourceFile;
 
 	Canvas mCanvas;
@@ -372,7 +374,17 @@ public class MoSyncThread extends Thread
 		//Do not access camera if it is not available
 		try
 		{
-			mMoSyncCameraController = new MoSyncCameraController(this);
+			Boolean isCameraAccessGranted =
+					(PackageManager.PERMISSION_GRANTED ==
+					getActivity().checkCallingOrSelfPermission("android.permission.CAMERA"));
+			if ( isCameraAccessGranted )
+			{
+				mMoSyncCameraController = new MoSyncCameraController(this);
+			}
+			else
+			{
+				mMoSyncCameraController = null;
+			}
 		}
 		catch (Throwable e)
 		{
@@ -3250,7 +3262,7 @@ public class MoSyncThread extends Thread
 	 * @param buttonNegative
 	 * @return
 	 */
-	int maAlert(
+	public int maAlert(
 		final String title,
 		final String message,
 		final String buttonPositive,
@@ -3336,19 +3348,26 @@ public class MoSyncThread extends Thread
 	 *  - #MA_TOAST_DURATION_LONG
 	 * @return
 	 */
-	int maToast(final String message, int duration)
+	int maToast(final String message, final int duration)
 	{
-		switch(duration)
+		if ( duration != MA_TOAST_DURATION_LONG &&
+				duration != MA_TOAST_DURATION_SHORT )
 		{
-		case MA_TOAST_DURATION_SHORT:
-			Toast.makeText(mContext.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
-			break;
-		case MA_TOAST_DURATION_LONG:
-			Toast.makeText(mContext.getApplicationContext(), message, Toast.LENGTH_LONG).show();
-			break;
-		default:
-			return 0;
+			return -1;
 		}
+
+		mContext.runOnUiThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				Toast.makeText(
+						mContext,
+						message,
+						(duration == MA_TOAST_DURATION_SHORT ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG))
+						.show();
+			}
+		});
 
 		return 0;
 	}
@@ -4529,6 +4548,109 @@ public class MoSyncThread extends Thread
 	}
 
 	/**
+	* The ActionBar is unique per application, therefore all syscalls that
+	* relate to the Action Bar will be handled on that unique instance.
+	* Available only on Android.
+	* @param handle The screen handle.
+	* @param title The menu item title.
+	* @param iconPredefinedId Optional icon for the action bar item.
+	* @param iconHandle ptional icon for the action bar item.
+	* @param displayFlag Where and how to display the menu item.
+	* \returns The the item handle on success, or any of the following result codes:
+	* - #MAW_RES_ERROR
+	* - #MAW_RES_ACTION_BAR_INVALID_ICON
+	* - #MAW_RES_ACTION_BAR_INVALID_FLAG
+	* - #MAW_RES_INVALID_HANDLE If the screenHandle points to an invalid screen.
+	* - #MAW_RES_ACTION_BAR_DISABLED If the action bar was explicitely disabled.
+	* - #MAW_RES_ACTION_BAR_NOT_AVAILABLE If the action bar is not available on the current platform.
+	*/
+	public int maActionBarAddMenuItem(final int handle, final String title,
+			final int iconPredefinedId, final int iconHandle, final int displayFlag)
+	{
+		return mMoSyncNativeUI.maActionBarAddMenuItem(
+				handle, title,
+				iconPredefinedId, iconHandle, displayFlag);
+	}
+
+	/**
+	 * Remove an item from the Action bar.
+	 * @param screenHandle The screen handle.
+	 * @param itemHandle The handle of the menu item to be removed.
+	 * \returns #MAW_RES_OK on success, or any of the following result codes:
+	 * - #MAW_RES_ACTION_BAR_NOT_AVAILABLE If the action bar is not available on the current platform,
+	 * - #MAW_RES_ACTION_BAR_DISABLED If the action bar was explicitely disabled, or
+	 * - #MAW_RES_INVALID_HANDLE If the indicated screen has no item on specified handle.
+	 */
+	public int maActionBarRemoveMenuItem(final int screenHandle, final int itemHandle)
+	{
+		return mMoSyncNativeUI.maActionBarRemoveMenuItem(screenHandle, itemHandle);
+	}
+
+	public int maActionBarSetEnabled(int state)
+	{
+		return mMoSyncNativeUI.maActionBarSetEnabled(state == 1 ? true : false);
+	}
+
+	public int maActionBarSetVisibility(int visibility)
+	{
+		return mMoSyncNativeUI.maActionBarSetVisibility(visibility == 1 ? true : false);
+	}
+
+	public int maActionBarGetHeight()
+	{
+		return mMoSyncNativeUI.maActionBarGetHeight();
+	}
+
+	public int maActionBarIsShowing()
+	{
+		return mMoSyncNativeUI.maActionBarIsShowing();
+	}
+
+	public int maActionBarSetTitle(final String title)
+	{
+		return mMoSyncNativeUI.maActionBarSetTitle(title);
+	}
+
+	public int maActionBarSetIcon(int iconHandle)
+	{
+		return mMoSyncNativeUI.maActionBarSetIcon(iconHandle);
+	}
+
+	public int maActionBarSetDisplayHomeAsUpEnabled(int enableUp)
+	{
+		return mMoSyncNativeUI.maActionBarSetDisplayHomeAsUpEnabled(enableUp == 1 ? true : false);
+	}
+
+	public int maActionBarShowTitleEnabled(int enable)
+	{
+		return mMoSyncNativeUI.maActionBarShowTitleEnabled(enable == 1 ? true : false);
+	}
+
+	public int maActionBarShowLogoEnabled(int enable)
+	{
+		if (enable == 1)
+			getActivity().getActionBar().setDisplayUseLogoEnabled(true);
+		else
+			getActivity().getActionBar().setDisplayUseLogoEnabled(true);
+		return 0;
+	}
+
+	public int maActionBarSetHomeButtonEnabled(int state)
+	{
+		return mMoSyncNativeUI.maActionBarSetHomeButtonEnabled(state == 1 ? true : false);
+	}
+
+	public int maActionBarRefresh()
+	{
+		return mMoSyncNativeUI.maActionBarRefresh();
+	}
+
+	public int maActionBarSetBackgroundImage(final int imageHandle)
+	{
+		return mMoSyncNativeUI.maActionBarSetBackgroundImage(imageHandle);
+	}
+
+	/**
 	 * Get the focused  screen.
 	 * @return The screen widget handle.
 	 */
@@ -4604,6 +4726,12 @@ public class MoSyncThread extends Thread
 		{
 			return IOCTL_UNAVAILABLE;
 		}
+
+		if ( mMoSyncCameraController.isSnapshotInProgress() )
+		{
+			return MA_CAMERA_RES_SNAPSHOT_IN_PROGRESS;
+		}
+
 		//Start a fullscreen preview and then start the camera
 		if(false == mMoSyncCameraController.hasView())
 		{
@@ -4660,6 +4788,11 @@ public class MoSyncThread extends Thread
 			return IOCTL_UNAVAILABLE;
 		}
 
+		if ( mMoSyncCameraController.isSnapshotInProgress() )
+		{
+			return MA_CAMERA_RES_SNAPSHOT_IN_PROGRESS;
+		}
+
 		return mMoSyncCameraController.cameraSnapshot(formatIndex, placeHolder);
 	}
 
@@ -4667,16 +4800,21 @@ public class MoSyncThread extends Thread
 	 * Takes a snapshot and send the place holder created via
 	 * #EVENT_TYPE_CAMERA_SNAPSHOT.
 	 *
-	 * @param formatIndex index of the format set by the user
-	 * @return IOCTL_UNAVAILABLE if fails and MA_CAMERA_RES_OK if succeeds
+	 * @param sizeIndex index of the snapshot size
+	 * @return IOCTL_UNAVAILABLE, MA_CAMERA_RES_FAILED if fails
+	 * and MA_CAMERA_RES_OK if succeeds
 	 */
-	int maCameraSnapshotAsync(int formatIndex)
+	int maCameraSnapshotAsync(int dataPlaceholder, int sizeIndex)
 	{
 		if(mMoSyncCameraController == null)
 		{
 			return IOCTL_UNAVAILABLE;
 		}
-		mMoSyncCameraController.cameraSnapshotAsync(formatIndex);
+		if ( mMoSyncCameraController.isSnapshotInProgress() )
+		{
+			return MA_CAMERA_RES_SNAPSHOT_IN_PROGRESS;
+		}
+		mMoSyncCameraController.cameraSnapshotAsync(dataPlaceholder, sizeIndex);
 		return MA_CAMERA_RES_OK;
 	}
 
@@ -4698,8 +4836,11 @@ public class MoSyncThread extends Thread
 				(FrameLayout)mMoSyncNativeUI.getCameraPreview(widgetHandle).getView();
 		MoSyncCameraPreview preview = (MoSyncCameraPreview)layout.getChildAt(0);
 		if(preview == null)
+		{
 			return 0; //Widget Not Found
+		}
 		mMoSyncCameraController.setPreview(preview);
+
 		return 1;
 	}
 
@@ -4821,9 +4962,11 @@ public class MoSyncThread extends Thread
 			return IOCTL_UNAVAILABLE;
 		}
 
-		return mMoSyncCameraController.enablePreviewEvents(
+		int returnVal = mMoSyncCameraController.enablePreviewEvents(
 			eventType, previewBuffer, rectLeft, rectTop,
 			rectWidth, rectHeight);
+
+		return returnVal;
 	}
 
 	int maCameraPreviewEventDisable()
@@ -5207,6 +5350,11 @@ public class MoSyncThread extends Thread
 	int maFileListClose(int list)
 	{
 		return mMoSyncFile.maFileListClose(list);
+	}
+
+	int maSaveImageToDeviceGallery(int imageHandle, String imageName)
+	{
+		return MediaManager.exportImageToPhotoGallery(imageHandle, imageName);
 	}
 
 	int maSensorStart(int sensor, int interval)

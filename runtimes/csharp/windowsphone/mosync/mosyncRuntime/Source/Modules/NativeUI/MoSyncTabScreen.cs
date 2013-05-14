@@ -148,6 +148,40 @@ namespace MoSync
             }
 
             /**
+             * Searches for a screen inside the children array, gets the proper pivot item
+             * for that screen and then updates its header based on the child screen title.
+             * @param childScreen The child screen that needs a title update.
+             */
+            public void UpdateScreenTitle(Screen childScreen)
+            {
+                // the index of the current screen inside the pivot control
+                int index = -1;
+                bool foundScreen = false;
+
+                for (int i = 0; i < mChildren.Count; i++)
+                {
+                    // if a screen is inside the children array, it means it's a
+                    // visible pivot item so we can increment the pivot item index
+                    if (mChildren[i] is Screen)
+                    {
+                        index++;
+                        if (mChildren[i].Equals(childScreen))
+                        {
+                            // we found the child screen
+                            foundScreen = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (foundScreen && mPivot.Items[index] is Microsoft.Phone.Controls.PivotItem)
+                {
+                    Microsoft.Phone.Controls.PivotItem item = mPivot.Items[index] as Microsoft.Phone.Controls.PivotItem;
+                    item.Header = childScreen.Title;
+                }
+            }
+
+            /**
              * MAW_TAB_SCREEN_TITLE property implementation
              * In order to avoid the property hiding from Screen you have to specify
              * the new keyword in front of the property
@@ -231,6 +265,34 @@ namespace MoSync
                 }
                 return false;
             }
-        }
-    }
-}
+
+            #region Property validation methods
+
+            /**
+             * Validates a property based on the property name and property value.
+             * @param propertyName The name of the property to be checked.
+             * @param propertyValue The value of the property to be checked.
+             * @returns true if the property is valid, false otherwise.
+             */
+            public new static bool ValidateProperty(string propertyName, string propertyValue)
+            {
+                bool isBasePropertyValid = Screen.ValidateProperty(propertyName, propertyValue);
+                if (isBasePropertyValid == false) return false;
+
+                if (propertyName.Equals("currentTab"))
+                {
+                    int val;
+                    if (!Int32.TryParse(propertyValue, out val)) return false;
+                    else
+                    {
+                        if (val < 0) return false;
+                    }
+                }
+
+                return true;
+            }
+
+            #endregion
+        } // end of TabScreen class
+    } // end of NativeUI namespace
+} // end of MoSync namespace

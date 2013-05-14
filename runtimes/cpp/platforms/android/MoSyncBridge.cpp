@@ -508,6 +508,9 @@ static void nativePostEvent(JNIEnv* env, jobject jthis, jintArray eventBuffer)
 		 * WIDGET_EVENT_RATING_STAR_VALUE_CHANGED
 		 *
 		 * MAW_EVENT_SCREEN_ORIENTATION_DID_CHANGE
+		 *
+		 * MAW_EVENT_CUSTOM_PICKER_ITEM_SELECTED
+		 * intArray[3] - The selected index.
 		 */
 
 		// Allocate the widget event data structure.
@@ -532,6 +535,10 @@ static void nativePostEvent(JNIEnv* env, jobject jthis, jintArray eventBuffer)
 		{
 			widgetEvent->sectionIndex = intArray[3];
 			widgetEvent->sectionItemIndex = intArray[4];
+		}
+		else if (widgetEventType == MAW_EVENT_CUSTOM_PICKER_ITEM_SELECTED)
+		{
+			widgetEvent->customPickerItemIndex = intArray[3];
 		}
 		else if (widgetEventType == MAW_EVENT_TAB_CHANGED)
 		{
@@ -591,6 +598,10 @@ static void nativePostEvent(JNIEnv* env, jobject jthis, jintArray eventBuffer)
 		{
 			widgetEvent->optionsMenuItem = intArray[3];
 		}
+		else if (widgetEventType == MAW_EVENT_ACTION_BAR_MENU_ITEM_SELECTED)
+		{
+			widgetEvent->actionBarMenuItem = intArray[3];
+		}
 		else if(widgetEventType == MAW_EVENT_SCREEN_ORIENTATION_DID_CHANGE)
 		{
 			widgetEvent->screenOrientation = intArray[3];
@@ -626,9 +637,15 @@ static void nativePostEvent(JNIEnv* env, jobject jthis, jintArray eventBuffer)
 	else if (event.type == EVENT_TYPE_CAMERA_SNAPSHOT)
 	{
 		event.snapshotImageDataHandle = intArray[1];
-		event.snapshotFormatIndex = intArray[2];
+		event.snapshotSize = intArray[2];
 		event.snapshotImageDataRepresentation = intArray[3];
 		event.snapshotReturnCode = intArray[4];
+	}
+	else if (event.type == EVENT_TYPE_MEDIA_EXPORT_FINISHED)
+	{
+		event.mediaType = intArray[1];
+		event.mediaHandle = intArray[2];
+		event.operationResultCode = intArray[3];
 	}
 	// HOLD ON!
 	// Don't forget to update the file EventQueue.cpp when adding

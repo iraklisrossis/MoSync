@@ -191,6 +191,11 @@ group WidgetEvent "Widget event" {
 			int optionsMenuItem;
 
 			/**
+			*  The selected action bar menu item handle, when a #MAW_EVENT_ACTION_BAR_MENU_ITEM_SELECTED event is received.
+			*/
+			int actionBarMenuItem;
+
+			/**
 			 * The clicked map pin index, when a #MAW_EVENT_MAP_PIN_CLICKED event is received.
 			 */
 			int mapPinIndex;
@@ -200,6 +205,13 @@ group WidgetEvent "Widget event" {
 			* May be one of the constants: \link #MA_SCREEN_ORIENTATION_PORTRAIT MA_SCREEN_ORIENTATION \endlink
 			*/
 			int screenOrientation;
+
+			/**
+			* @brief The index of the selected custom picker item.
+			* The first item has index zero.
+			* Valid only if event's type is #MAW_EVENT_CUSTOM_PICKER_ITEM_SELECTED.
+			*/
+			int customPickerItemIndex;
 		}
 	}
 
@@ -437,6 +449,25 @@ group WidgetEvent "Widget event" {
 			* Available on iOS.
 			*/
 			SEGMENTED_LIST_ITEM_DELETE_BTN = 36;
+
+			/**
+			* @brief Sent by a CustomPicker when user selects an item.
+			* The event will contain the selected item index in customPickerItemIndex.
+			* Available on iOS.
+			*/
+			CUSTOM_PICKER_ITEM_SELECTED = 37;
+
+			/**
+			* @brief Send when the home item from the Action Bar is selected.
+			* Available on Android.
+			*/
+			ACTION_BAR_UP_ITEM_SELECTED = 38;
+
+			/**
+			* @brief Send when an item from the Action Bar is selected.
+			* Available on Android.
+			*/
+			ACTION_BAR_MENU_ITEM_SELECTED = 39;
 		}
 	} // end of WidgetEventTypes
 } // end of WidgetEvent

@@ -166,6 +166,10 @@ public class StackScreenWidget extends ScreenWidget
 		//getView( ).addView( screen.getView( ) );
 		screen.getRootView( ).clearFocus();
 		getView( ).addView( screen.getRootView( ) );
+
+		// Add the screen to the children list.
+		screen.setParent( this );
+		m_children.add( m_children.size( ), screen );
 	}
 
 	private void sendPopEvent() {
@@ -212,6 +216,10 @@ public class StackScreenWidget extends ScreenWidget
 		// Remove current view
 		getView( ).removeAllViews( );
 
+		// Remove the last screen from the children list.
+		m_screenStack.peek().setParent( null );
+		m_children.remove( m_screenStack.peek() );
+
 		m_screenStack.pop( );
 
 		if( m_screenStack.empty( ) )
@@ -229,6 +237,10 @@ public class StackScreenWidget extends ScreenWidget
 						m_popTransitionType, m_popTransitionDuration, true);
 			}
 			getView( ).addView( previousScreen.getView( ) );
+
+			// Redraw the action bar each time a screen is shown - or manually by calling maActionBarRefresh().
+			Log.e("@@MoSync","NativeUI maWidgetScreenShow invalidate menu");
+			MoSyncThread.getInstance().getActivity().invalidateOptionsMenu();
 		}
 	}
 

@@ -1153,6 +1153,236 @@ namespace Base
 		return (int)result;
 	}
 
+	int _maActionBarSetEnabled(int state, JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarSetEnabled", "(I)I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, state);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
+	int _maActionBarAddMenuItem(int screenHandle, const char* title, int iconPredefinedId, int iconHandle, int displayFlag,
+								JNIEnv* jNIEnv, jobject jThis)
+	{
+		jstring jstrTitle = jNIEnv->NewStringUTF(title);
+
+		// Get the Java method
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarAddMenuItem", "(ILjava/lang/String;III)I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, screenHandle, jstrTitle, iconPredefinedId, iconHandle, displayFlag);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+		jNIEnv->DeleteLocalRef(jstrTitle);
+
+		return (int)result;
+	}
+	int _maActionBarSetVisibility(int visibility, JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarSetVisibility", "(I)I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, visibility);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
+	int _maActionBarGetHeight(JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarGetHeight", "()I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
+	int _maActionBarRemoveMenuItem(int screenHandle, int itemHandle, JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarRemoveMenuItem", "(II)I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, screenHandle, itemHandle);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
+	int _maActionBarIsShowing(JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarIsShowing","()I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
+	int _maActionBarSetTitle(const char* title, JNIEnv* jNIEnv, jobject jThis)
+	{
+		jstring jstrTitle = jNIEnv->NewStringUTF(title);
+
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarSetTitle", "(Ljava/lang/String;)I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, jstrTitle);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+		jNIEnv->DeleteLocalRef(jstrTitle);
+
+		return (int)result;
+	}
+
+	int _maActionBarSetIcon(int iconHandle, JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarSetIcon", "(I)I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, iconHandle);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+	int _maActionBarSetDisplayHomeAsUpEnabled(int enableUp, JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarSetDisplayHomeAsUpEnabled", "(I)I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, enableUp);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
+	int _maActionBarShowTitleEnabled(int enable, JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarShowTitleEnabled", "(I)I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, enable);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
+	int _maActionBarShowLogoEnabled(int enable, JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarShowLogoEnabled", "(I)I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, enable);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
+	int _maActionBarSetHomeButtonEnabled(int state, JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarSetHomeButtonEnabled", "(I)I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, state);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
+	int _maActionBarRefresh(JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maActionBarRefresh", "()I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
+	int _maActionBarSetBackgroundImage(int imageHandle, JNIEnv* jNIEnv, jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "=maActionBarSetBackgroundImage", "(I)I");
+
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, imageHandle);
+
+		// Delete allocated memory
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
 	int _maWidgetScreenShow(int screenWidget, JNIEnv* jNIEnv, jobject jThis)
 	{
 		// Get the Java method
@@ -1724,6 +1954,30 @@ namespace Base
 		return (int)result;
 	}
 
+	int _maSaveImageToDeviceGallery(
+		MAHandle imageHandle,
+		const char* imageName,
+		JNIEnv* jNIEnv,
+		jobject jThis)
+	{
+		jclass cls = jNIEnv->GetObjectClass(jThis);
+
+		jstring jstrValue = jNIEnv->NewStringUTF(imageName);
+
+		jmethodID methodID = jNIEnv->GetMethodID(
+												 cls,
+												 "maSaveImageToDeviceGallery",
+												 "(ILjava/lang/String;)I");
+		jint result = -1;
+
+		if (methodID != 0)
+			result = jNIEnv->CallIntMethod(jThis, methodID, imageHandle, jstrValue);
+
+		jNIEnv->DeleteLocalRef(cls);
+
+		return (int)result;
+	}
+
 	int _maCameraStart(JNIEnv* jNIEnv, jobject jThis)
 	{
 		// Get the Java method
@@ -1827,16 +2081,16 @@ namespace Base
 		return (int)result;
 	}
 
-	int _maCameraSnapshotAsync(int formatIndex, JNIEnv* jNIEnv, jobject jThis)
+	int _maCameraSnapshotAsync(int dataPlaceholder, int sizeIndex, JNIEnv* jNIEnv, jobject jThis)
 	{
 		// Get the Java method
 		jclass cls = jNIEnv->GetObjectClass(jThis);
-		jmethodID methodID = jNIEnv->GetMethodID(cls, "maCameraSnapshotAsync", "(I)I");
+		jmethodID methodID = jNIEnv->GetMethodID(cls, "maCameraSnapshotAsync", "(II)I");
 
 		jint result = -1;
 
 		if (methodID != 0)
-			result = jNIEnv->CallIntMethod(jThis, methodID, formatIndex);
+			result = jNIEnv->CallIntMethod(jThis, methodID, dataPlaceholder, sizeIndex);
 
 		// Delete allocated memory
 		jNIEnv->DeleteLocalRef(cls);

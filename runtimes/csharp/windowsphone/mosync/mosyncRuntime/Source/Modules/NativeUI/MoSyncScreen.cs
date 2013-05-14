@@ -81,7 +81,11 @@ namespace MoSync
                 mPage = new Grid();
                 mPage.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 mPage.RowDefinitions.Add(new RowDefinition { Height = new GridLength( 1, GridUnitType.Star) });
-                mView = mPage;
+
+                View = mPage;
+                //mView = mPage;
+
+//                (mView as System.Windows.UIElement).LayoutUpdated += new EventHandler(Button_LayoutUpdated);
 
                 //Initialize the application bar and set its visibility to false.
                 mApplicationBar = new Microsoft.Phone.Shell.ApplicationBar();
@@ -144,7 +148,7 @@ namespace MoSync
                         mosyncScreenOrientation = MoSync.Constants.MA_SCREEN_ORIENTATION_LANDSCAPE_RIGHT;
                         break;
                     case PageOrientation.Portrait:
-                        mosyncScreenOrientation = MoSync.Constants.MA_SCREEN_ORIENTATION_PORTRAIT;
+                        mosyncScreenOrientation = MoSync.Constants.MA_SCREEN_ORIENTATION_PORTRAIT_UP;
                         break;
                     case PageOrientation.PortraitDown:
                         mosyncScreenOrientation = MoSync.Constants.MA_SCREEN_ORIENTATION_PORTRAIT_UPSIDE_DOWN;
@@ -154,39 +158,26 @@ namespace MoSync
                         break;
                 }
 
-                // Post events handled by both NativeUI and Moblet.
-                postOrientationEvent(mosyncScreenOrientation);
-                postScreenOrientationEvent(mosyncScreenOrientation);
-            }
-
-            /**
-             * Post orientation event to MoSync queue.
-             * @param orientation The new orientation.
-             */
-            protected void postOrientationEvent(int orientation)
-            {
-                Memory eventData = new Memory(8);
-                const int MAEventData_eventType = 0;
-                const int MAEventData_orientation = 4;
-                eventData.WriteInt32(MAEventData_eventType, MoSync.Constants.EVENT_TYPE_ORIENTATION_DID_CHANGE);
-                eventData.WriteInt32(MAEventData_orientation, orientation);
-
-                mRuntime.PostEvent(new Event(eventData));
+                // Post events handled by the NativeUI library.
+                postScreenOrientationEvent(mosyncScreenOrientation, mHandle);
             }
 
             /**
              * Post screen orientation event to MoSync queue.
              * @param orientation The new screen orientation.
+             * @param widgetHandle The handle of the screen that will receive the event.
              */
-            protected void postScreenOrientationEvent(int orientation)
+            protected void postScreenOrientationEvent(int orientation, int widgetHandle)
             {
                 // send the event to the mosync runtime.
                 Memory eventData = new Memory(12);
                 const int MAWidgetEventData_eventType = 0;
                 const int MAWidgetEventData_widgetHandle = 4;
                 const int MAWidgetEventData_screenOrientation = 8;
-                eventData.WriteInt32(MAWidgetEventData_eventType, MoSync.Constants.MAW_EVENT_SCREEN_ORIENTATION_DID_CHANGE);
-                eventData.WriteInt32(MAWidgetEventData_widgetHandle, mHandle);
+                eventData.WriteInt32(
+                    MAWidgetEventData_eventType,
+                    MoSync.Constants.MAW_EVENT_SCREEN_ORIENTATION_DID_CHANGE);
+                eventData.WriteInt32(MAWidgetEventData_widgetHandle, widgetHandle);
                 eventData.WriteInt32(MAWidgetEventData_screenOrientation, orientation);
 
                 mRuntime.PostCustomEvent(MoSync.Constants.EVENT_TYPE_WIDGET, eventData);
@@ -306,7 +297,19 @@ namespace MoSync
             {
                 set
                 {
-                   mTitle = value;
+                    mTitle = value;
+                    IWidget parent = GetParent();
+                    // if the parent widget is a TabScreen, we need to update the screen
+                    // title if the property has been set after the current screen has been
+                    // added as a pivot element
+                    if (parent is TabScreen)
+                    {
+                        (parent as TabScreen).UpdateScreenTitle(this);
+                    }
+                }
+                get
+                {
+                    return mTitle;
                 }
             }
 
@@ -456,6 +459,24 @@ namespace MoSync
             {
                 return false;
             }
-        }
-    }
-}
+
+            #region Property validation methods
+
+            /**
+             * Validates a property based on the property name and property value.
+             * @param propertyName The name of the property to be checked.
+             * @param propertyValue The value of the property to be checked.
+             * @returns true if the property is valid, false otherwise.
+             */
+            public new static bool ValidateProperty(string propertyName, string propertyValue)
+            {
+                bool isBasePropertyValid = WidgetBaseWindowsPhone.ValidateProperty(propertyName, propertyValue);
+                if (isBasePropertyValid == false) return false;
+
+                return true;
+            }
+
+            #endregion
+        } // end of Screen class
+    } // end of NativeUI namespace
+} // end of MoSync namespace

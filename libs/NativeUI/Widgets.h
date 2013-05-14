@@ -37,11 +37,14 @@ MA 02110-1301, USA.
 #define NATIVEUI_WIDGETS_H_
 
 #include "ActivityIndicator.h"
+#include "ActionBar.h"
 #include "Button.h"
 #include "ButtonListener.h"
 #include "CameraPreview.h"
+#include "Camera.h"
 #include "CheckBox.h"
 #include "CheckBoxListener.h"
+#include "CustomPicker.h"
 #include "DatePicker.h"
 #include "DatePickerListener.h"
 #include "Dialog.h"

@@ -47,16 +47,14 @@ namespace WPAppLauncher
 	{
 		private static void ShowHelp()
 		{
-			Console.WriteLine("WP7AppLauncher.exe [/target:<option>] [/wait:<filename>] <yourXapFile.xap>");
+			Console.WriteLine("WPAppLauncher.exe [/wait:<filename>] <platform> <target> <yourXapFile.xap>");
 			Console.WriteLine("");
-			Console.WriteLine("\t<option> can be 'device' or 'emulator'. Default: 'emulator'.");
-			Console.WriteLine("\t<option> can also be 8d, 8eWVGA5, 8eWVGA, 8eWXGA or 8e720p.");
 			Console.WriteLine("\t/wait causes the launcher to wait until the specified file exists.");
 			Console.WriteLine("\t<yourXapFile.xap> is the XAP file you want to launch.");
 		}
 
-		static string sPlatform = "Windows Phone 7";
-		static string[] sTargets = {"Windows Phone Emulator", "Windows Phone 7 Emulator"};
+		static string sPlatform;
+		static string sTarget;
 		static string waitFile = null;
 
 		static string xapFile;
@@ -67,7 +65,7 @@ namespace WPAppLauncher
 			try
 #endif
 			{
-				if (args.Length >= 1)
+				if (args.Length >= 3)
 					ProcessOptions(args);
 				else
 					ShowHelp();
@@ -82,42 +80,17 @@ namespace WPAppLauncher
 
 		private static void ProcessOptions(string[] args)
 		{
-			sTargets = new string[] {"Windows Phone Device"};
-			for (int i = 0; i < args.Length - 1; i++)
+			for (int i = 0; i < args.Length - 3; i++)
 			{
-				if (args[i].StartsWith("/target:"))
-				{
-					string t = args[i].Substring(8);
-					if (t == "device")
-						sTargets = new string[] {"Windows Phone Device"};
-					else if (t == "emulator")
-						sTargets = new string[] {"Windows Phone Emulator", "Windows Phone 7 Emulator"};
-					else
-					{
-						sPlatform = "Windows Phone 8";
-						if (t == "8d")
-							sTargets = new string[] {"Device"};
-						else if (t == "8eWVGA5")
-							sTargets = new string[] {"Emulator WVGA 512MB"};
-						else if (t == "8eWVGA")
-							sTargets = new string[] {"Emulator WVGA"};
-						else if (t == "8eWXGA")
-							sTargets = new string[] {"Emulator WXGA"};
-						else if (t == "8e720p")
-							sTargets = new string[] {"Emulator 720P"};
-						else
-						{
-							throw new Exception("Unknown target '" + t + "'");
-						}
-					}
-				}
-				else if (args[i].StartsWith("/wait:"))
+				if (args[i].StartsWith("/wait:"))
 					waitFile = args[i].Substring(6);
 				else
 				{
 					throw new Exception("Exception: option not recognized: " + args[i]);
 				}
 			}
+			sPlatform = args[args.Length - 3];
+			sTarget = args[args.Length - 2];
 			xapFile = args[args.Length - 1];
 			if (!File.Exists(xapFile))
 			{
@@ -135,45 +108,32 @@ namespace WPAppLauncher
 			{
 				platform = platforms.Single(p => p.Name == sPlatform);
 			}
-			catch (InvalidOperationException)
+			catch (InvalidOperationException e)
 			{
 				Console.WriteLine("Platform '" + sPlatform + "' not found. Available platforms:");
 				foreach (var p in platforms)
 				{
 					Console.WriteLine(p.Name);
 				}
-				throw new Exception();
+				throw e;
 			}
 
 
 			// Get Emulator / Device
 			var devices = platform.GetDevices();
 			Device device = null;
-			foreach(string t in sTargets)
+			try
 			{
-				try
-				{
-					device = devices.Single(d => d.Name == t);
-					break;
-				}
-				catch (InvalidOperationException)
-				{
-				}
+				device = devices.Single(d => d.Name == sTarget);
 			}
-
-			if (device == null)
+			catch (InvalidOperationException e)
 			{
-				Console.WriteLine("Target not found. Attempted targets:");
-				foreach (string t in sTargets)
-				{
-					Console.WriteLine(t);
-				}
-				Console.WriteLine("Available targets:");
+				Console.WriteLine("Target '" + sTarget + "' not found. Available targets:");
 				foreach (var d in devices)
 				{
 					Console.WriteLine(d.Name);
 				}
-				throw new Exception();
+				throw e;
 			}
 
 			// Connect to WP7 Emulator / Device

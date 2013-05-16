@@ -202,6 +202,8 @@ LocalFiles.bin*
 
 /tools/iphone-apns/Certs/
 
+/tools/WPAppLauncher/WPAppLauncher.sln
+
 /runtimes/cpp/platforms/sdl/MoRE/filesystem/*
 /runtimes/cpp/platforms/android/config_platform.h.saved
 /runtimes/java/platforms/javaME/setdirs.bat

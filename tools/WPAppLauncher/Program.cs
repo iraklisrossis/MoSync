@@ -39,7 +39,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.SmartDevice.Connectivity;
+//using Microsoft.SmartDevice.Connectivity;
+using System.GAC;
 
 namespace WPAppLauncher
 {
@@ -47,8 +48,9 @@ namespace WPAppLauncher
 	{
 		private static void ShowHelp()
 		{
-			Console.WriteLine("WPAppLauncher.exe [/wait:<filename>] <platform> <target> <yourXapFile.xap>");
+			Console.WriteLine("WPAppLauncher.exe < /dump | [/wait:<filename>] <platform> <target> <yourXapFile.xap> >");
 			Console.WriteLine("");
+			Console.WriteLine("\t/dump prints a complete list of available platforms and targets, then exits.");
 			Console.WriteLine("\t/wait causes the launcher to wait until the specified file exists.");
 			Console.WriteLine("\t<yourXapFile.xap> is the XAP file you want to launch.");
 		}
@@ -65,15 +67,23 @@ namespace WPAppLauncher
 			try
 #endif
 			{
-				if (args.Length >= 3)
+				if (args.Length == 1 && args[0] == "/dump")
+					dumpAssemblyInfo();
+				else if (args.Length >= 3)
 					ProcessOptions(args);
 				else
 					ShowHelp();
 			}
 #if !DEBUG
+			catch (System.Reflection.TargetInvocationException tie)
+			{
+				Console.WriteLine("Exception: " + tie.InnerException.Message);
+				Environment.Exit(1);
+			}
 			catch (Exception e)
 			{
 				Console.WriteLine("Exception: " + e.Message);
+				Environment.Exit(1);
 			}
 #endif
 		}
@@ -99,59 +109,146 @@ namespace WPAppLauncher
 			LaunchApp();
 		}
 
-		private static void LaunchApp()
+		private static void dumpAssemblyInfo()
 		{
-			// Get CoreCon WP7 SDK
-			var platforms = new DatastoreManager(1033).GetPlatforms();
-			Platform platform;
-			try
+			var assemblies = new System.Collections.ArrayList();
+			Console.WriteLine("Enumerating versions of Microsoft.SmartDevice.Connectivity...");
+			var e = AssemblyCache.CreateGACEnum("Microsoft.SmartDevice.Connectivity");
+			while (true)
 			{
-				platform = platforms.Single(p => p.Name == sPlatform);
-			}
-			catch (InvalidOperationException e)
-			{
-				Console.WriteLine("Platform '" + sPlatform + "' not found. Available platforms:");
+				IAssemblyName an;
+				e.GetNextAssembly(new IntPtr(0), out an, 0);
+				if (an == null)
+					break;
+#if false
+				uint vh, vl;
+				an.GetVersion(out vh, out vl);
+				Console.WriteLine("v" + vh + "." + vl);
+#endif
+				uint len = 1000;
+				var dnb = new System.Text.StringBuilder(1000);
+				an.GetDisplayName(dnb, ref len, 0);
+				string dn = dnb.ToString();
+				Console.WriteLine(dn);
+				var a = System.Reflection.Assembly.Load(new System.Reflection.AssemblyName(dn));
+				assemblies.Add(a);
+
+				Type t = a.GetType("Microsoft.SmartDevice.Connectivity.DatastoreManager");
+				Type[] constructorTypes = { typeof(int) };
+				if (t == null)
+				{
+					Console.WriteLine("Module loaded. Available types:");
+					foreach (var at in a.GetTypes())
+					{
+						Console.WriteLine(at.FullName);
+					}
+				}
+
+				object[] parameters = { 1033 };
+				object dm = t.GetConstructor(constructorTypes).Invoke(parameters);
+
+				var platforms = (System.Collections.ICollection)invoke(dm, "GetPlatforms");
+				Console.WriteLine("Available platforms/devices:");
 				foreach (var p in platforms)
 				{
-					Console.WriteLine(p.Name);
+					var name = gpv(p, "Name");
+					Console.WriteLine(name);
+
+					var devices = (System.Collections.ICollection)invoke(p, "GetDevices");
+					foreach (var d in devices)
+					{
+						var devName = gpv(d, "Name");
+						Console.WriteLine("\t" + devName);
+					}
 				}
-				throw e;
+				Console.WriteLine("");
 			}
+		}
 
+		// get property value
+		private static object gpv(object o, string propName)
+		{
+			return o.GetType().GetProperty(propName).GetValue(o, null);
+		}
 
-			// Get Emulator / Device
-			var devices = platform.GetDevices();
-			Device device = null;
-			try
+		private static object invoke(object o, string funcName, params object[] parameters)
+		{
+			var t = o.GetType();
+			System.Reflection.MethodInfo m;
+			if(parameters == null || parameters.Length == 0)
+				m = t.GetMethod(funcName, new Type[0]);
+			else
+				m = t.GetMethod(funcName);
+			return m.Invoke(o, parameters);
+		}
+
+		private static object GetDevice(string platName, string devName)
+		{
+			Console.WriteLine("Looking for '" + platName + "'/'" + devName + "'...");
+			// iterate over assemblies with this name.
+			var e = AssemblyCache.CreateGACEnum("Microsoft.SmartDevice.Connectivity");
+			while (true)
 			{
-				device = devices.Single(d => d.Name == sTarget);
-			}
-			catch (InvalidOperationException e)
-			{
-				Console.WriteLine("Target '" + sTarget + "' not found. Available targets:");
-				foreach (var d in devices)
+				// load next assembly, if there is one.
+				IAssemblyName an;
+				e.GetNextAssembly(new IntPtr(0), out an, 0);
+				if (an == null)
+					break;
+				uint len = 1000;
+				var dnb = new System.Text.StringBuilder(1000);
+				an.GetDisplayName(dnb, ref len, 0);
+				string assemblyName = dnb.ToString();
+				var a = System.Reflection.Assembly.Load(new System.Reflection.AssemblyName(assemblyName));
+
+				// construct DatastoreManager.
+				Type t = a.GetType("Microsoft.SmartDevice.Connectivity.DatastoreManager");
+				Type[] constructorTypes = { typeof(int) };
+				object[] parameters = { 1033 };
+				object dm = t.GetConstructor(constructorTypes).Invoke(parameters);
+
+				// get collection of platforms.
+				var platforms = (System.Collections.ICollection)invoke(dm, "GetPlatforms");
+				foreach (var p in platforms)
 				{
-					Console.WriteLine(d.Name);
-				}
-				throw e;
-			}
+					if ((string)gpv(p, "Name") != platName)
+						continue;
 
-			// Connect to WP7 Emulator / Device
-			Console.WriteLine("Connecting to '" + device.Name + "'...");
-			device.Connect();
-			Console.WriteLine(device + " Connected.");
+					var devices = (System.Collections.ICollection)invoke(p, "GetDevices");
+					foreach (var d in devices)
+					{
+						if ((string)gpv(d, "Name") == devName)
+						{
+							Console.WriteLine("Found it in " + assemblyName);
+							return d;
+						}
+					}
+				}
+			}
+			Console.WriteLine("'" + platName + "'/'" + devName + "' not found. Available targets:");
+			dumpAssemblyInfo();
+			throw new Exception();
+		}
+
+		private static void LaunchApp()
+		{
+			var device = GetDevice(sPlatform, sTarget);
 
 			// Get AppID.
 			var xipFile = new ICSharpCode.SharpZipLib.Zip.ZipFile(xapFile);
 			Guid appID = GetAppID(xipFile.GetInputStream(xipFile.GetEntry(("WMAppManifest.xml"))));
 
+			// Connect to Emulator / Device
+			Console.WriteLine("Connecting to '" + sTarget + "'...");
+			invoke(device, "Connect");
+			Console.WriteLine(device + " Connected.");
+
 			// Remove old version, if installed.
-			RemoteApplication app;
-			if (device.IsApplicationInstalled(appID))
+			object app = null;
+			if ((Boolean)invoke(device, "IsApplicationInstalled", appID))
 			{
 				Console.WriteLine("Uninstalling XAP...");
-				app = device.GetApplication(appID);
-				app.Uninstall();
+				app = invoke(device, "GetApplication", appID);
+				invoke(app, "Uninstall");
 				Console.WriteLine("XAP Uninstalled...");
 			}
 
@@ -167,12 +264,12 @@ namespace WPAppLauncher
 
 			// Install XAP.
 			Console.WriteLine("Installing XAP...");
-			app = device.InstallApplication(appID, appID, "NormalApp", iconPath, xapFile);
+			app = invoke(device, "InstallApplication", appID, appID, "NormalApp", iconPath, xapFile);
 			Console.WriteLine("XAP installed.");
 
 			// Launch Application.
 			Console.WriteLine("Launching app...");
-			app.Launch();
+			invoke(app, "Launch");
 			Console.WriteLine("Launched app.");
 
 			// Delete icon.
@@ -183,33 +280,19 @@ namespace WPAppLauncher
 			if (waitFile != null)
 			{
 				Console.WriteLine("Waiting for the app to create '" + waitFile + "'...");
-#if false	// IsRunning() is not implemented.
-				while (app.IsRunning())
-				{
-					System.Threading.Thread.Sleep(1000);
-				}
-				Console.WriteLine("App has exited, retrieving output...");
-				app.GetIsolatedStore().ReceiveFile("log.txt", "log.txt");
-#else
 				while (true)
 				{
 					try
 					{
-						app.GetIsolatedStore().ReceiveFile(waitFile, waitFile);
+						var store = invoke(app, "GetIsolatedStore");
+						invoke(store, "ReceiveFile", waitFile, waitFile);
 						break;
 					}
 					catch (System.IO.FileNotFoundException)
 					{
 						System.Threading.Thread.Sleep(1000);
 					}
-#if false
-					catch (Exception e)
-					{
-						Console.WriteLine("Exception: " + e.ToString());
-					}
-#endif
 				}
-#endif
 				Console.WriteLine(waitFile + " retrieved.");
 			}
 		}

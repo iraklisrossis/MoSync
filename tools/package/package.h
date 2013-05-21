@@ -56,7 +56,7 @@ struct SETTINGS {
 
 	// Windows Phone specific settings
 	const char* WPconfig;
-	const char* WPtarget;
+	//const char* WPtarget;
 	bool WPgenerateOnly;
 	const char* WPguid;
 	const char* WPvsBuildPath;

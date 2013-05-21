@@ -63,6 +63,7 @@ void writeCpp(const DebuggingData& data, const char* cppName) {
 			"\n"
 			"#pragma warning disable 0164\n"
 			"#pragma warning disable 1717\n"
+			"#pragma warning disable 1718\n"
 			"\n";
 	}
 	else
@@ -357,7 +358,7 @@ static void setCallRegDataRefs(const DebuggingData& data, CallRegs& cr)
 
 typedef const char* (*getRegNameFunc)(size_t);
 static void streamRegisterDeclarations(ostream& os, const char* type, unsigned regUsage, size_t nRegs,
-	size_t start, size_t paramLow, size_t paramHi, unsigned nParams, getRegNameFunc grn)
+	size_t start, size_t paramLow, size_t paramHi, unsigned nParams, getRegNameFunc grn, bool cs)
 {
 	if(regUsage != 0) {
 		bool first = true;
@@ -372,6 +373,8 @@ static void streamRegisterDeclarations(ostream& os, const char* type, unsigned r
 			} else
 				os << ", ";
 			os << grn(i);
+			if(cs && grn == getIntRegName)
+				os << "=0";
 		}
 		if(!first)
 			os << ";\n";
@@ -391,8 +394,9 @@ static void streamFunctionContents(const DebuggingData& data,
 
 	// declare registers
 	streamRegisterDeclarations(os, "int ", pid.regUsage.i, nIntRegs, REG_fp,
-		REG_p0, REG_p0 + f.ci.intParams, f.ci.intParams, getIntRegName);
-	streamRegisterDeclarations(os, "double ", pid.regUsage.f, nFloatRegs, 0, 8, 15, f.ci.floatParams, getFloatRegName);
+		REG_p0, REG_p0 + f.ci.intParams, f.ci.intParams, getIntRegName, data.cs);
+	streamRegisterDeclarations(os, "double ", pid.regUsage.f, nFloatRegs, 0,
+		8, 15, f.ci.floatParams, getFloatRegName, data.cs);
 
 	os << oss.str();
 }
@@ -418,7 +422,7 @@ static void streamFunctionPrototypeParams(ostream& os, bool cs, const CallInfo& 
 	}
 	os << ')';
 	if(!cs)
-	os << hex;
+		os << hex;
 }
 
 static void streamFunctionPrototype(ostream& os, const Function& f, bool cs) {

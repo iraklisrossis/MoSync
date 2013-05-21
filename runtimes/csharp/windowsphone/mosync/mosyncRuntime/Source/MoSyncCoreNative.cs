@@ -127,6 +127,12 @@ namespace MoSync
 				i1 = (int)(((ulong)value) >> 32);
 			}
 
+			protected long RETURN_DI(int i0, int i1)
+			{
+				ulong l = ((ulong)(uint)i0) | (((ulong)(uint)i1) << 32);
+				return (long)l;
+			}
+
 			protected void MOV_SISF(int i0, out double d)
 			{
 				d = MoSync.Util.ConvertToFloat(i0);

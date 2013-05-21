@@ -29,6 +29,8 @@ default_const(:EXIT_ON_ERROR, true)
 default_const(:PRINT_WORKING_DIRECTORY, false)
 default_const(:INSTALL_DIR, false)
 
+default_const(:MSBUILD_PATH, nil)
+
 default_const(:DEFAULT_BB10_ARCH, 'arm')
 
 # Implement this in local_config.rb.

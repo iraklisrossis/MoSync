@@ -222,30 +222,34 @@ class MoSyncPackTask < Task
 		@o[:vendor] = 'Built with MoSync' if(!@o[:vendor])
 	end
 	def execute
-		if(@o[:resource])
-			r = File.expand_path(@o[:resource])
-			resArg = " -r \"#{r}\""
-		end
 		p = File.expand_path(@o[:program])
 		d = File.expand_path(@o[:packpath])
 		co = File.expand_path(@o[:cppOutput])
-		iconArg = " --icon #{@o[:icon]}" if(@o[:icon])
+		cmd = "#{mosyncdir}/bin/package -p \"#{p}\""
+		if(@o[:resource])
+			r = File.expand_path(@o[:resource])
+			cmd << " -r \"#{r}\""
+		end
+		cmd << " -m \"#{@o[:model]}\""+
+			" -d \"#{d}\" -n \"#{@o[:name]}\" --vendor \"#{@o[:vendor]}\""+
+			" --version #{@o[:version]}"
+		cmd << " --icon #{@o[:icon]}" if(@o[:icon])
+		cmd << " --ios-cert \"#{@o[:iosCert]}\""+
+			" --cpp-output \"#{co}\" --ios-project-only"+
+			" --wp-config release_rebuild"+
+			" --cs-output \"#{co}\""
+		cmd << " --wp-project-only" if(!MSBUILD_PATH)
+		cmd << " --wp-vs-build-path \"#{MSBUILD_PATH}\"" if(MSBUILD_PATH)
+		cmd << " --android-package \"#{@o[:androidPackage]}\""+
+			" --android-version-code \"#{@o[:androidVersionCode]}\""+
+			" --android-keystore \"#{@o[:androidKeystore]}\""+
+			" --android-storepass \"#{@o[:androidStorepass]}\""+
+			" --android-alias \"#{@o[:androidAlias]}\""+
+			" --android-keypass \"#{@o[:androidKeypass]}\""+
+			" --show-passwords"+
+			@o[:extraParameters].to_s
 		FileUtils.cd(@o[:tempdir], :verbose => true) do
-			sh "#{mosyncdir}/bin/package -p \"#{p}\"#{resArg} -m \"#{@o[:model]}\""+
-				" -d \"#{d}\" -n \"#{@o[:name]}\" --vendor \"#{@o[:vendor]}\""+
-				" --version #{@o[:version]}"+
-				"#{iconArg}"+
-				" --ios-cert \"#{@o[:iosCert]}\""+
-				" --cpp-output \"#{co}\" --ios-project-only"+
-				" --wp-project-only"+
-				" --android-package \"#{@o[:androidPackage]}\""+
-				" --android-version-code \"#{@o[:androidVersionCode]}\""+
-				" --android-keystore \"#{@o[:androidKeystore]}\""+
-				" --android-storepass \"#{@o[:androidStorepass]}\""+
-				" --android-alias \"#{@o[:androidAlias]}\""+
-				" --android-keypass \"#{@o[:androidKeypass]}\""+
-				" --show-passwords"+
-				@o[:extraParameters].to_s
+			sh cmd
 		end
 	end
 end
@@ -335,6 +339,9 @@ module MoSyncExeModule
 	def isPackingForIOS
 		return (defined?(PACK) && @PACK_MODEL.beginsWith('Apple/'))
 	end
+	def isPackingForWP7
+		return (defined?(PACK) && @PACK_MODEL == 'WindowsPhone/7')
+	end
 	def resourceTask
 		@resourceTask
 	end
@@ -346,7 +353,9 @@ module MoSyncExeModule
 			return Mapip2RebuildTask if(MODE == 'rebuild')
 			raise "Invalid MODE #{MODE}" if(MODE != 'default')
 		end
-		return (isPackingForIOS ? Mapip2IosCppTask : super)
+		return Mapip2IosCppTask if(isPackingForIOS)
+		return Mapip2CsTask if(isPackingForWP7)
+		return super
 	end
 	def libTask(lib)
 		return FileTask.new(self, "#{mosync_libdir}/#{@COMMON_BUILDDIR_NAME}/#{lib}#{libFileEnding}")
@@ -407,7 +416,8 @@ module MoSyncExeModule
 		super
 
 		if(USE_GNU_BINUTILS)
-			if(!defined?(MODE) && !isPackingForIOS)
+			# todo: simplify this check.
+			if(!defined?(MODE) && !isPackingForIOS && !isPackingForWP7)
 				@TARGET = Mapip2MxTask.new(self, @TARGET, @EXTRA_LINKFLAGS)
 				@prerequisites << @TARGET
 			end
@@ -416,6 +426,7 @@ module MoSyncExeModule
 		if(ELIM)
 			@TARGET.extend(PipeElimTask)
 		end
+		@programTask = @TARGET
 		if(defined?(PACK))
 			@prerequisites << @TARGET = MoSyncPackTask.new(self,
 				:tempdir => @BUILDDIR_BASE,
@@ -440,9 +451,17 @@ module MoSyncExeModule
 		end
 
 		if(installDir)
-			@prerequisites << CopyFileTask.new(self, "#{installDir}/program", @TARGET, :force)
-			if(!defined?(PACK) && @resourceTask)
-				@prerequisites << CopyFileTask.new(self, "#{installDir}/resources", @resourceTask, :force)
+			@prerequisites << CopyFileTask.new(self, "#{installDir}/program", @programTask, :force)
+			if(!defined?(PACK))
+				if(@resourceTask)
+					@prerequisites << CopyFileTask.new(self, "#{installDir}/resources", @resourceTask, :force)
+				end
+				if(defined?(MODE) && MODE == 'cs')
+					@prerequisites << CopyFileTask.new(self, "#{installDir}/RebuildData/rebuild.build.cs",
+						FileTask.new(self, "#{File.dirname(@TARGET)}/rebuild.build.cs"), :force)
+					@prerequisites << CopyFileTask.new(self, "#{installDir}/RebuildData/data_section.bin",
+						FileTask.new(self, "#{File.dirname(@TARGET)}/data_section.bin"), :force)
+				end
 			end
 		end
 	end

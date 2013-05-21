@@ -403,7 +403,7 @@ class CopyFileTask < FileTask
 	end
 	def out_of_date?(d, log=true)
 		return super if(!@force)
-		if(File.exist?(@src))
+		if(File.exist?(@src.to_s))
 			if(File.mtime(@src) != d)
 				puts "Because source '#{@src}' has different date:" if(log)
 				return true

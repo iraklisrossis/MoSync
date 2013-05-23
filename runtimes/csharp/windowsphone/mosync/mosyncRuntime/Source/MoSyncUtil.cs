@@ -107,13 +107,29 @@ namespace MoSync
 		{
 			return BitConverter.ToInt32(BitConverter.GetBytes(v), 0);
 		}
+
 		private static bool sLoggingStarted = false;
 		private static void InitLogging()
 		{
 			if (!sLoggingStarted)
 			{
-				WriteTextToFile(null, "log.txt", FileMode.Create);
+				WriteTextToFile(null, "_log.txt", FileMode.Create);
 				sLoggingStarted = true;
+			}
+		}
+
+		public static void CloseLog()
+		{
+			lock (typeof(MoSync.Util))
+			{
+				if (!sLoggingStarted)
+					return;
+				using (IsolatedStorageFile isolatedStorage = IsolatedStorageFile.GetUserStoreForApplication())
+				{
+					if(isolatedStorage.FileExists("log.txt"))
+						isolatedStorage.DeleteFile("log.txt");
+					isolatedStorage.MoveFile("_log.txt", "log.txt");
+				}
 			}
 		}
 
@@ -122,7 +138,7 @@ namespace MoSync
 		{
 			Console.Write(text);
 			InitLogging();
-			WriteTextToFile(text, "log.txt");
+			WriteTextToFile(text, "_log.txt");
 			if (System.Diagnostics.Debugger.IsAttached)
 			{
 				DebugWrite(text);
@@ -164,7 +180,7 @@ namespace MoSync
 		public static void Log(byte[] bytes)
 		{
 			InitLogging();
-			WriteBytesToFile(bytes, "log.txt");
+			WriteBytesToFile(bytes, "_log.txt");
 			if (System.Diagnostics.Debugger.IsAttached)
 			{
 				String text = System.Text.Encoding.UTF8.GetString(bytes, 0, bytes.Length);
@@ -219,7 +235,7 @@ namespace MoSync
 		public static void Exit(int res)
 		{
 			//CriticalError("Exited!");
-			//throw new ExitException(res);
+			throw new ExitException(res);
 		}
 
 		public static int CreateExtent(int w, int h)

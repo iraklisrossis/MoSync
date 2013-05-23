@@ -74,12 +74,18 @@ namespace MoSync
 						CoreRun();
 					}
 #if CATCH_CORE_EXCEPTIONS
+#if true
+					catch (MoSync.Util.ExitException e)
+					{
+						throw e;
+					}
+#endif
 					catch (Exception e)
 					{
 						System.Diagnostics.Debug.WriteLine(e.StackTrace);
 						MoSync.Util.ShowMessage(e.ToString());
 						return;
-					};
+					}
 #endif
 				}
 

@@ -66,6 +66,7 @@ namespace MoSync
 
 			syscalls.maExit = delegate(int res)
 			{
+				MoSync.Util.Log("maExit(" + res + ")\n");
 				MoSync.Util.Exit(res);
 			};
 

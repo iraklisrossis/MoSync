@@ -64,6 +64,7 @@ build-one.rb
 /tools/ReleasePackageBuild/build_package_tools/include
 /tools/ReleasePackageBuild/build_package_tools//osx_bin/ImageMagick
 /tools/uidcrc
+/tools/WPAppLauncher
 
 # files
 
@@ -185,8 +186,6 @@ build-one.rb
 /tools/DefaultSkinGenerator/Generator.rb
 
 /tools/vis/ConvertSLD.rb
-
-/tools/WPAppLauncher/GAC.cs
 
 /runtimes/csharp/windowsphone/mosync/mosyncRuntime/Libraries
 /runtimes/csharp/windowsphone/mosync/mosync/mosync.csproj

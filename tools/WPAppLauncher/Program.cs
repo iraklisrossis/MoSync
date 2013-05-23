@@ -48,16 +48,18 @@ namespace WPAppLauncher
 	{
 		private static void ShowHelp()
 		{
-			Console.WriteLine("WPAppLauncher.exe < /dump | [/wait:<filename>] <platform> <target> <yourXapFile.xap> >");
+			Console.WriteLine("WPAppLauncher.exe < /dump | [/wait:<filename>] [/verbose] <platform> <target> <yourXapFile.xap> >");
 			Console.WriteLine("");
 			Console.WriteLine("\t/dump prints a complete list of available platforms and targets, then exits.");
 			Console.WriteLine("\t/wait causes the launcher to wait until the specified file exists.");
+			Console.WriteLine("\t/verbose causes the launcher to report on its waiting process.");
 			Console.WriteLine("\t<yourXapFile.xap> is the XAP file you want to launch.");
 		}
 
 		static string sPlatform;
 		static string sTarget;
 		static string waitFile = null;
+		static bool sVerbose = false;
 
 		static string xapFile;
 
@@ -77,15 +79,21 @@ namespace WPAppLauncher
 #if !DEBUG
 			catch (System.Reflection.TargetInvocationException tie)
 			{
-				Console.WriteLine("Exception: " + tie.InnerException.Message);
-				Environment.Exit(1);
+				handleException(tie.InnerException);
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine("Exception: " + e.Message);
-				Environment.Exit(1);
+				handleException(e);
 			}
 #endif
+		}
+
+		private static void handleException(Exception e)
+		{
+			Console.WriteLine("Exception: "+e.GetType().Name);
+			Console.WriteLine(e.Message);
+			Console.WriteLine(e.StackTrace);
+			Environment.Exit(1);
 		}
 
 		private static void ProcessOptions(string[] args)
@@ -94,6 +102,8 @@ namespace WPAppLauncher
 			{
 				if (args[i].StartsWith("/wait:"))
 					waitFile = args[i].Substring(6);
+				else if (args[i] == "/verbose")
+					sVerbose = true;
 				else
 				{
 					throw new Exception("Exception: option not recognized: " + args[i]);
@@ -285,12 +295,21 @@ namespace WPAppLauncher
 					try
 					{
 						var store = invoke(app, "GetIsolatedStore");
-						invoke(store, "ReceiveFile", waitFile, waitFile);
+						invoke(store, "ReceiveFile", "\\"+waitFile, waitFile, true);
 						break;
 					}
-					catch (System.IO.FileNotFoundException)
+					catch (System.Reflection.TargetInvocationException tie)
 					{
-						System.Threading.Thread.Sleep(1000);
+						if (tie.InnerException is System.IO.FileNotFoundException)
+						{
+							if (sVerbose)
+								Console.WriteLine("File not found. Sleeping...");
+							System.Threading.Thread.Sleep(1000);
+						}
+						else
+						{
+							throw tie;
+						}
 					}
 				}
 				Console.WriteLine(waitFile + " retrieved.");

@@ -1840,6 +1840,7 @@ interface MAAPI {
 	* Timer accuracy is platform-specific, but should be better than 20 ms.
 	*
 	* Use this function rather than idle loops to save CPU/battery power.
+	*
 	* \see maGetEvent()
 	*/
 	void maWait(in int timeout);

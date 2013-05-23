@@ -16,6 +16,9 @@ require 'fileutils'
 require './skipped.rb'
 require './dejaGnu.rb'
 
+default_const(:WP7, false)
+default_const(:PACK, "WindowsPhone/7") if(WP7)
+
 if(target)
 	puts "Target: #{target}"
 	SETTINGS[:strict_prerequisites] = true
@@ -196,6 +199,7 @@ class TTWork < PipeExeWork
 		}
 		@EXTRA_LINKFLAGS = standardMemorySettings(15)
 		@EXTRA_EMUFLAGS = ' -noscreen -allowdivzero'
+		@PACK_ICON = false	# override the default to save some time.
 		@NAME = name
 	end
 	def rebuildArgs
@@ -268,6 +272,31 @@ class TTWork < PipeExeWork
 			puts "#{@sourcepath}:#{@lineNum}:"
 			p e
 			exit(1) if(EXIT_ON_ERROR)
+			raise
+		end
+	end
+
+	def run
+		return super unless(WP7)
+		sh "WPAppLauncher /verbose /wait:log.txt \"Windows Phone 7\" \"#{WP7}\" #{builddir}WindowsPhone/7/project/Bin/release_rebuild/#{@NAME}.xap"
+		# Read the file. It should contain one (and only one) line "maExit(0)".
+		# If it does not, the test has failed.
+		success = false
+		open('log.txt', 'r') do |file|
+			file.lines.each do |line|
+				s = line.strip
+				if(s == 'maExit(0)')
+					success = true
+				elsif(s.start_with?('maExit'))
+					success = false
+					break
+				end
+			end
+		end
+		if(success)
+			puts "log.txt reports success!"
+		else
+			puts "log.txt reports failure!"
 			raise
 		end
 	end
@@ -385,7 +414,10 @@ files.each do |f|
 			work.compile
 		else
 			work.invoke(winFile)
-			work.run if(work.mode == :run)
+			if(work.mode == :run)
+				work.run
+				FileUtils.mv('log.txt', logFile)
+			end
 		end
 		FileUtils.touch(winFile)
 		FileUtils.rm_f(failFile)

@@ -371,7 +371,7 @@ unsigned CCore::printInstruction(unsigned ip) {
 			os << "FIXS_DFDI("<<out<< RD << ", "<<out<< REG(rd+1) << ", " << FRS << ");";
 		EOP;
 
-		OPC(FIXUN_TRUNCS) FETCH_RD_FRS WRITE_REG(rd, "(unsigned int)" << FRS); EOP;
+		OPC(FIXUN_TRUNCS) FETCH_RD_FRS WRITE_REG(rd, "(int)(uint)" << FRS); EOP;
 		OPC(FIXUN_TRUNCD)
 			FETCH_RD_FRS;
 			os << "FIXU_DFDI("<<out<< RD << ", "<<out<< REG(rd+1) << ", " << FRS << ");";
@@ -548,7 +548,7 @@ unsigned CCore::printInstruction(unsigned ip) {
 			//_flushall();
 			os << "switch(" << RD << ") {\n";
 			for(unsigned i=0; i<=count; i++) {
-				os << "\t\tcase " << (low + i) << ": goto " << label(*((int*)(dataBytes + tableAddr) + i)) << ";\n";
+				os << "\t\tcase " << (int)(low + i) << ": goto " << label(*((int*)(dataBytes + tableAddr) + i)) << ";\n";
 			}
 			os << "\t\tdefault: goto " << label(defaultLabel) << ";\n";
 			os << "\t}";

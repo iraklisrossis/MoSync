@@ -450,3 +450,8 @@ else
 	SKIPPED << 'c-c++-common/restrict-1.c'	# fails on purpose
 	SKIPPED << 'gcc.dg/torture/builtin-power-1.c'	# fails on purpose
 end
+
+if(WP7)
+	# C# bug; conversion from double to ulong loses precision. No viable workarounds exist.
+	SKIPPED << 'ieee/rbug.c'
+end

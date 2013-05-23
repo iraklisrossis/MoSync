@@ -11,9 +11,20 @@ using System.Windows;
 
 namespace MoSync
 {
-    public class CoreNative : Core
-    {
-        protected Syscalls mSyscalls;
+
+  public class CoreNative : Core
+  {
+		public struct ComplexInt
+		{
+			public int r, i;
+		}
+
+		public struct ComplexDouble
+		{
+			public double r, i;
+		}
+
+				protected Syscalls mSyscalls;
         protected int sp;
 
         public CoreNative()
@@ -145,7 +156,50 @@ namespace MoSync
 
 			protected void FLOATS_DIDF(int i0, int i1, out double d)
 			{
-				d = MoSync.Util.ConvertToDouble(i0, i1);
+				d = (double)RETURN_DI(i0, i1);
+			}
+
+			protected void FLOATU_DIDF(int i0, int i1, out double d)
+			{
+				d = (double)(ulong)RETURN_DI(i0, i1);
+			}
+
+			protected void FIXS_DFDI(out int i0, out int i1, double d)
+			{
+				MOV_DI(out i0, out i1, (long)d);
+			}
+
+			protected void FIXU_DFDI(out int i0, out int i1, double d)
+			{
+				MOV_DI(out i0, out i1, (long)(ulong)d);
+			}
+
+			protected ComplexDouble RETURN_CF(double d0, double d1)
+			{
+				ComplexDouble cd;
+				cd.r = d0;
+				cd.i = d1;
+				return cd;
+			}
+
+			protected ComplexInt RETURN_CI(int i0, int i1)
+			{
+				ComplexInt ci;
+				ci.r = i0;
+				ci.i = i1;
+				return ci;
+			}
+
+			protected void MOV_CF(out double d0, out double d1, ComplexDouble cd)
+			{
+				d0 = cd.r;
+				d1 = cd.i;
+			}
+
+			protected void MOV_CI(out int i0, out int i1, ComplexInt ci)
+			{
+				i0 = ci.r;
+				i1 = ci.i;
 			}
 
 			protected double sqrt(double d)

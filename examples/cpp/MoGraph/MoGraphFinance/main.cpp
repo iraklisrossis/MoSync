@@ -17,7 +17,7 @@ MA 02110-1301, USA.
 */
 
 #include <yajl/YAJLDom.h>
-#include <mautil/connection.h>
+#include <MAUtil/Connection.h>
 #include <mavsprintf.h>
 #include <MAUtil/GLMoblet.h>
 #include <GLES2/gl2.h>

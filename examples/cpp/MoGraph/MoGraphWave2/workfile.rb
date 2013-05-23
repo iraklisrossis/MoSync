@@ -9,7 +9,7 @@ work.instance_eval do
 	@SOURCES = ["."]
 	@EXTRA_INCLUDES = ["#{mosync_include}/stlport", "#{mosync_include}/glm", "#{mosync_include}/MoGraph"]
 	@EXTRA_CPPFLAGS = ' -Wno-float-equal -Wno-unreachable-code -Wno-shadow -Wno-missing-noreturn'
-	@LIBRARIES = ["stlport", "mautil", "mograph"]
+	@LIBRARIES = ["stlport", "mautil", "MoGraph"]
 	@EXTRA_LINKFLAGS = standardMemorySettings(11)
 	@NAME = "MoGraphWave2"
 end

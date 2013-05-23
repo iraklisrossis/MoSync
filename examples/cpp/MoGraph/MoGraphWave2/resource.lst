@@ -3,7 +3,7 @@
 
 .res R_BOX_FNT
 .bin
-.include "resources/font.fnt"
+.include "resources/Font.fnt"
 
 .res R_MOSYNC_LOGO
 .image "resources/MoSync32.png"

@@ -3,4 +3,4 @@
 
 .res R_BOX_FNT
 .bin
-.include "resources/font.fnt"
+.include "resources/Font.fnt"

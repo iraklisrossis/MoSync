@@ -1155,7 +1155,7 @@ void WRITE_REG(int reg, int value) {
 #ifdef MEMORY_DEBUG
 #ifdef CORE_DEBUGGING_MODE
 	void dumpJump(uint address) {
-#ifdef SYMBIAN
+#if defined(SYMBIAN) || !defined (FAKE_CALL_STACK)
 		LOGC("\nJump to 0x%x\n", address);
 #else
 		std::string file;
@@ -1742,6 +1742,7 @@ int getRuntimeIp() {
 const char* CurrentSyscallString(VMCore* core, char* buffer, int bufSize) {
 	if(CORE == NULL)
 		return NULL;
+#ifdef TRACK_SYSCALL_ID
 	if(CORE->currentSyscallId == -1)
 		return NULL;
 	const char* t = translateSyscall(CORE->currentSyscallId);
@@ -1756,6 +1757,9 @@ const char* CurrentSyscallString(VMCore* core, char* buffer, int bufSize) {
 		return buffer;
 	}
 	return t;
+#else
+	return NULL;
+#endif	//TRACK_SYSCALL_ID
 }
 #endif
 }	//namespace Core

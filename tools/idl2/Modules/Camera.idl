@@ -269,10 +269,10 @@ group CameraAPI "Camera API" {
 
 		/**
 		* Stores an output format in \a fmt.
-		* \a index must be \>= 0 and \< the number returned by maCameraFormatNumber().
+		* \a idx must be \>= 0 and \< the number returned by maCameraFormatNumber().
 		* \returns 0.
 		*/
-		int maCameraFormat(in int index, out MA_CAMERA_FORMAT fmt);
+		int maCameraFormat(in int idx, out MA_CAMERA_FORMAT fmt);
 
 		/**
 		* Starts a fullscreen viewfinder.

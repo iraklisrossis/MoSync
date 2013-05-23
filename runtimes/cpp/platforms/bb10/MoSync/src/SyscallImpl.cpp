@@ -1416,7 +1416,20 @@ SYSCALL(longlong, maIOCtl(int function, int a, int b, int c, ...))
 #undef glGetPointerv
 #endif	//SUPPORT_OPENGL_ES
 
-	maIOCtl_IX_WIDGET_caselist;
+	maIOCtl_case(maWidgetCreate);
+	maIOCtl_case(maWidgetDestroy);
+	maIOCtl_case(maWidgetAddChild);
+	maIOCtl_case(maWidgetInsertChild);
+	maIOCtl_case(maWidgetRemoveChild);
+	maIOCtl_case(maWidgetModalDialogShow);
+	maIOCtl_case(maWidgetModalDialogHide);
+	maIOCtl_case(maWidgetScreenShow);
+	maIOCtl_case(maWidgetScreenShowWithTransition);
+	maIOCtl_case(maWidgetStackScreenPush);
+	maIOCtl_case(maWidgetStackScreenPop);
+	maIOCtl_case(maWidgetSetProperty);
+	maIOCtl_case(maWidgetGetProperty);
+	maIOCtl_case(maWidgetScreenAddOptionsMenuItem);
 
 	maIOCtl_case(maGetBatteryCharge);
 

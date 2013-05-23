@@ -146,9 +146,13 @@ void failFunction();
 #endif  //CORE_DEBUGGING_MODE
 
 #ifdef SYSCALL_DEBUGGING_MODE
+#ifdef TRACK_SYSCALL_ID
 #define LOGSC\
 	if(currentSyscallId >= MINIMUM_SYSCALL_ID && currentSyscallId <= MAX_SYSCALL_ID)\
 	LOG
+#else
+#define LOGSC LOG
+#endif	//TRACK_SYSCALL_ID
 #define MEMORY_DEBUG
 #define TRANSLATE_PANICS
 #define SCDEBUG_ARG(arg) arg

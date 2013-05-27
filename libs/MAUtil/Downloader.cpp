@@ -46,6 +46,8 @@ bool DownloadListener::outOfMemory(Downloader*)
 
 Downloader::Downloader()
 : mIsDownloading(false),
+	mIsInsideReader(false),
+	mIsCanceling(false),
   mIsDataPlaceholderSystemAllocated(false),
   mDataPlaceholder(0),
   mReader(NULL),
@@ -121,6 +123,11 @@ int Downloader::cancelDownloading()
 	{
 		// Inactive download cancelled.
 		return CONNERR_NO_ACTIVE_DOWNLOAD;
+	}
+
+	if(mIsInsideReader) {
+		mIsCanceling = true;
+		return CONNERR_CANCEL_DELAYED;
 	}
 
 	closeConnection(CLEANUP);
@@ -268,7 +275,7 @@ void Downloader::httpFinished(HttpConnection* http, int result)
 
 		if (RES_OK != errorCode)
 		{
-			fireError(CONNERR_DOWNLOADER_OTHER - errorCode);
+			fireError(CONNERR_DOWNLOADER_OTHER + errorCode);
 			return;
 		}
 
@@ -314,7 +321,13 @@ void Downloader::connRecvFinished(Connection* conn, int result)
 		return;
 	}
 
+	mIsInsideReader = true;
 	mReader->connRecvFinished(conn, result);
+	mIsInsideReader = false;
+	if(mIsCanceling) {
+		mIsCanceling = false;
+		cancelDownloading();
+	}
 }
 
 MAHandle Downloader::getHandle()
@@ -370,7 +383,7 @@ MAHandle ImageDownloader::getHandle()
 
 	if (RES_OK != res)
 	{
-		fireError(CONNERR_DOWNLOADER_OTHER - res);
+		fireError(CONNERR_DOWNLOADER_OTHER + res);
 		return 0;
 	}
 

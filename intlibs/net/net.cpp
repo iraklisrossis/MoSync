@@ -495,11 +495,13 @@ mHeadersSent(false)
 
 ProtocolConnection::~ProtocolConnection() {
 	close();
+	if(mTransport)
+		delete mTransport;
 }
 
 void ProtocolConnection::close() {
 	if(mTransport)
-		delete mTransport;
+		mTransport->close();
 }
 
 int ProtocolConnection::getAddr(MAConnAddr& addr) {

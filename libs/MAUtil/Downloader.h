@@ -71,8 +71,19 @@ listener.error ->
 
 /// The system has run out of memory.
 #define CONNERR_DOWNLOADER_OOM (CONNERR_USER - 1)
+/// A download is already in progress.
+#define CONNERR_DOWNLOAD_IN_PROGRESS (CONNERR_USER - 2)
+/// There is no active download.
+#define CONNERR_NO_ACTIVE_DOWNLOAD (CONNERR_USER - 3)
+/// Downloader has no available reader. This happens after the connection is closed.
+#define CONNERR_READER_UNAVAILABLE (CONNERR_USER - 4)
+/// Redirection failed. This occurs when the server does not provide alternative url
+/// or if the maximum number of attempts to redirect was exceeded.
+#define CONNERR_REDIRECT (CONNERR_USER - 5)
+/// Download could not be immediately canceled. It will be canceled as soon as the callback returns.
+#define CONNERR_CANCEL_DELAYED (CONNERR_USER - 6)
 
-#define CONNERR_DOWNLOADER_OTHER (CONNERR_USER + (CONNERR_USER / 2))
+#define CONNERR_DOWNLOADER_OTHER (CONNERR_USER - (CONNERR_USER / 2))
 
 /**
  * Use values below this for your own error codes when you inherit the Downloader class.
@@ -223,6 +234,9 @@ namespace MAUtil {
 		 * Do cleanup and send downloadCancelled to listeners.
 		 * \return \>0 on success, or \link #CONNERR_NO_ACTIVE_DOWNLOAD CONNERR \endlink
 		 * code if there is no active download.
+		 * \note If you call this function from inside a DownloadListener callback,
+		 * the canceling is delayed until the callback returns.
+		 * That means you can't call beginDownloading() until you've gotten the downloadCancelled() callback.
 		 */
 		virtual int cancelDownloading();
 
@@ -300,6 +314,7 @@ namespace MAUtil {
 	protected:
 		HttpConnection *mConn;
 		bool mIsDownloading;
+		bool mIsInsideReader, mIsCanceling;
 		bool mIsDataPlaceholderSystemAllocated;
 		MAHandle mDataPlaceholder;
 		Vector<DownloadListener*> mDownloadListeners;

@@ -210,7 +210,9 @@ void Downloader::doRedirect(HttpConnection* http)
 		{
 			// Make sure connection is closed.
 			closeConnection(NO_CLEANUP);
-			beginDownloading(str.c_str(), mDataPlaceholder);
+			res = beginDownloading(str.c_str(), mDataPlaceholder);
+			if(res <= 0)
+				fireError(res);
 		}
 		else
 		{
@@ -221,8 +223,36 @@ void Downloader::doRedirect(HttpConnection* http)
 	{
 		// Make sure connection is closed.
 		closeConnection(NO_CLEANUP);
-		beginDownloading(str.c_str(), mDataPlaceholder);
 
+		// Make sure the URL is valid.
+		// That means there must be a slash after the domain.
+		// First find the end of the protocol ("//").
+		int pos = str.findFirstOf('/');
+		if(pos == String::npos) {
+			fireError(CONNERR_URL);
+			return;
+		}
+		int p2 = str.findFirstOf('/', pos+1);
+		if(p2 != pos+1) {
+			fireError(CONNERR_URL);
+			return;
+		}
+		pos = str.findFirstOf('/', p2+1);
+		if(pos == String::npos) {
+			// Add the missing slash.
+			// If the URL is still invalid after this, we can't fix it,
+			// and beginDownloading() will catch it.
+			str += '/';
+		} else if(pos <= p2+1) {
+			fireError(CONNERR_URL);
+			return;
+		}
+
+		res = beginDownloading(str.c_str(), mDataPlaceholder);
+		if(res <= 0) {
+			fireError(res);
+			return;
+		}
 		mRedirectionCounter++;
 	}
 	else

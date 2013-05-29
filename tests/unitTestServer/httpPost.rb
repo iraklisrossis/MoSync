@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 
 require 'webrick'
+
 include WEBrick
 
 class EchoServlet < HTTPServlet::AbstractServlet
@@ -23,14 +24,6 @@ class EchoServlet < HTTPServlet::AbstractServlet
 	end
 end
 
-class CancelGetServlet < HTTPServlet::AbstractServlet
-	def do_GET(req, resp)
-		resp.status = 299
-		r, w = IO.pipe
-		resp.body = r
-	end
-end
-
 def start_webrick(config = {})
 	# always listen on port x
 	config.update(:Port => 5004)
@@ -48,6 +41,4 @@ start_webrick(
 #:Logger => debug_logger, :AccessLog => debug_logger
 ) {|server|
 	server.mount('/post', EchoServlet)
-	server.mount('/cancel_get', CancelGetServlet)
 }
-

@@ -47,8 +47,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define UDP_URL(port) ("datagram://" IP_HOST ":" + integerToString(port)).c_str()
 #define HTTP_GET_URL(port) ("http://" IP_HOST ":" +integerToString(port)+ "/server_data.bin").c_str()
 #define HTTP_POST_URL ("http://" IP_HOST ":5004/post")
-#define HTTP_CANCEL_GET_URL ("http://" IP_HOST ":5004/cancel_get")
-#define HTTP_CANCEL_POST_URL ("http://" IP_HOST ":5004/cancel_post")
+#define HTTP_CANCEL_GET_URL ("http://" IP_HOST ":5006/cancel_get")
+#define HTTP_CANCEL_POST_URL SOCKET_URL(SOCKET_CANCEL_PORT)
 #define BT_URL(port) ("btspp://" BT_HOST ":" +integerToString(port)).c_str()
 
 #ifdef _MSC_VER
@@ -300,8 +300,8 @@ public:
 				u.c[0], u.c[1], u.c[2], u.c[3], addr.inet4.port);
 		} else {
 			printf("getAddr error: %i\n", res);
-			assert("TCP getAddr", false);
 		}
+		assert("TCP getAddr", res >= 0);
 		conn->read(mReadBuffer, DATA_SIZE);
 	}
 	virtual void connReadFinished(Connection* conn, int result) {
@@ -442,7 +442,8 @@ public:
 		Environment::getEnvironment().addTimer(this, 1000, 1);
 	}
 	virtual void connRecvFinished(Connection* conn, int result) {
-		printf("Recv %i\n", result);
+		if(result <= 0)
+			printf("Recv %i\n", result);
 		if(result == CONNERR_CANCELED) {
 			Environment::getEnvironment().removeConnListener(mConn);
 			mConn = -1;
@@ -452,7 +453,10 @@ public:
 		}
 		if(result <= 0) {
 			fail();
+			return;
 		}
+		conn->recv(mBuffer, DATA_SIZE);
+		Environment::getEnvironment().addTimer(this, 1000, 1);
 	}
 };
 
@@ -576,13 +580,14 @@ public:
 	}
 
 	virtual void readTestFinished() {
-		mUrl = SOCKET_URL(SOCKET_CANCEL_PORT);
+		mUrl = HTTP_CANCEL_POST_URL;
 		SocketCancelCase::readTestFinished();
 	}
 };
 
 void addConnTests(TestSuite* suite);
 void addConnTests(TestSuite* suite) {
+#if 1
 	suite->addTestCase(new SingleSocketCase);
 	suite->addTestCase(new SingleHttpGetCase);
 	suite->addTestCase(new SocketCancelCase);
@@ -590,11 +595,14 @@ void addConnTests(TestSuite* suite) {
 	suite->addTestCase(new ConnectCancelCase("connectCancel", SOCKET_URL(CONNECT_CANCEL_PORT)));
 	// cancel at TCP-connect stage.
 	suite->addTestCase(new ConnectCancelCase("httpConnectCancel", HTTP_GET_URL(CONNECT_CANCEL_PORT)));
-	// cancel while reading headers.
+	// cancel while reading 16:17 2013-05-29headers.
 	suite->addTestCase(new ConnectCancelCase("httpHeadersCancel", HTTP_GET_URL(SOCKET_CANCEL_PORT)));
+#endif
 	// cancel while reading response data, and while writing POST data.
 	suite->addTestCase(new HttpCancelCase);
+#if 1
 	for(int i=0; i<5; i++) {
 		suite->addTestCase(new SingleHttpPostCase(1 << i));
 	}
+#endif
 }

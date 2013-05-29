@@ -222,6 +222,18 @@ static void socketSizeSpinOff(SOCKET sock) {
 static void socketCancelSpinOff(SOCKET sock) {
 }
 
+static void httpGetCancelSpinOff(SOCKET sock) {
+	// This much data must be sent to make Windows Phone 7 report the headers.
+	// Yeah, Microsoft are stupid. Surprised?
+	static const char sHttpReponse[128*1024] =
+		"HTTP/1.0 200 OK\r\n"
+		"Server: unitTestServer\r\n"
+		"Connection: Keep-Alive\r\n"
+		"\r\n"
+		"some data\r\n";
+	gThreadPool.execute(new SockWrite(sock, sHttpReponse, sizeof(sHttpReponse)-1));
+}
+
 static void ATTRIBUTE(noreturn, closeProgram(int sn));
 
 static void closeProgram(int sn) {
@@ -243,6 +255,7 @@ int main() {
 
 	gThreadPool.execute(new Acceptor(SINGLE_SOCKET_PORT, singleSocketSpinOff));
 	gThreadPool.execute(new Acceptor(SOCKET_CANCEL_PORT, socketCancelSpinOff));
+	gThreadPool.execute(new Acceptor(HTTP_CANCEL_PORT, httpGetCancelSpinOff));
 
 	// nuke it and forget it.
 	createBoundSocket(CONNECT_CANCEL_PORT);

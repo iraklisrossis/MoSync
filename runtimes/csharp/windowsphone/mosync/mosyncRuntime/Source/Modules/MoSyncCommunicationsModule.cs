@@ -67,6 +67,10 @@ namespace MoSync
 							{
 								result = 1;
 							}
+							else if (e.SocketError == SocketError.OperationAborted)
+							{
+								result = MoSync.Constants.CONNERR_CANCELED;
+							}
 							else
 							{
 								result = MoSync.Constants.CONNERR_GENERIC;
@@ -97,6 +101,10 @@ namespace MoSync
 									result = 1;
 								else
 									result = e.BytesTransferred;
+							}
+							else if (e.SocketError == SocketError.OperationAborted)
+							{
+								result = MoSync.Constants.CONNERR_CANCELED;
 							}
 							else
 							{
@@ -144,6 +152,8 @@ namespace MoSync
 			protected WebRequest mRequest;
 			protected WebResponse mResponse;
 			protected System.IO.Stream mStream;
+			protected bool mClosing = false;
+			protected IAsyncResult mReadAR, mWriteAR;
 
 			public WebRequestConnection(Uri uri, int handle, int method)
 			{
@@ -238,54 +248,116 @@ namespace MoSync
 			public override void recv(byte[] buffer, int offset, int size,
 					 ResultHandler rh)
 			{
-				mStream.BeginRead(buffer, offset, size, new AsyncCallback(RecvCallback), rh);
+				lock (this)
+				{
+					if (mReadAR != null)
+						throw new Exception("Double recv!");
+					IAsyncResult ar = mStream.BeginRead(buffer, offset, size, new AsyncCallback(RecvCallback), rh);
+					// It's hard to keep state properly.
+					if (mReadAR == null)
+					{
+						mReadAR = ar;
+					}
+					else
+					{
+						mReadAR = null;
+					}
+				}
 			}
 			protected void RecvCallback(IAsyncResult ar)
 			{
-				ResultHandler rh = (ResultHandler)ar.AsyncState;
-				int result = mStream.EndRead(ar);
-				if (result == 0)
+				lock (this)
 				{
-					result = MoSync.Constants.CONNERR_CLOSED;
+					ResultHandler rh = (ResultHandler)ar.AsyncState;
+					int result;
+					if (mClosing)
+					{
+						result = MoSync.Constants.CONNERR_CANCELED;
+					}
+					else
+					{
+						// if mStream is Disposed (by maConnClose?) during recv-op,
+						// this will throw an unhandled exception.
+						result = mStream.EndRead(ar);
+						if (result == 0)
+						{
+							result = MoSync.Constants.CONNERR_CLOSED;
+						}
+					}
+					// Can happen if BeginRead() calls RecvCallback().
+					if (mReadAR == null)
+					{
+						mReadAR = ar;
+					}
+					else
+					{
+						mReadAR = null;
+					}
+					rh(mHandle, MoSync.Constants.CONNOP_READ, result);
 				}
-				rh(mHandle, MoSync.Constants.CONNOP_READ, result);
 			}
 
 			public override void write(byte[] buffer, int offset, int size,
 					 ResultHandler rh)
 			{
-				if (mResponse != null)
-					throw new Exception("HTTP write");
-				if (mStream == null)
+				lock (this)
 				{
-					mRequest.BeginGetRequestStream(
-							new AsyncCallback(delegate(IAsyncResult ar)
+					if (mWriteAR != null)
+						throw new Exception("Double write!");
+					if (mResponse != null)
+						throw new Exception("HTTP write");
+					if (mStream == null)
 					{
-						mStream = mRequest.EndGetRequestStream(ar);
-						mStream.BeginWrite(buffer, offset, size,
-								new AsyncCallback(WriteCallback), rh);
-					}), rh);
-					return;
+						mRequest.BeginGetRequestStream(
+								new AsyncCallback(delegate(IAsyncResult ar)
+						{
+							mStream = mRequest.EndGetRequestStream(ar);
+							mWriteAR = mStream.BeginWrite(buffer, offset, size,
+									new AsyncCallback(WriteCallback), rh);
+						}), rh);
+						return;
+					}
+					mWriteAR = mStream.BeginWrite(buffer, offset, size,
+							new AsyncCallback(WriteCallback), rh);
 				}
-				mStream.BeginWrite(buffer, offset, size,
-						new AsyncCallback(WriteCallback), rh);
 			}
 			protected void WriteCallback(IAsyncResult ar)
 			{
-				ResultHandler rh = (ResultHandler)ar.AsyncState;
-				mStream.EndWrite(ar);
-				rh(mHandle, MoSync.Constants.CONNOP_WRITE, 1);
+				lock (this)
+				{
+					ResultHandler rh = (ResultHandler)ar.AsyncState;
+					int res;
+					if (mClosing)
+					{
+						res = MoSync.Constants.CONNERR_CANCELED;
+					}
+					else
+					{
+						mStream.EndWrite(ar);
+						res = 1;
+					}
+					mWriteAR = null;
+					rh(mHandle, MoSync.Constants.CONNOP_WRITE, res);
+				}
 			}
 
 			// immediate
 			public override void close()
 			{
+				lock(this) {
+					mClosing = true;
+				}
 				if (mStream != null)
 					mStream.Close();
 				if (mResponse != null)
 					mResponse.Close();
 				if (mRequest != null)
 					mRequest.Abort();
+				// todo: wait for any read or write operations to complete.
+				var w = mWriteAR;
+				var r = mReadAR;
+				if (w != null) w.AsyncWaitHandle.WaitOne();
+				if (r != null) r.AsyncWaitHandle.WaitOne();
 			}
 			public override int getAddr(Memory m, int _addr)
 			{

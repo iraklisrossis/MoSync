@@ -44,8 +44,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define IP_HOST "modev.mine.nu" //"192.168.0.173"	//"localhost"	//
 
 #define SOCKET_URL(port) ("socket://" IP_HOST ":" + integerToString(port)).c_str()
+#define UDP_URL(port) ("datagram://" IP_HOST ":" + integerToString(port)).c_str()
 #define HTTP_GET_URL(port) ("http://" IP_HOST ":" +integerToString(port)+ "/server_data.bin").c_str()
 #define HTTP_POST_URL ("http://" IP_HOST ":5004/post")
+#define HTTP_CANCEL_GET_URL ("http://" IP_HOST ":5004/cancel_get")
+#define HTTP_CANCEL_POST_URL ("http://" IP_HOST ":5004/cancel_post")
 #define BT_URL(port) ("btspp://" BT_HOST ":" +integerToString(port)).c_str()
 
 #ifdef _MSC_VER
@@ -219,10 +222,12 @@ public:
 			String str;
 			result = mHttp.getResponseHeader(sHeaders[i].key, &str);
 			if(result < 0) {
+				printf("Header missing: %s\n", sHeaders[i].key);
 				fail();
 				return;
 			}
 			if(strcmp(str.c_str(), sHeaders[i].value) != 0) {
+				printf("Header mismatch: %s:%s != %s\n", sHeaders[i].key, sHeaders[i].value, str.c_str());
 				fail();
 				return;
 			}
@@ -295,7 +300,7 @@ public:
 				u.c[0], u.c[1], u.c[2], u.c[3], addr.inet4.port);
 		} else {
 			printf("getAddr error: %i\n", res);
-			fail();
+			assert("TCP getAddr", false);
 		}
 		conn->read(mReadBuffer, DATA_SIZE);
 	}
@@ -381,9 +386,214 @@ public:
 	}
 };
 
+class BaseCancelCase : public TestCase, protected Connection, protected ConnectionListener, protected TimerListener {
+public:
+	BaseCancelCase(const char* name) : TestCase(name), Connection(this) {
+	}
+
+	void fail() {
+		Environment::getEnvironment().removeTimer(this);
+		assert(name, false);
+		suite->runNextCase();
+	}
+
+	//TestCase
+	void close() {
+		Connection::close();
+	}
+
+	void runTimerEvent() {
+		// call maConnClose directly, so we get CONNERR_CANCELED events.
+		maConnClose(mConn);
+	}
+};
+
+class BaseSocketCancelCase : public BaseCancelCase {
+protected:
+	char mBuffer[DATA_SIZE];
+	String mUrl;
+
+	virtual bool connectTestFinished() = 0;
+	virtual void readTestFinished() = 0;
+public:
+	BaseSocketCancelCase(const char* name, const String& url) : BaseCancelCase(name), mUrl(url) {
+	}
+
+	//TestCase
+	void start() {
+		printf("%s test\n", name.c_str());
+		int res = Connection::connect(mUrl.c_str());
+		if(res <= 0) {
+			printf("connect %i\n", res);
+			fail();
+		}
+	}
+
+	virtual void connectFinished(Connection* conn, int result) {
+		printf("Connected %i\n", result);
+		if(result <= 0) {
+			fail();
+			return;
+		}
+		if(connectTestFinished()) {
+			return;
+		}
+		conn->recv(mBuffer, DATA_SIZE);
+		Environment::getEnvironment().addTimer(this, 1000, 1);
+	}
+	virtual void connRecvFinished(Connection* conn, int result) {
+		printf("Recv %i\n", result);
+		if(result == CONNERR_CANCELED) {
+			Environment::getEnvironment().removeConnListener(mConn);
+			mConn = -1;
+
+			readTestFinished();
+			return;
+		}
+		if(result <= 0) {
+			fail();
+		}
+	}
+};
+
+class SocketCancelCase : public BaseSocketCancelCase {
+private:
+	bool mReadFinished;
+	int mWriteCount;
+public:
+	SocketCancelCase(const char* name = "socketCancel")
+		: BaseSocketCancelCase(name, SOCKET_URL(SOCKET_CANCEL_PORT))
+	{
+		mReadFinished = false;
+		mWriteCount = 0;
+	}
+
+	virtual bool connectTestFinished() {
+		if(mReadFinished) {
+			write();
+			return true;
+		}
+		return false;
+	}
+	virtual void readTestFinished() {
+		mReadFinished = true;
+		int res = Connection::connect(mUrl.c_str());
+		if(res <= 0) {
+			printf("connect %i\n", res);
+			fail();
+		}
+	}
+	// keep writing until it no longer returns instantly.
+	// addTimer() resets the timer.
+	void write() {
+		mWriteCount++;
+		Connection::write(mBuffer, DATA_SIZE);
+		Environment::getEnvironment().addTimer(this, 1000, 1);
+	}
+	virtual void connWriteFinished(Connection* conn, int result) {
+		if(result <= 0) {
+			printf("Wrote %i\n", result);
+		}
+		if(result == CONNERR_CANCELED) {
+			printf("count: %i\n", mWriteCount);
+			// remember to de-register the now-closed connection.
+			Environment::getEnvironment().removeConnListener(mConn);
+			mConn = -1;
+			assert(name, true);
+			suite->runNextCase();
+			return;
+		}
+		if(result <= 0) {
+			fail();
+			return;
+		}
+		write();
+	}
+};
+
+
+class UdpCancelCase : public BaseSocketCancelCase {
+public:
+	UdpCancelCase() : BaseSocketCancelCase("udpCancel", UDP_URL(UDP_CANCEL_PORT)) {
+	}
+
+	virtual bool connectTestFinished() {
+		return false;
+	}
+	virtual void readTestFinished() {
+		assert(name, true);
+		suite->runNextCase();
+	}
+};
+
+
+class ConnectCancelCase : public BaseCancelCase {
+protected:
+	const String mUrl;
+public:
+	ConnectCancelCase(const char* name, const String& url) : BaseCancelCase(name), mUrl(url) {
+	}
+
+	//TestCase
+	void start() {
+		printf("%s test\n", name.c_str());
+		int res = Connection::connect(mUrl.c_str());
+		if(res <= 0) {
+			printf("connect %i\n", res);
+			fail();
+			return;
+		}
+		Environment::getEnvironment().addTimer(this, 500, 1);
+	}
+	void close() {
+		Connection::close();
+	}
+
+	virtual void connectFinished(Connection* conn, int result) {
+		printf("Connected %i\n", result);
+		if(result == CONNERR_CANCELED) {
+			Environment::getEnvironment().removeConnListener(mConn);
+			mConn = -1;
+			assert(name, true);
+			suite->runNextCase();
+			return;
+		}
+		// If maConnClose was called, but CONNERR_CANCELED did not happen,
+		// another call to maConnClose (like from Connection::close) will
+		// cause a panic.
+		fail();
+	}
+	void runTimerEvent() {
+		// call maConnClose directly, so we get CONNERR_CANCELED events.
+		maConnClose(mConn);
+	}
+};
+
+class HttpCancelCase : public SocketCancelCase {
+public:
+	HttpCancelCase() : SocketCancelCase("httpCancel") {
+		mUrl = HTTP_CANCEL_GET_URL;
+	}
+
+	virtual void readTestFinished() {
+		mUrl = SOCKET_URL(SOCKET_CANCEL_PORT);
+		SocketCancelCase::readTestFinished();
+	}
+};
+
 void addConnTests(TestSuite* suite);
 void addConnTests(TestSuite* suite) {
 	suite->addTestCase(new SingleSocketCase);
+	suite->addTestCase(new SingleHttpGetCase);
+	suite->addTestCase(new SocketCancelCase);
+	suite->addTestCase(new UdpCancelCase);
+	suite->addTestCase(new ConnectCancelCase("connectCancel", SOCKET_URL(CONNECT_CANCEL_PORT)));
+	// cancel at TCP-connect stage.
+	suite->addTestCase(new ConnectCancelCase("httpConnectCancel", HTTP_GET_URL(CONNECT_CANCEL_PORT)));
+	// cancel while reading headers.
+	suite->addTestCase(new ConnectCancelCase("httpHeadersCancel", HTTP_GET_URL(SOCKET_CANCEL_PORT)));
+	// cancel while reading response data, and while writing POST data.
+	suite->addTestCase(new HttpCancelCase);
 	for(int i=0; i<5; i++) {
 		suite->addTestCase(new SingleHttpPostCase(1 << i));
 	}

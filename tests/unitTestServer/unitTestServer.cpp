@@ -49,8 +49,8 @@ ThreadPool gThreadPool;
 char gServerData[DATA_SIZE];
 char gClientData[DATA_SIZE];
 
-void singleSocketSpinOff(SOCKET sock);
-void socketSizeSpinOff(SOCKET sock);
+static void singleSocketSpinOff(SOCKET sock);
+static void socketCancelSpinOff(SOCKET sock);
 
 #define TB(func) if(!(func)) { printf("%s failed\n", #func); return false; }
 
@@ -74,6 +74,29 @@ static bool loadData() {
 	return true;
 }
 
+static SOCKET createBoundSocket(unsigned short port) {
+	//socket
+	SOCKET servSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if(servSock == INVALID_SOCKET) {
+		printf("socket error %i\n", WSAGetLastError());
+		return INVALID_SOCKET;
+	}
+
+	//bind
+	sockaddr_in service;
+	service.sin_family = AF_INET;
+	service.sin_addr.s_addr = INADDR_ANY;
+	service.sin_port = htons(port);
+
+	if(bind(servSock, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
+		printf("bind error %i.\n", WSAGetLastError());
+		closesocket(servSock);
+		return INVALID_SOCKET;
+	}
+	printf("Opened port %u.\n", port);
+	return servSock;
+}
+
 class Acceptor : public Runnable {
 	unsigned short mPort;
 	void (*mSpinOff)(SOCKET);
@@ -89,24 +112,9 @@ public:
 	}
 
 	void run() {
-		//socket
-		SOCKET servSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if(servSock == INVALID_SOCKET) {
-			printf("socket error %i\n", WSAGetLastError());
+		SOCKET servSock = createBoundSocket(mPort);
+		if(servSock == INVALID_SOCKET)
 			return;
-		}
-
-		//bind
-		sockaddr_in service;
-		service.sin_family = AF_INET;
-		service.sin_addr.s_addr = INADDR_ANY;
-		service.sin_port = htons(mPort);
-
-		if(bind(servSock, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
-			printf("bind error %i.\n", WSAGetLastError());
-			closesocket(servSock);
-			return;
-		}
 
 		//listen
 		if(listen(servSock, SOMAXCONN) == SOCKET_ERROR) {
@@ -200,13 +208,18 @@ public:
 	}
 };
 
-void singleSocketSpinOff(SOCKET sock) {
+static void singleSocketSpinOff(SOCKET sock) {
 	gThreadPool.execute(new SockWrite(sock, gServerData, DATA_SIZE));
 	gThreadPool.execute(new ReadClientData(sock));
 }
 
-void socketSizeSpinOff(SOCKET sock) {
-	//gThreadPool.execute(new SockSizeWrite(sock, gServerData, DATA_SIZE));
+#if 0
+static void socketSizeSpinOff(SOCKET sock) {
+	gThreadPool.execute(new SockSizeWrite(sock, gServerData, DATA_SIZE));
+}
+#endif
+
+static void socketCancelSpinOff(SOCKET sock) {
 }
 
 static void ATTRIBUTE(noreturn, closeProgram(int sn));
@@ -229,7 +242,10 @@ int main() {
 	}
 
 	gThreadPool.execute(new Acceptor(SINGLE_SOCKET_PORT, singleSocketSpinOff));
-	//gThreadPool.execute(new Acceptor(SOCKET_SIZE_PORT, socketSizeSpinOff));
+	gThreadPool.execute(new Acceptor(SOCKET_CANCEL_PORT, socketCancelSpinOff));
+
+	// nuke it and forget it.
+	createBoundSocket(CONNECT_CANCEL_PORT);
 
 	while(true) {
 		int ch = getchar();

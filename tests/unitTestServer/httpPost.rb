@@ -15,11 +15,19 @@ class EchoServlet < HTTPServlet::AbstractServlet
 				puts "Skipping header '#{key}'"
 			else
 				puts "Reflecting header '#{key}'"
-				resp[key] = value
+				resp[key] = value.join
 			end
 		}
 
 		resp.body = req.body
+	end
+end
+
+class CancelGetServlet < HTTPServlet::AbstractServlet
+	def do_GET(req, resp)
+		resp.status = 299
+		r, w = IO.pipe
+		resp.body = r
 	end
 end
 
@@ -38,5 +46,8 @@ end
 
 start_webrick(
 #:Logger => debug_logger, :AccessLog => debug_logger
-) {|server| server.mount('/post', EchoServlet) }
+) {|server|
+	server.mount('/post', EchoServlet)
+	server.mount('/cancel_get', CancelGetServlet)
+}
 

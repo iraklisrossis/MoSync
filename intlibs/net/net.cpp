@@ -357,11 +357,19 @@ void InetConnection::close() {
 	}
 }
 
+static int parse_sockerr(int e) {
+	switch(e) {
+	// This can happen if close() is called before recv/write* is called.
+	case EBADF: return CONNERR_CANCELED;
+	default: return CONNERR_GENERIC;
+	}
+}
+
 int TcpConnection::read(void* dst, int max) {
 	int bytesRecv = recv(mSock, (char*)dst, max, 0);
 	if(SOCKET_ERROR == bytesRecv) {
 		LOG("TcpConnection::read: recv failed. error code: %i\n", SOCKET_ERRNO);
-		return CONNERR_GENERIC;
+		return parse_sockerr(SOCKET_ERRNO);
 	} else if (bytesRecv == 0) {
 		return CONNERR_CLOSED;
 	} else {
@@ -378,7 +386,7 @@ int UdpConnection::read(void* dst, int max) {
 			return max;
 		}
 #endif
-		return CONNERR_GENERIC;
+		return parse_sockerr(SOCKET_ERRNO);
 	} else if (bytesRecv == 0) {
 		return CONNERR_CLOSED;
 	} else {
@@ -406,7 +414,7 @@ int UdpConnection::readFrom(void* dst, int max, MAConnAddr& src) {
 			return max;
 		}
 #endif
-		return CONNERR_GENERIC;
+		return parse_sockerr(SOCKET_ERRNO);
 	} else if (bytesRecv == 0) {
 		return CONNERR_CLOSED;
 	} else {
@@ -425,7 +433,7 @@ int UdpConnection::writeTo(const void* src, int len, const MAConnAddr& dst) {
 	int bytesSent = sendto(mSock, (const char*) src, len, 0, (sockaddr*)&si, sizeof(si));
 	if(bytesSent != len || SOCKET_ERROR == bytesSent) {
 		LOG("UdpConnection::writeTo: sendto failed. error code: %i\n", SOCKET_ERRNO);
-		return CONNERR_GENERIC;
+		return parse_sockerr(SOCKET_ERRNO);
 	} else {
 		return 1;
 	}
@@ -435,7 +443,7 @@ int InetConnection::write(const void* src, int len) {
 	int bytesSent = send(mSock, (const char*) src, len, 0);
 	if(bytesSent != len || SOCKET_ERROR == bytesSent) {
 		LOG("InetConnection::write: send failed. error code: %i\n", SOCKET_ERRNO);
-		return CONNERR_GENERIC;
+		return parse_sockerr(SOCKET_ERRNO);
 	} else {
 		return 1;
 	}

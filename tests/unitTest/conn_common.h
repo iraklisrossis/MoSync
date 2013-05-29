@@ -19,5 +19,13 @@ MA 02110-1301, USA.
 #define SINGLE_SOCKET_PORT 5001
 #define HTTP_PORT 5002
 #define SOCKET_SIZE_PORT 5003
+#define HTTP_POST_PORT 5004
+#define SOCKET_CANCEL_PORT 5005
+#define HTTP_CANCEL_PORT 5006
+
+// this port should be firewalled, so the client has time to cancel.
+#define CONNECT_CANCEL_PORT 5007
+
+#define UDP_CANCEL_PORT 5100
 
 #define DATA_SIZE (4*1024)

@@ -451,7 +451,7 @@ else
 	SKIPPED << 'gcc.dg/torture/builtin-power-1.c'	# fails on purpose
 end
 
-if(WP7)
+if(defined?(WP7) && WP7)
 	# C# bug; conversion from double to ulong loses precision. No viable workarounds exist.
 	SKIPPED << 'ieee/rbug.c'
 end

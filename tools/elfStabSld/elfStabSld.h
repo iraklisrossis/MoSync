@@ -117,6 +117,7 @@ struct DebuggingData {
 	bfd_vma stackSize, heapSize;
 	// these are valid only in cOutput mode.
 	Array0<Elf32_Rela> textRela, rodataRela, dataRela;
+	Array0<Elf32_Rela> ctorsRela, dtorsRela;
 	Array0<Elf32_Sym> symbols;
 	Array0<char> strtab;	// this one is used by symbols.
 	RelocMap textRelocMap;

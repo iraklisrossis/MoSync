@@ -650,6 +650,10 @@ DEBIG_PHAT_ERROR; }
 					relaP = &data.rodataRela;
 				else if(strcmp(name, ".rela.data") == 0)
 					relaP = &data.dataRela;
+				else if(strcmp(name, ".rela.ctors") == 0)
+					relaP = &data.ctorsRela;
+				else if(strcmp(name, ".rela.dtors") == 0)
+					relaP = &data.dtorsRela;
 				if(relaP) {
 					Array0<Elf32_Rela>& rela(*relaP);
 					DEBUG_ASSERT(shdr.sh_size % sizeof(Elf32_Rela) == 0);

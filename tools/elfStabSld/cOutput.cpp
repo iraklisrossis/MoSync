@@ -352,6 +352,10 @@ static void setCallRegDataRefs(const DebuggingData& data, CallRegs& cr)
 	setCallRegDataRefs(data, data.rodataRela, cr);
 	printf("data: %" PRIuPTR " relas\n", data.dataRela.size());
 	setCallRegDataRefs(data, data.dataRela, cr);
+	printf("ctors: %" PRIuPTR " relas\n", data.ctorsRela.size());
+	setCallRegDataRefs(data, data.ctorsRela, cr);
+	printf("dtors: %" PRIuPTR " relas\n", data.dtorsRela.size());
+	setCallRegDataRefs(data, data.dtorsRela, cr);
 	printf("Total callRegs: %" PRIuPTR "\n", gFunctionPointerMap.size());
 	fflush(stdout);
 }

@@ -24,6 +24,8 @@ if(target)
 	SETTINGS[:strict_prerequisites] = true
 end
 
+TARGET = target
+
 BASE = SETTINGS[:base_path]
 
 SP = Struct.new('SourcePath', :base, :path, :mode, :defaultMode)
@@ -213,6 +215,7 @@ class TTWork < PipeExeWork
 		flags = ' -g -w -DSIGNAL_SUPPRESS'
 		flags << ' -DNO_TRAMPOLINES -DNO_LABEL_VALUES'
 		flags << ' -O2 -fomit-frame-pointer' if(CONFIG == "")
+		flags << ' -save-temps' if(TARGET)
 		flags << ' -ffloat-store -fno-inline' if(@sourcefile.sourcePath.base == 'ieee/')
 		flags << ' -ffloat-store' if("#{@sourcefile.sourcePath.base}#{@NAME}" == 'gcc.dg/torture/fp-int-convert-float.c') # doesn't help.
 		flags << include_flags
@@ -297,6 +300,11 @@ class TTWork < PipeExeWork
 			puts "log.txt reports success!"
 		else
 			puts "log.txt reports failure!"
+			# copy rebuild.build.cs and data_section.bin to INSTALL_DIR, if set
+			if(defined?(INSTALL_DIR) && INSTALL_DIR)
+				FileUtils::Verbose::cp(builddir+'rebuild.build.cs', INSTALL_DIR+'/RebuildData/rebuild.build.cs')
+				FileUtils::Verbose::cp(builddir+'data_section.bin', INSTALL_DIR+'/RebuildData/data_section.bin')
+			end
 			raise
 		end
 	end

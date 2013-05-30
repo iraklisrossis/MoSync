@@ -1,5 +1,7 @@
 // Disable this to allow debugging of core exceptions.
+#if DEBUG
 #define CATCH_CORE_EXCEPTIONS
+#endif
 
 using System;
 using System.Collections.Generic;

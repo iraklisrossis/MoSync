@@ -13,18 +13,19 @@ end
 require File.expand_path(ENV['MOSYNCDIR']+'/rules/mosync_exe.rb')
 require File.expand_path(ENV['MOSYNCDIR']+'/rules/mosync_lib.rb')
 require 'fileutils'
-require './skipped.rb'
-require './dejaGnu.rb'
 
 default_const(:WP7, false)
 default_const(:PACK, "WindowsPhone/7") if(WP7)
+
+require './skipped.rb'
+require './dejaGnu.rb'
 
 if(target)
 	puts "Target: #{target}"
 	SETTINGS[:strict_prerequisites] = true
 end
 
-TARGET = target
+TARGET_FILE = target
 
 BASE = SETTINGS[:base_path]
 
@@ -215,7 +216,7 @@ class TTWork < PipeExeWork
 		flags = ' -g -w -DSIGNAL_SUPPRESS'
 		flags << ' -DNO_TRAMPOLINES -DNO_LABEL_VALUES'
 		flags << ' -O2 -fomit-frame-pointer' if(CONFIG == "")
-		flags << ' -save-temps' if(TARGET)
+		flags << ' -save-temps' if(TARGET_FILE)
 		flags << ' -ffloat-store -fno-inline' if(@sourcefile.sourcePath.base == 'ieee/')
 		flags << ' -ffloat-store' if("#{@sourcefile.sourcePath.base}#{@NAME}" == 'gcc.dg/torture/fp-int-convert-float.c') # doesn't help.
 		flags << include_flags
@@ -440,3 +441,5 @@ if(target && !targetFound)
 	puts "Error: target not found!"
 	exit(1)
 end
+
+puts "Tests complete."

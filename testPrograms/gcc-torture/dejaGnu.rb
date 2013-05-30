@@ -19,7 +19,8 @@ BAD_OPTIONS = [
 	'-fsyntax-only',
 ]
 
-if(defined?(MODE) && MODE == 'rebuild')
+if((defined?(MODE) && MODE == 'rebuild') ||
+	WP7)
 	BAD_OPTIONS << '-finstrument-functions'
 end
 

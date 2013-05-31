@@ -119,10 +119,13 @@ class Work < TaskBase
 		Work.invoke_subdir_ex(false, dir, *args)
 	end
 	def Work.invoke_subdir_ex(reload, dir, *args)
+		Work.invoke_subdir_ex2('workfile.rb', reload, dir, *args)
+	end
+	def Work.invoke_subdir_ex2(workfileName, reload, dir, *args)
 		puts File.expand_path(dir) + " " + args.inspect
-		fn = dir + "/workfile.rb"
+		fn = dir + '/' + workfileName
 		if(!File.exists?(fn))
-			error "No workfile found in #{dir}"
+			error "No #{workfileName} found in #{dir}"
 		end
 
 		oldDir = Dir.getwd
@@ -143,7 +146,7 @@ class Work < TaskBase
 			args << " MODE=#{MODE}" if(defined?(MODE))
 			args << " EXTRA_RUNPARAMS=\"#{EXTRA_RUNPARAMS}\"" if(defined?(EXTRA_RUNPARAMS))
 			args << " CONFIG=#{CONFIG}" if(!args.include?('CONFIG'))
-			cmd = "workfile.rb #{args}"
+			cmd = "#{workfileName} #{args}"
 			if(HOST == :win32)
 				sh "ruby #{cmd}"
 			else
@@ -153,7 +156,7 @@ class Work < TaskBase
 			if(defined?(Targets))
 				Targets.reset(args)
 			end
-			load(File.expand_path('workfile.rb'), true)
+			load(File.expand_path(workfileName), true)
 		end
 		Dir.chdir(oldDir)
 	end

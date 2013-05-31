@@ -233,8 +233,8 @@ class MoSyncPackTask < Task
 		cmd << " -m \"#{@o[:model]}\""+
 			" -d \"#{d}\" -n \"#{@o[:name]}\" --vendor \"#{@o[:vendor]}\""+
 			" --version #{@o[:version]}"
-		cmd << " --icon #{@o[:icon]}" if(@o[:icon])
-		cmd << " --ios-cert \"#{@o[:iosCert]}\""+
+		cmd << " --icon \"#{File.expand_path(@o[:icon])}\"" if(@o[:icon])
+		cmd << " --ios-cert \"#{File.expand_path(@o[:iosCert])}\""+
 			" --cpp-output \"#{co}\" --ios-project-only"+
 			" --wp-config release_rebuild"+
 			" --cs-output \"#{co}\""
@@ -242,7 +242,7 @@ class MoSyncPackTask < Task
 		cmd << " --wp-vs-build-path \"#{MSBUILD_PATH}\"" if(MSBUILD_PATH)
 		cmd << " --android-package \"#{@o[:androidPackage]}\""+
 			" --android-version-code \"#{@o[:androidVersionCode]}\""+
-			" --android-keystore \"#{@o[:androidKeystore]}\""+
+			" --android-keystore \"#{File.expand_path(@o[:androidKeystore])}\""+
 			" --android-storepass \"#{@o[:androidStorepass]}\""+
 			" --android-alias \"#{@o[:androidAlias]}\""+
 			" --android-keypass \"#{@o[:androidKeypass]}\""+

@@ -36,6 +36,11 @@ using namespace NativeUI; // WebView widget
 
 namespace Wormhole
 {
+
+	LogMessageListener::~LogMessageListener()
+	{
+	}
+
 	/**
 	 * Constructor.
 	 */

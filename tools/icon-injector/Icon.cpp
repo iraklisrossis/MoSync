@@ -19,6 +19,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <expat.h>
 #include <stdio.h>
 #include <cstring>
+#include <unistd.h>
 #include "Shared.h"
 #include "Util.h"
 
@@ -77,6 +78,7 @@ static void end(void *data, const char *el) {
 		FILE* f = fopen(filename.c_str(), "r");
 
 		if(!f) {
+			printf("cwd: %s\n", getcwd(NULL, 0));
 			errorExit((string("Could not open input file: ") + filename).c_str());
 		}
 

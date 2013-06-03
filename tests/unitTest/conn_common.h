@@ -24,8 +24,6 @@ MA 02110-1301, USA.
 #define HTTP_CANCEL_PORT 5006
 
 // this port should be firewalled, so the client has time to cancel.
-#define CONNECT_CANCEL_PORT 5007
-
-#define UDP_CANCEL_PORT 5100
+#define CONNECT_CANCEL_PORT 5100
 
 #define DATA_SIZE (4*1024)

@@ -518,7 +518,7 @@ public:
 
 class UdpCancelCase : public BaseSocketCancelCase {
 public:
-	UdpCancelCase() : BaseSocketCancelCase("udpCancel", UDP_URL(UDP_CANCEL_PORT)) {
+	UdpCancelCase() : BaseSocketCancelCase("udpCancel", UDP_URL(CONNECT_CANCEL_PORT)) {
 	}
 
 	virtual bool connectTestFinished() {

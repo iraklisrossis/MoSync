@@ -171,7 +171,15 @@ namespace MoSync
 
 			protected void FIXU_DFDI(out int i0, out int i1, double d)
 			{
-				MOV_DI(out i0, out i1, (long)(ulong)d);
+				ulong u;
+				if (d > long.MaxValue)
+					// This conversion loses the last 4 digits of precision.
+					// But it's better than the direct conversion from double to ulong,
+					// which, for this range, returns zero.
+					u = (ulong)(decimal)d;
+				else
+					u = (ulong)d;
+				MOV_DI(out i0, out i1, (long)u);
 			}
 
 			protected ComplexDouble RETURN_CF(double d0, double d1)

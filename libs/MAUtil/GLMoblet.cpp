@@ -63,7 +63,8 @@ public:
 			// surface is recreated (and textures have to be uploaded etc.)
 			if( data->eventType == MAW_EVENT_GL_VIEW_READY )
 			{
-				maWidgetSetProperty(data->widgetHandle, "bind", "");
+				if(data->widgetHandle > 0)
+					maWidgetSetProperty(data->widgetHandle, "bind", "");
 				mMoblet->init();
 				mMoblet->startDrawing();
 				mWasDrawing = true;

@@ -51,7 +51,7 @@ public:
 	Grid(int x, int y, int w, int h);
 	void initContext(int w, int h);
 
-	void initGrid(int gridSizeX=8, int gridSizeY=8);
+	void initGrid(int gridSizeX=32, int gridSizeY=32);
 	void setShadingEnabled(bool enabled);
 	bool getShadingEnabled() const;
 	bool setExpression(const String& exp);

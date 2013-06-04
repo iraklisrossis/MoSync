@@ -2,7 +2,7 @@
 
 require File.expand_path(ENV['MOSYNCDIR']+'/rules/mosync_exe.rb')
 
-raise unless(USE_NEWLIB)
+raise unless(HAVE_LIBC)
 
 work = PipeExeWork.new
 work.instance_eval do

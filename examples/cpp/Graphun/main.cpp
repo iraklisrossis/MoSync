@@ -14,22 +14,33 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  MA 02110-1301, USA.
- */
+*/
+
+#define HAVE_NATIVE_UI 0
 
 #include <MAUtil/Moblet.h>
 #include <stdio.h>
+#include <mavsprintf.h>
 
+#if HAVE_NATIVE_UI
 #include "UIFramework/Screen.h"
 #include "UIFramework/ListSelectionScreen.h"
+#else
+#include <MAUtil/GLMoblet.h>
+#endif
+
 #include "grid.h"
 
 #include "MAHeaders.h"
 
 using namespace MAUtil;
+#if HAVE_NATIVE_UI
 using namespace MoSync;
 using namespace UI;
+#endif
 
 namespace Graphun {
+#if HAVE_NATIVE_UI
 static const char
 		* sHelpText =
 				"Graphun is a tool to visualize 3D graphs. The z-coordinates of the points on the plane are "
@@ -137,15 +148,22 @@ protected:
 	Widget* mSetResolutionItem;
 
 };
+#endif
 
 /**
  * The main screen with the graph view.
  */
-class MainScreen: public Screen, public IdleListener, public PointerListener {
+class MainScreen:
+#if HAVE_NATIVE_UI
+	public Screen,
+#endif
+	public IdleListener, public PointerListener {
 protected:
+#if HAVE_NATIVE_UI
 	Widget* mEditBox;
 	Widget* mGLView;
 	Widget* mSettingsButton;
+#endif
 	Grid *grid;
 	MAPoint2d lastPoint;
 
@@ -159,6 +177,7 @@ protected:
 public:
 	Grid* getGrid();
 	MainScreen();
+#if HAVE_NATIVE_UI
 	void setExpression(const String& exp);
 	virtual void buttonClicked(UIItem* item);
 	virtual void editBoxReturned(UIItem* item);
@@ -166,6 +185,10 @@ public:
 	void idle();
 	void willAppear();
 	void hide();
+#else
+	void idle();
+	void start();
+#endif
 	void pointerPressEvent(MAPoint2d p);
 	void pointerReleaseEvent(MAPoint2d p);
 	void pointerMoveEvent(MAPoint2d p);
@@ -177,6 +200,7 @@ public:
 };
 
 MainScreen *sMainScreen = NULL;
+#if HAVE_NATIVE_UI
 SettingsScreen *sSettingsScreen = NULL;
 TextScreen* sHelpScreen = NULL;
 TextScreen* sAboutScreen = NULL;
@@ -219,6 +243,7 @@ protected:
 	Map<UIItem*, String> mExpressions;
 
 };
+#endif
 
 Grid* MainScreen::getGrid() {
 	return grid;
@@ -227,6 +252,7 @@ Grid* MainScreen::getGrid() {
 MainScreen::MainScreen() {
 	mDrawing = false;
 
+#if HAVE_NATIVE_UI
 	setProperty("title", "Graphun");
 
 	Widget* layout = new Widget("VerticalLayout");
@@ -289,10 +315,14 @@ MainScreen::MainScreen() {
 	mSettingsButton->setProperty("width", "-2");
 	mSettingsButton->setProperty("height", "-2");
 	toolBar->addChild(mSettingsButton);
+#else
+	mExpression = "sin(sqrt(x*x+y*y)*10+time)*0.5";
+#endif
 
 	grid = new Grid(0, 0, 0, 0);
 }
 
+#if HAVE_NATIVE_UI
 void MainScreen::setExpression(const String& exp) {
 	if (grid->setExpression(exp)) {
 		mExpression = exp;
@@ -311,6 +341,7 @@ void MainScreen::hide() {
 	Environment::getEnvironment().removeIdleListener(this);
 	Environment::getEnvironment().removePointerListener(this);
 }
+#endif
 
 void MainScreen::idle() {
 	if (!mDrawing) {
@@ -331,7 +362,9 @@ void MainScreen::idle() {
 		}
 	}
 	grid->render();
+#if HAVE_NATIVE_UI
 	mGLView->setProperty("invalidate", "");
+#endif
 }
 
 void MainScreen::pointerPressEvent(MAPoint2d p) {
@@ -365,6 +398,16 @@ void MainScreen::pointerReleaseEvent(MAPoint2d p) {
 	mRotating = true;
 }
 
+#if !HAVE_NATIVE_UI
+void MainScreen::start() {
+	MAExtent s = maGetScrSize();
+	grid->initContext(EXTENT_X(s), EXTENT_Y(s));
+	grid->setExpression(mExpression);
+	mDrawing = true;
+}
+#endif
+
+#if HAVE_NATIVE_UI
 void MainScreen::buttonClicked(UIItem* item) {
 	if (item == mSettingsButton) {
 		sSettingsScreen->requestListFocus();
@@ -500,13 +543,25 @@ public:
 		}
 	}
 };
+#endif
 }
 
-class GraphunApp: public Moblet {
+class GraphunApp :
+#if HAVE_NATIVE_UI
+	public Moblet
+#else
+	public GLMoblet
+#endif
+{
 public:
-	GraphunApp() {
-		Graphun::sStackScreen = new StackScreen();
+	GraphunApp()
+#if !HAVE_NATIVE_UI
+	: GLMoblet(GL1)
+#endif
+{
 		Graphun::sMainScreen = new Graphun::MainScreen();
+#if HAVE_NATIVE_UI
+		Graphun::sStackScreen = new StackScreen();
 		Graphun::sSettingsScreen = new Graphun::SettingsScreen();
 		Graphun::sResolutionSelector = new Graphun::ResolutionSelector();
 
@@ -516,11 +571,29 @@ public:
 
 		Graphun::sStackScreen->pushScreen(Graphun::sMainScreen);
 		Graphun::sStackScreen->show();
+#endif
 	}
+
+#if !HAVE_NATIVE_UI
+	// GLMoblet
+	void init() {
+		lprintfln("init()");
+		Graphun::sMainScreen->start();
+		addPointerListener(Graphun::sMainScreen);
+	}
+	void draw() {
+		glDisable( GL_TEXTURE_2D);
+		Graphun::sMainScreen->idle();
+		//maUpdateScreen();
+	}
+#endif
 
 	void keyPressEvent(int keyCode, int nativeCode) {
 		if (keyCode == MAK_BACK) {
-			if (1 == Graphun::sStackScreen->stackSize()) {
+#if HAVE_NATIVE_UI
+			if (1 == Graphun::sStackScreen->stackSize())
+#endif
+			{
 				maExit(0);
 			}
 		}

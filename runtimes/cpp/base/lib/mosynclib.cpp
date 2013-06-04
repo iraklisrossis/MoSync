@@ -25,10 +25,12 @@ void Base::Syscall::ValidateMemRange(const void* ptr, int size) {
 int Base::Syscall::ValidatedStrLen(const char* ptr) {
 	return strlen(ptr);
 }
-int Base::Syscall::GetValidatedStackValue(int offset VSV_ARGPTR_DECL) {
-	if(offset < INT_MAX)	//hack
-		BIG_PHAT_ERROR(ERR_FUNCTION_UNSUPPORTED);
-	return 0;
+int Base::Syscall::GetValidatedStackValue(int offset, va_list argptr) {
+	DEBUG_ASSERT((offset % 4) == 0);
+	for(int i=0; i<offset; i+=4) {
+		va_arg(argptr, int);
+	}
+	return va_arg(argptr, int);
 }
 const char* Base::Syscall::GetValidatedStr(int address) {
 	return (const char*)address;

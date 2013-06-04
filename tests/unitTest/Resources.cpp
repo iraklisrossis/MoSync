@@ -175,10 +175,19 @@ public:
 		assert("Placeholder test", !failed);
 	}
 
+	void doCIFD(MAHandle hImage, MAHandle hData, int cbData) {
+		int iRet = maCreateImageFromData (hImage, hData, 0, cbData);
+		if (iRet == RES_BAD_INPUT) {
+			printf ("Image creation failed, as expected.\n");
+		} else {
+			printf ("Incorrect return value: %i\n", iRet);
+		}
+		assert("testCreateImageFromDataBug", iRet == RES_BAD_INPUT);
+	}
+
 	void testCreateImageFromDataBug()
 	{
 		MAHandle hData, hImage;
-		int iRet;
 		char buf[32]={0};
 		int cbData=sizeof(buf);
 
@@ -190,13 +199,13 @@ public:
 		}
 		maWriteData (hData, buf, 0, cbData);
 		hImage = maCreatePlaceholder();
-		if ((iRet = maCreateImageFromData (hImage, hData, 0, cbData)) == RES_BAD_INPUT)
-		{
-			printf ("Image creation failed, as expected.\n");
-			return;
-		}
-		printf ("Incorrect return value: %i\n", iRet);
-		assert("testCreateImageFromDataBug", false);
+
+		// A test of 32 bytes, all zero.
+		doCIFD(hImage, hData, cbData);
+
+		// Let's do a few random-data tests.
+		doCIFD(hImage, SERVER_DATA, DATA_SIZE);
+		doCIFD(hImage, CLIENT_DATA, DATA_SIZE);
 	}
 
 	void start() {

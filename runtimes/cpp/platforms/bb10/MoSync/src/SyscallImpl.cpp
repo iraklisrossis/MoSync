@@ -212,7 +212,7 @@ namespace Base
 		// initialize image decoder
 		{
 			img_lib_t ilib = NULL;
-			IMGERR(img_lib_attach(&ilib));
+			IMGERR_EXIT(img_lib_attach(&ilib));
 			sCodecCount = img_codec_list(ilib, NULL, 0, NULL, 0);
 			LOG("%i codecs.\n", sCodecCount);
 			sCodecs = new img_codec_t[sCodecCount];
@@ -231,25 +231,14 @@ namespace Base
 		sMainEventChannel = bps_channel_get_active();
 	}
 
-	Image* Syscall::loadImage(MemStream& s)
-	{
-		LOG("loadImage...\n");
-		io_stream_t* io;
-		int length;
-		DEBUG_ASSERT(s.length(length));
-		DUMPINT(length);
-		io = io_open(IO_MEM, IO_READ, length, s.ptrc());
-		if(!io)
-			DO_ERRNO;
-
+	static int createImgFromIo(img_t& img, io_stream_t* io) {
 		unsigned index;
-		IMGERR(img_decode_validate(sCodecs, sCodecCount, io, &index));
+		IMGERR_RES(img_decode_validate(sCodecs, sCodecCount, io, &index));
 		DUMPINT(index);
 
 		uintptr_t decode_data;
-		IMGERR(img_decode_begin(sCodecs[index], io, &decode_data));
+		IMGERR_RES(img_decode_begin(sCodecs[index], io, &decode_data));
 
-		img_t img;
 		img.flags = IMG_FORMAT;
 		switch(sBackBuffer->pixelFormat) {
 			case Image::PIXELFORMAT_RGB555: img.format = IMG_FMT_PKHE_ARGB1555; break;
@@ -259,21 +248,50 @@ namespace Base
 			case Image::PIXELFORMAT_ARGB8888: img.format = IMG_FMT_PKHE_ARGB8888; break;
 			default: DEBIG_PHAT_ERROR;
 		}
-		IMGERR(img_decode_frame(sCodecs[index], io, NULL, &img, &decode_data));
+		IMGERR_RES(img_decode_frame(sCodecs[index], io, NULL, &img, &decode_data));
 
-		IMGERR(img_decode_finish(sCodecs[index], io, &decode_data));
+		IMGERR_RES(img_decode_finish(sCodecs[index], io, &decode_data));
+		return RES_OK;
+	}
+
+	static int createImageFromData(Image*& dst, const void* src, int length) {
+		LOG("loadImage...\n");
+		int res;
+
+		io_stream_t* io;
+		DUMPINT(length);
+		io = io_open(IO_MEM, IO_READ, length, src);
+		if(!io)
+			DO_ERRNO;
+
+		img_t img;
+		res = createImgFromIo(img, io);
+
 		io_close(io);
+		if(res != RES_OK)
+			return res;
 
 		static const int flags = IMG_DIRECT | IMG_FORMAT | IMG_W | IMG_H;
 		if((img.flags & flags) != flags) {
 			LOG("Bad flags: %X (expected %X)\n", img.flags, flags);
-			return NULL;
+			return RES_BAD_INPUT;
 		}
 
 		LOG("loadImage complete!\n");
 
-		return new Image(img.access.direct.data, NULL, img.w, img.h,
+		dst = new Image(img.access.direct.data, NULL, img.w, img.h,
 			img.access.direct.stride, sBackBuffer->pixelFormat, false, false);
+		return RES_OK;
+	}
+
+	Image* Syscall::loadImage(MemStream& s)
+	{
+		int length;
+		DEBUG_ASSERT(s.length(length));
+		Image* dst;
+		int res = createImageFromData(dst, s.ptrc(), length);
+		DEBUG_ASSERT(res == RES_OK);
+		return dst;
 	}
 
 	Image* Syscall::loadSprite(void* surface, ushort left, ushort top, ushort width, ushort height, ushort cx, ushort cy)
@@ -820,16 +838,22 @@ SYSCALL(int, maCreateImageFromData(MAHandle placeholder, MAHandle src, int offse
 	MYASSERT(size>0, ERR_DATA_OOB);
 	Stream* stream = gSyscall->resources.get_RT_BINARY(src);
 	Image* image = 0;
+	int res;
 
 	if(!stream->ptrc()) {
 		// is not a memstream, create a memstream and load it.
 		MYASSERT(stream->seek(Seek::Start, offset), ERR_DATA_OOB);
 		MemStream b(size);
 		MYASSERT(stream->readFully(b), ERR_DATA_ACCESS_FAILED);
-		image = gSyscall->loadImage(b);
+		res = createImageFromData(image, b.ptrc(), size);
 	} else {
-		image = gSyscall->loadImage(*(MemStream*)stream);
+		int length;
+		MYASSERT(stream->length(length), ERR_DATA_ACCESS_FAILED);
+		MYASSERT(length >= offset + size, ERR_DATA_OOB);
+		res = createImageFromData(image, (byte*)stream->ptrc() + offset, size);
 	}
+	if(res != RES_OK)
+		return res;
 	if(image == NULL)
 		return RES_OUT_OF_MEMORY;
 

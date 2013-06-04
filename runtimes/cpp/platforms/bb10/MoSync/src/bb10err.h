@@ -14,9 +14,13 @@
 
 #define NULL_ERRNO(func) do { void* _res = (func); if(_res < NULL) DO_ERRNO; } while(0)
 
-#define IMGERR(func) do { int _res = (func); if(_res != IMG_ERR_OK) {\
+#define IMGERR_BASE(func, end) do { int _res = (func); if(_res != IMG_ERR_OK) {\
 	LOG("IMGERR at %s:%i: %i\n", __FILE__, __LINE__, _res);\
-	MoSyncErrorExit(_res); } } while(0)
+	end; } } while(0)
+
+#define IMGERR_RES(func) IMGERR_BASE(func, return RES_BAD_INPUT)
+
+#define IMGERR_EXIT(func) IMGERR_BASE(func, MoSyncErrorExit(_res))
 
 #define DUAL_ERRNO(fail, success, func) do { int _res = (func);\
 	if(_res == fail) DO_ERRNO; else if(_res != success) {DEBIG_PHAT_ERROR;} } while(0)

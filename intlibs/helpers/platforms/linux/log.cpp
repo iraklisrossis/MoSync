@@ -20,6 +20,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
+#include <errno.h>
+
+#define LOG_ERRNO LOG("Errno %i @ %s:%i\n", errno, __FILE__, __LINE__)
+#define FAIL_ERRNO LOG_ERRNO; MoSyncErrorExit(ERR_INTERNAL)
+#define ERRNO(a) if((a) < 0) { FAIL_ERRNO; }
 
 //hack
 #define CONFIG_H
@@ -125,24 +130,25 @@ void LogTime(const char* fmt, ...) {
 
 void InitializeCriticalSection(CRITICAL_SECTION* cs) {
 	pthread_mutexattr_t mutexattr;
+	ERRNO(pthread_mutexattr_init(&mutexattr));
 	// Set the mutex as a recursive mutex
-	pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
+	ERRNO(pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE));
 	// create the mutex with the attributes set
-	pthread_mutex_init(cs, &mutexattr);
+	ERRNO(pthread_mutex_init(cs, &mutexattr));
 	//After initializing the mutex, the thread attribute can be destroyed
-	pthread_mutexattr_destroy(&mutexattr);
+	ERRNO(pthread_mutexattr_destroy(&mutexattr));
 }
 
 void DeleteCriticalSection(CRITICAL_SECTION* cs) {
-	pthread_mutex_destroy(cs);
+	ERRNO(pthread_mutex_destroy(cs));
 }
 
 void EnterCriticalSection(CRITICAL_SECTION* cs) {
-	pthread_mutex_lock(cs);
+	ERRNO(pthread_mutex_lock(cs));
 }
 
 void LeaveCriticalSection(CRITICAL_SECTION* cs) {
-	pthread_mutex_unlock(cs);
+	ERRNO(pthread_mutex_unlock(cs));
 }
 
 #if !defined(_android)

@@ -78,9 +78,10 @@ static void bpsWait(int timeout);
 #if HAVE_SCREEN
 static int sDisplayCount;
 static screen_context_t sScreen;
-static int sScreenFormat;
-#endif
-static screen_display_t* sDisplays;
+static int sScreenFormat = SCREEN_FORMAT_RGBA8888;
+static Image::PixelFormat sScreenImageFormat = Image::PIXELFORMAT_ARGB8888;
+static int sScreenImageBytesPerPixel = 4;
+static screen_display_t* sDisplays = NULL;
 static screen_window_t sWindow;
 static Image* sCurrentDrawSurface = NULL;
 static MAHandle sCurrentDrawHandle = HANDLE_SCREEN;
@@ -89,6 +90,9 @@ static int sCurrentColor = 0;
 static screen_buffer_t sScreenBuffer;
 static int sScreenRect[4] = { 0,0 };
 static bool sOpenGLActive = false;
+
+#define INITIALIZE_SCREEN if(sCurrentDrawSurface == sBackBuffer && sBackBuffer == NULL) initializeScreen()
+#endif
 
 static char sCwd[PATH_MAX];
 
@@ -140,71 +144,7 @@ namespace Base
 
 		Syscall::init();
 		MANetworkInit();
-#if HAVE_SCREEN
-		ERRNO(screen_create_context(&sScreen, SCREEN_APPLICATION_CONTEXT));
-		ERRNO(screen_create_window(&sWindow, sScreen));
 
-		ERRNO(screen_get_context_property_iv(sScreen, SCREEN_PROPERTY_DISPLAY_COUNT, &sDisplayCount));
-		sDisplays = new screen_display_t[sDisplayCount];
-		ERRNO(screen_get_context_property_pv(sScreen, SCREEN_PROPERTY_DISPLAYS, (void**)sDisplays));
-
-		// define the screen usage
-		int param = SCREEN_USAGE_WRITE | SCREEN_USAGE_NATIVE;
-		ERRNO(screen_set_window_property_iv(sWindow, SCREEN_PROPERTY_USAGE, &param));
-
-		// create a the buffer required for rendering the window
-		ERRNO(screen_create_window_buffers(sWindow, 1));
-
-		// obtain the framebuffer context
-		ERRNO(screen_get_window_property_pv(sWindow, SCREEN_PROPERTY_RENDER_BUFFERS, (void**)&sScreenBuffer));
-
-		// optain window size
-		ERRNO(screen_get_window_property_iv(sWindow, SCREEN_PROPERTY_BUFFER_SIZE, sScreenRect + 2));
-		LOG("Screen size: %ix%i\n", sScreenRect[2], sScreenRect[3]);
-
-		// obtain window format
-		ERRNO(screen_get_window_property_iv(sWindow, SCREEN_PROPERTY_FORMAT, &sScreenFormat));
-		LOG("Screen format: %i\n", sScreenFormat);
-
-		Image::PixelFormat format;
-		switch(sScreenFormat) {
-		case SCREEN_FORMAT_RGBX5551: format = Image::PIXELFORMAT_RGB555; break;
-		case SCREEN_FORMAT_RGBX4444: format = Image::PIXELFORMAT_RGB444; break;
-		case SCREEN_FORMAT_RGB565: format = Image::PIXELFORMAT_RGB565; break;
-		case SCREEN_FORMAT_RGB888: format = Image::PIXELFORMAT_RGB888; break;
-		case SCREEN_FORMAT_RGBX8888: format = Image::PIXELFORMAT_ARGB8888; break;
-		case SCREEN_FORMAT_RGBA8888: format = Image::PIXELFORMAT_ARGB8888; break;
-		default:
-			LOG("Unsupported screen format %i\n", sScreenFormat);
-			DEBIG_PHAT_ERROR;
-		}
-
-		// obtain stride
-		ERRNO(screen_get_buffer_property_iv(sScreenBuffer, SCREEN_PROPERTY_STRIDE, &param));
-		LOG("Screen stride: %i\n", param);
-
-		// obtain framebuffer pointer
-		byte* framebuffer;
-		ERRNO(screen_get_buffer_property_pv(sScreenBuffer, SCREEN_PROPERTY_POINTER, (void **)&framebuffer));
-
-		// initialize Image system
-		initMulTable();
-		initRecipLut();
-
-		// initialize internal backbuffer
-		sBackBuffer = new Image(framebuffer, NULL, sScreenRect[2], sScreenRect[3], param, format, false, false);
-		sCurrentDrawSurface = sBackBuffer;
-		assert(sBackBuffer != NULL);
-
-		// fill with black
-		memset(framebuffer, 0, param * sScreenRect[3]);
-
-		// request the window be displayed
-		maUpdateScreen();
-
-		BPSERR(screen_request_events(sScreen));
-		LOG("Screen init complete.\n");
-#endif
 		// initialize events
 		BPSERR(navigator_request_events(0));
 		BPSERR(button_request_events(0));
@@ -231,6 +171,80 @@ namespace Base
 		sMainEventChannel = bps_channel_get_active();
 	}
 
+	static void initializeScreen() {
+		{
+			static bool done = false;
+			if(done)
+				return;
+			done = true;
+		}
+#if HAVE_SCREEN
+		ERRNO(screen_create_context(&sScreen, SCREEN_APPLICATION_CONTEXT));
+		ERRNO(screen_create_window(&sWindow, sScreen));
+
+		ERRNO(screen_get_context_property_iv(sScreen, SCREEN_PROPERTY_DISPLAY_COUNT, &sDisplayCount));
+		sDisplays = new screen_display_t[sDisplayCount];
+		ERRNO(screen_get_context_property_pv(sScreen, SCREEN_PROPERTY_DISPLAYS, (void**)sDisplays));
+
+		// define the screen usage
+		int param = SCREEN_USAGE_WRITE | SCREEN_USAGE_NATIVE;
+		ERRNO(screen_set_window_property_iv(sWindow, SCREEN_PROPERTY_USAGE, &param));
+
+		// create a the buffer required for rendering the window
+		ERRNO(screen_create_window_buffers(sWindow, 1));
+
+		// obtain the framebuffer context
+		ERRNO(screen_get_window_property_pv(sWindow, SCREEN_PROPERTY_RENDER_BUFFERS, (void**)&sScreenBuffer));
+
+		// optain window size
+		ERRNO(screen_get_window_property_iv(sWindow, SCREEN_PROPERTY_BUFFER_SIZE, sScreenRect + 2));
+		LOG("Screen size: %ix%i\n", sScreenRect[2], sScreenRect[3]);
+
+		// obtain window format
+		ERRNO(screen_get_window_property_iv(sWindow, SCREEN_PROPERTY_FORMAT, &sScreenFormat));
+		LOG("Screen format: %i\n", sScreenFormat);
+
+		switch(sScreenFormat) {
+		case SCREEN_FORMAT_RGBX5551: sScreenImageFormat = Image::PIXELFORMAT_RGB555; break;
+		case SCREEN_FORMAT_RGBX4444: sScreenImageFormat = Image::PIXELFORMAT_RGB444; break;
+		case SCREEN_FORMAT_RGB565: sScreenImageFormat = Image::PIXELFORMAT_RGB565; break;
+		case SCREEN_FORMAT_RGB888: sScreenImageFormat = Image::PIXELFORMAT_RGB888; break;
+		case SCREEN_FORMAT_RGBX8888: sScreenImageFormat = Image::PIXELFORMAT_ARGB8888; break;
+		case SCREEN_FORMAT_RGBA8888: sScreenImageFormat = Image::PIXELFORMAT_ARGB8888; break;
+		default:
+			LOG("Unsupported screen format %i\n", sScreenFormat);
+			DEBIG_PHAT_ERROR;
+		}
+
+		// obtain stride
+		ERRNO(screen_get_buffer_property_iv(sScreenBuffer, SCREEN_PROPERTY_STRIDE, &param));
+		LOG("Screen stride: %i\n", param);
+
+		// obtain framebuffer pointer
+		byte* framebuffer;
+		ERRNO(screen_get_buffer_property_pv(sScreenBuffer, SCREEN_PROPERTY_POINTER, (void **)&framebuffer));
+
+		// initialize Image system
+		initMulTable();
+		initRecipLut();
+
+		// initialize internal backbuffer
+		sBackBuffer = new Image(framebuffer, NULL, sScreenRect[2], sScreenRect[3], param, sScreenImageFormat, false, false);
+		sScreenImageBytesPerPixel = sBackBuffer->bytesPerPixel;
+		sCurrentDrawSurface = sBackBuffer;
+		assert(sBackBuffer != NULL);
+
+		// fill with black
+		memset(framebuffer, 0, param * sScreenRect[3]);
+
+		// request the window be displayed
+		maUpdateScreen();
+
+		BPSERR(screen_request_events(sScreen));
+		LOG("Screen init complete.\n");
+#endif	//HAVE_SCREEN
+	}
+
 	static int createImgFromIo(img_t& img, io_stream_t* io) {
 		unsigned index;
 		IMGERR_RES(img_decode_validate(sCodecs, sCodecCount, io, &index));
@@ -240,7 +254,7 @@ namespace Base
 		IMGERR_RES(img_decode_begin(sCodecs[index], io, &decode_data));
 
 		img.flags = IMG_FORMAT;
-		switch(sBackBuffer->pixelFormat) {
+		switch(sScreenImageFormat) {
 			case Image::PIXELFORMAT_RGB555: img.format = IMG_FMT_PKHE_ARGB1555; break;
 			case Image::PIXELFORMAT_RGB444: DEBIG_PHAT_ERROR; break;
 			case Image::PIXELFORMAT_RGB565: img.format = IMG_FMT_PKHE_RGB565; break;
@@ -280,7 +294,7 @@ namespace Base
 		LOG("loadImage complete!\n");
 
 		dst = new Image(img.access.direct.data, NULL, img.w, img.h,
-			img.access.direct.stride, sBackBuffer->pixelFormat, false, false);
+			img.access.direct.stride, sScreenImageFormat, false, false);
 		return RES_OK;
 	}
 
@@ -556,6 +570,7 @@ SYSCALL(int, maGetKeys())
 
 SYSCALL(void, maSetClipRect(int left, int top, int width, int height))
 {
+	INITIALIZE_SCREEN;
 	sCurrentDrawSurface->clipRect.x = left;
 	sCurrentDrawSurface->clipRect.y = top;
 	sCurrentDrawSurface->clipRect.width = width;
@@ -564,6 +579,7 @@ SYSCALL(void, maSetClipRect(int left, int top, int width, int height))
 
 SYSCALL(void, maGetClipRect(MARect* rect))
 {
+	INITIALIZE_SCREEN;
 	gSyscall->ValidateMemRange(rect, sizeof(MARect));
 	rect->left = sCurrentDrawSurface->clipRect.x;
 	rect->top = sCurrentDrawSurface->clipRect.y;
@@ -578,18 +594,22 @@ SYSCALL(int, maSetColor(int argb)) {
 }
 
 SYSCALL(void, maPlot(int posX, int posY)) {
+	INITIALIZE_SCREEN;
 	sCurrentDrawSurface->drawPoint(posX, posY, sCurrentColor);
 }
 
 SYSCALL(void, maLine(int x0, int y0, int x1, int y1)) {
+	INITIALIZE_SCREEN;
 	sCurrentDrawSurface->drawLine(x0, y0, x1, y1, sCurrentColor);
 }
 
 SYSCALL(void, maFillRect(int left, int top, int width, int height)) {
+	INITIALIZE_SCREEN;
 	sCurrentDrawSurface->drawFilledRect(left, top, width, height, sCurrentColor);
 }
 
 SYSCALL(void, maFillTriangleStrip(const MAPoint2d *points, int count)) {
+	INITIALIZE_SCREEN;
 	SYSCALL_THIS->ValidateMemRange(points, sizeof(MAPoint2d) * count);
 	CHECK_INT_ALIGNMENT(points);
 	MYASSERT(count >= 3, ERR_POLYGON_TOO_FEW_POINTS);
@@ -606,6 +626,7 @@ SYSCALL(void, maFillTriangleStrip(const MAPoint2d *points, int count)) {
 }
 
 SYSCALL(void, maFillTriangleFan(const MAPoint2d *points, int count)) {
+	INITIALIZE_SCREEN;
 	SYSCALL_THIS->ValidateMemRange(points, sizeof(MAPoint2d) * count);
 	CHECK_INT_ALIGNMENT(points);
 	MYASSERT(count >= 3, ERR_POLYGON_TOO_FEW_POINTS);
@@ -670,6 +691,7 @@ SYSCALL(MAExtent, maGetTextSizeW(const wchar* str))
 template<class Tchar>
 void maDrawTextT(int left, int top, const Tchar* str)
 {
+	INITIALIZE_SCREEN;
 	loadFont();
 	FT_GlyphSlot slot = sFontFace->glyph;
 	const Tchar* ptr = str;
@@ -728,7 +750,7 @@ SYSCALL(void, maUpdateScreen())
 {
 	if(sOpenGLActive)
 		bbutil_swap();
-	else {
+	else if(sDisplays) {
 		ERRNO(screen_wait_vsync(sDisplays[0]));
 		ERRNO(screen_post_window(sWindow, sScreenBuffer, 1, sScreenRect, 0));
 	}
@@ -740,15 +762,15 @@ SYSCALL(void, maResetBacklight())
 
 SYSCALL(MAExtent, maGetScrSize())
 {
-#if HAVE_SCREEN
-	return EXTENT(sBackBuffer->width, sBackBuffer->height);
-#else
-	return getScrSize();
-#endif
+	if(sBackBuffer)
+		return EXTENT(sBackBuffer->width, sBackBuffer->height);
+	else
+		return getScrSize();
 }
 
 SYSCALL(void, maDrawImage(MAHandle image, int left, int top))
 {
+	INITIALIZE_SCREEN;
 	Image* img = gSyscall->resources.get_RT_IMAGE(image);
 	sCurrentDrawSurface->drawImage(left, top, img);
 }
@@ -756,6 +778,7 @@ SYSCALL(void, maDrawImage(MAHandle image, int left, int top))
 SYSCALL(void, maDrawRGB(const MAPoint2d* dstPoint, const void* src,
 	const MARect* srcRect, int scanlength))
 {
+	INITIALIZE_SCREEN;
 	Image srcImg((byte*)src, NULL, scanlength, srcRect->top + srcRect->height, scanlength*4, Image::PIXELFORMAT_ARGB8888, false, false);
 	ClipRect cr = {srcRect->left, srcRect->top, srcRect->width, srcRect->height};
 	sCurrentDrawSurface->drawImageRegion(dstPoint->x, dstPoint->y, &cr, &srcImg, TRANS_NONE);
@@ -763,6 +786,7 @@ SYSCALL(void, maDrawRGB(const MAPoint2d* dstPoint, const void* src,
 
 SYSCALL(void, maDrawImageRegion(MAHandle image, const MARect* src, const MAPoint2d* dstTopLeft, int transformMode))
 {
+	INITIALIZE_SCREEN;
 	gSyscall->ValidateMemRange(dstTopLeft, sizeof(MAPoint2d));
 #if 0
 	maDrawImage(image, dstTopLeft->x, dstTopLeft->y);
@@ -872,9 +896,9 @@ SYSCALL(int, maCreateImageRaw(MAHandle placeholder, const void* src, MAExtent si
 
 SYSCALL(int, maCreateDrawableImage(MAHandle placeholder, int width, int height))
 {
-	Image::PixelFormat f = sBackBuffer->pixelFormat;
+	Image::PixelFormat f = sScreenImageFormat;
 	MYASSERT(width > 0 && height > 0, ERR_IMAGE_SIZE_INVALID);
-	Image *i = new Image(width, height, width * sBackBuffer->bytesPerPixel, f);
+	Image *i = new Image(width, height, width * sScreenImageBytesPerPixel, f);
 	if(i==NULL) return RES_OUT_OF_MEMORY;
 	if(!(i->hasData())) { delete i; return RES_OUT_OF_MEMORY; }
 
@@ -1617,11 +1641,13 @@ void MoSyncExit(int exitCode)
 		// reset all syscall structures.
 
 #if HAVE_SCREEN
-		// reset the screen
-		maSetDrawTarget(HANDLE_SCREEN);
-		maSetColor(0);
-		maSetClipRect(0, 0, sBackBuffer->width, sBackBuffer->height);
-		maFillRect(0, 0, sBackBuffer->width, sBackBuffer->height);
+		if(sBackBuffer) {
+			// reset the screen
+			maSetDrawTarget(HANDLE_SCREEN);
+			maSetColor(0);
+			maSetClipRect(0, 0, sBackBuffer->width, sBackBuffer->height);
+			maFillRect(0, 0, sBackBuffer->width, sBackBuffer->height);
+		}
 #endif
 
 		Base::reloadProgram();

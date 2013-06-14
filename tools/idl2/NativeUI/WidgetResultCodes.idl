@@ -59,7 +59,7 @@ group WidgetResultCodes "Widget result codes" {
 		REMOVED_ROOT = -10;
 
 		/**
-		* @brief Indicates that a syscall tried to access a feature that is not supported by the current framework version.
+		* @brief Indicates that a syscall tried to access a feature that is not supported by the current platform.
 		*/
 		FEATURE_NOT_AVAILABLE = -11;
 

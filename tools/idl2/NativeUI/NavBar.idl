@@ -6,7 +6,7 @@ group WidgetNavBarProperties "Navigation Bar" {
 		/**
 		* @brief Sets or gets the title.
 		*
-		* @validvalue A null-terminated string.
+		* @validvalue A null-terminated UTF-8 string.
 		*
 		* @setandget
 		*
@@ -38,7 +38,7 @@ group WidgetNavBarProperties "Navigation Bar" {
 		* Note: this is available only on iOS.
 		* On Android the back behavior is handled by the device's back button.
 		*
-		* @validvalue A null-terminated string.
+		* @validvalue A null-terminated UTF-8 string.
 		*
 		* @setandget
 		*

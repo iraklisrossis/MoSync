@@ -17,6 +17,7 @@
 require "#{File.dirname(__FILE__)}/util.rb"
 require "#{File.dirname(__FILE__)}/error.rb"
 require "#{File.dirname(__FILE__)}/host.rb"
+require "#{File.dirname(__FILE__)}/arg_handler.rb"
 
 # add functions to this class to allow them to be used as command-line targets
 # if no command-line target is chosen, "default" is run.
@@ -38,7 +39,6 @@ class Targets
 
 	@@targets = {}
 	@@goals = []
-	@@handlers = {}
 
 	def Targets.reset(args)
 		@@targets = {}
@@ -126,15 +126,6 @@ class Targets
 		else
 			@@goals += [a.to_sym]
 		end
-	end
-
-	def Targets.registerArgHandler(a, &block)
-		raise "Need a block!" if(!block)
-		a = a.to_str
-		if(!@@handlers[a])
-			@@handlers[a] = []
-		end
-		@@handlers[a] << block
 	end
 
 	def Targets.invoke

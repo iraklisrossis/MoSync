@@ -6,7 +6,7 @@ group WidgetButtonProperties "Button" {
 		/**
 		* @brief Sets or gets the text that is displayed in the label.
 		*
-		* @validvalue A null-terminated string.
+		* @validvalue A null-terminated UTF-8 string.
 		*
 		* @setandget
 		*

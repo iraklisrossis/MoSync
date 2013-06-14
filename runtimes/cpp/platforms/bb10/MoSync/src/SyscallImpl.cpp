@@ -748,9 +748,10 @@ SYSCALL(void, maDrawTextW(int left, int top, const wchar* str))
 
 SYSCALL(void, maUpdateScreen())
 {
-	if(sOpenGLActive)
-		bbutil_swap();
-	else if(sDisplays) {
+	if(sOpenGLActive) {
+		//bbutil_swap();
+		glFinish();	// causes swap?
+	} else if(sDisplays) {
 		ERRNO(screen_wait_vsync(sDisplays[0]));
 		ERRNO(screen_post_window(sWindow, sScreenBuffer, 1, sScreenRect, 0));
 	}

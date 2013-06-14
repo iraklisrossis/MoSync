@@ -6,7 +6,7 @@ group WidgetLabelProperties "Label" {
 		/**
 		* @brief Sets or gets the text that is displayed in the label.
 		*
-		* @validvalue A null-terminated string.
+		* @validvalue A null-terminated UTF-8 string.
 		*
 		* @setandget
 		*
@@ -58,13 +58,13 @@ group WidgetLabelProperties "Label" {
 		/**
 		* @brief Sets the font color of the label's text.
 		*
-		* @validvalue A hexadecimal value 0xRRGGBB, where R, G and B are the red, green and blue components respectively.
+		* @validvalue A hexadecimal value RRGGBB, where R, G and B are the red, green and blue components respectively.
 		*
 		* @setonly
 		*
 		* @par Example
 		* \code
-		*	maWidgetSetProperty(labelHandle, MAW_LABEL_FONT_COLOR, "0xff0000");
+		*	maWidgetSetProperty(labelHandle, MAW_LABEL_FONT_COLOR, "ff0000");
 		* \endcode
 		*/
 		FONT_COLOR = "fontColor";

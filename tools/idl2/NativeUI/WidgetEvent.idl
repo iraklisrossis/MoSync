@@ -22,7 +22,7 @@ group WidgetEvent "Widget event" {
 
 		union {
 			/**
-			* @brief The index when a #MAW_EVENT_CLICKED or a #MAW_EVENT_ITEM_WILL_SELECT
+			* @brief The index when a #MAW_EVENT_ITEM_CLICKED or a #MAW_EVENT_ITEM_WILL_SELECT
 			* event is received for a #MAW_LIST_VIEW.
 			*/
 			int listItemIndex;
@@ -239,6 +239,8 @@ group WidgetEvent "Widget event" {
 
 			/**
 			* @brief Sent when something is clicked.
+			*
+			* Not sent when list view items are clicked. See #MAW_EVENT_ITEM_CLICKED.
 			*/
 			CLICKED = 5;
 

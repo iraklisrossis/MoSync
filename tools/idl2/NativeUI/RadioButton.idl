@@ -36,7 +36,7 @@ group WidgetRadioButtonProperties "Radio Button" {
 		/**
 		* @brief Set or get the text to display.
 		*
-		* @validvalue A null-terminated string.
+		* @validvalue A null-terminated UTF-8 string.
 		*
 		* @setandget
 		*

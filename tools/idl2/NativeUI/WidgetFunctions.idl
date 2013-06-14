@@ -186,7 +186,7 @@ group WidgetAPIFunctions "Widget functions" {
 	* - #MAW_RES_INVALID_HANDLE if the handle was invalid.
 	* - #MAW_RES_INVALID_PROPERTY_NAME if the property name was invalid.
 	* - #MAW_RES_INVALID_PROPERTY_VALUE if the property value was invalid.
-	* - #MAW_RES_FEATURE_NOT_AVAILABLE if the property is not supported by the curent framework version.
+	* - #MAW_RES_FEATURE_NOT_AVAILABLE if the property is not supported by the current platform.
 	* - #MAW_RES_ERROR otherwise.
 	*/
 	int maWidgetSetProperty(in MAWidgetHandle widget, in MAString property, in MAString value);
@@ -204,7 +204,7 @@ group WidgetAPIFunctions "Widget functions" {
 	* - #MAW_RES_INVALID_PROPERTY_NAME if the property name was invalid.
 	* - #MAW_RES_INVALID_PROPERTY_VALUE if the property value was invalid.
 	* - #MAW_RES_INVALID_STRING_BUFFER_SIZE if the buffer size was to small.
-	* - #MAW_RES_FEATURE_NOT_AVAILABLE if the property is not supported by the curent framework version.
+	* - #MAW_RES_FEATURE_NOT_AVAILABLE if the property is not supported by the current platform.
 	* - #MAW_RES_ERROR otherwise.
 	*/
 	int maWidgetGetProperty(in MAWidgetHandle widget, in MAString property, out MAString value range("bufSize"), in int bufSize);
@@ -232,7 +232,7 @@ group WidgetAPIFunctions "Widget functions" {
 	* \returns The the item index on success, or any of the following result codes:
 	* - #MAW_RES_ERROR
 	* - #MAW_RES_INVALID_HANDLE
-	* NOTE: Android no longer requires a dedicated Menu button, some devices don’t have one, and you should migrate away from using it.
+	* NOTE: Android no longer requires a dedicated Menu button, some devices don't have one, and you should migrate away from using it.
 	* Use #maActionBarAddMenuItem() syscall instead.
 	*/
 	int maWidgetScreenAddOptionsMenuItem(in MAWidgetHandle widget, in MAString title, in MAString iconPath, in int iconPredefined);

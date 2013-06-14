@@ -6,7 +6,7 @@ group WidgetSearchBarProperties "Search bar" {
 		/**
 		* @brief Set or get the current text of the search bar.
 		*
-		* @validvalue A null-terminated string.
+		* @validvalue A null-terminated UTF-8 string.
 		*
 		* @setandget
 		*
@@ -20,7 +20,7 @@ group WidgetSearchBarProperties "Search bar" {
 		/**
 		* @brief Set a text in the search bar that acts as a placeholder when an edit box is empty.
 		*
-		* @validvalue A null-terminated string.
+		* @validvalue A null-terminated UTF-8 string.
 		*
 		* @setonly
 		*

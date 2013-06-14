@@ -192,10 +192,12 @@ MAKE_UIWRAPPER_LAYOUTING_IMPLEMENTATION(MoSync, HLayoutView)
         // Is applied to MAW_VERTICAL_LAYOUT_PADDING_BOTTOM too.
 		AbstractLayoutView* alv = (AbstractLayoutView*)self.view;
 		[alv setBottomMargin:[value intValue]];
+#if 0	// Disabled until it can be properly documented.
 	} else if([key isEqualToString:@"spacing"]) {
 		AbstractLayoutView* alv = (AbstractLayoutView*)self.view;
 		[alv setSpacing:[value intValue]];
 	}
+#endif
 	else if([key isEqualToString:@MAW_VERTICAL_LAYOUT_SCROLLABLE]) {
 		AbstractLayoutView* alv = (AbstractLayoutView*)self.view;
 		alv.scrollEnabled = [value boolValue];

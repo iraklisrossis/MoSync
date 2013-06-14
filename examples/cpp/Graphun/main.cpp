@@ -16,7 +16,7 @@
  MA 02110-1301, USA.
 */
 
-#define HAVE_NATIVE_UI 0
+#define HAVE_NATIVE_UI 1
 
 #include <MAUtil/Moblet.h>
 #include <stdio.h>
@@ -73,15 +73,13 @@ static const char
 class TextScreen: public Screen {
 public:
 	TextScreen(const String& title, const String& text, MAHandle topImage = 0) {
-		const int padding = 20;
-
 		setProperty("title", title);
 		mLayout = new Widget("VerticalLayout");
 		mLayout->setProperty("backgroundColor", "000000");
 
 		if (topImage) {
 			Widget* layout = new Widget("VerticalLayout");
-			layout->setProperty("backgroundColor", "00000000");
+			layout->setProperty("backgroundColor", "000000");
 			layout->setProperty("width", -1);
 			layout->setProperty("height", -2);
 			layout->setProperty("childHorizontalAlignment", "center");
@@ -106,11 +104,14 @@ public:
 
 		mLayout->setProperty("width", -1);
 		mLayout->setProperty("height", -1);
+#if 0	// not part of the MoSync API.
+		const int padding = 20;
 		mLayout->setProperty("leftMargin", padding);
 		mLayout->setProperty("rightMargin", padding);
 		mLayout->setProperty("topMargin", padding);
 		mLayout->setProperty("bottomMargin", padding);
 		mLayout->setProperty("spacing", "5");
+#endif
 		mLayout->setProperty(MAW_VERTICAL_LAYOUT_SCROLLABLE, "true");
 
 		mLayout->addChild(mLabel);
@@ -283,7 +284,10 @@ MainScreen::MainScreen() {
 	mEditBox->setProperty("height", -2);
 	mEditBox->setProperty("placeholder", "Expression (x,y,sin,cos,sqrt,time)");
 	mEditBox->setProperty("text", mExpression.c_str());
-	mEditBox->setProperty("autocorrectionEnabled", "false");
+
+	// not part of the MoSync API.
+	//mEditBox->setProperty("autocorrectionEnabled", "false");
+
 	horizontalLayout->addChild(mEditBox);
 
 	layout->addChild(horizontalLayout);
@@ -305,10 +309,12 @@ MainScreen::MainScreen() {
 	toolBar->setProperty("height", EXTENT_Y(maGetScrSize()) / 10);
 	layout->addChild(toolBar);
 
+#if 0	// not part of the MoSync API.
 	toolBar->setProperty("leftMargin", "8");
 	toolBar->setProperty("rightMargin", "8");
 	toolBar->setProperty("topMargin", "8");
 	toolBar->setProperty("bottomMargin", "8");
+#endif
 
 	mSettingsButton = new Widget("ImageButton");
 	mSettingsButton->setProperty("image", R_SETTINGS_ICON);
@@ -490,7 +496,6 @@ void SettingsScreen::checkboxStateChanged(UIItem* item, bool checked) {
 	if (item == mShadingCheckBox) {
 		sMainScreen->getGrid()->setShadingEnabled(checked);
 	}
-
 }
 
 void SettingsScreen::listboxItemSelected(UIItem* item, int index) {
@@ -504,7 +509,6 @@ void SettingsScreen::listboxItemSelected(UIItem* item, int index) {
 		requestListFocus();
 		Graphun::sStackScreen->pushScreen(Graphun::sAboutScreen);
 	}
-
 }
 
 /**
@@ -570,6 +574,7 @@ public:
 				Graphun::sAboutText, R_GRAPHUN_LOGO);
 
 		Graphun::sStackScreen->pushScreen(Graphun::sMainScreen);
+		//Graphun::sStackScreen->pushScreen(Graphun::sSettingsScreen);
 		Graphun::sStackScreen->show();
 #endif
 	}

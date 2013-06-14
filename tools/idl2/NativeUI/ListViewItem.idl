@@ -100,7 +100,7 @@ group WidgetListViewItem "List View Item" {
 			/**
 			* @brief Sets the text part of the list view item. If there is an icon the text will be placed to the right of it, otherwise near the left edge.
 			*
-			* @validvalue A null-terminated string.
+			* @validvalue A null-terminated UTF-8 string.
 			*
 			* @setonly
 			*
@@ -116,7 +116,7 @@ group WidgetListViewItem "List View Item" {
 			*
 			* Platform: Windows Phone 7.
 			*
-			* @validvalue A null-terminated string.
+			* @validvalue A null-terminated UTF-8 string.
 			*
 			* @setonly
 			*

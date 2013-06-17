@@ -85,13 +85,13 @@ group WidgetProperties "Widget properties" {
 		/**
 		* @brief Specifies the background color of a widget.
 		*
-		* @validvalue A hexadecimal value 0xRRGGBB, where R, G and B are the red, green and blue components respectively.
+		* @validvalue A hexadecimal value RRGGBB, where R, G and B are the red, green and blue components respectively.
 		*
 		* @setonly
 		*
 		* @par Example
 		* \code
-		*	maWidgetSetProperty(widgetHandle, MAW_WIDGET_BACKGROUND_COLOR, "0xff0000"); // Red
+		*	maWidgetSetProperty(widgetHandle, MAW_WIDGET_BACKGROUND_COLOR, "ff0000"); // Red
 		* \endcode
 		*/
 		BACKGROUND_COLOR = "backgroundColor";
@@ -130,14 +130,14 @@ group WidgetProperties "Widget properties" {
 		* @brief Specifies the background gradient of a widget.
 		* Currently implemented only on Android.
 		*
-		* @validvalue Two hexadecimal values 0xRRGGBB, where R, G and B are the red, green and blue components respectively,
+		* @validvalue Two hexadecimal values RRGGBB, where R, G and B are the red, green and blue components respectively,
 		* separated by comma.
 		*
 		* @setonly
 		*
 		* @par Example
 		* \code
-		*	maWidgetSetProperty(widgetHandle, MAW_WIDGET_BACKGROUND_GRADIENT,  "0x27408B,0xCAE1FF");
+		*	maWidgetSetProperty(widgetHandle, MAW_WIDGET_BACKGROUND_GRADIENT,  "27408B,CAE1FF");
 		* \endcode
 		*/
 		BACKGROUND_GRADIENT = "backgroundGradient";

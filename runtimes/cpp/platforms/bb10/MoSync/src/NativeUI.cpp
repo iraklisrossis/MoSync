@@ -29,6 +29,7 @@
 #include <bb/cascades/QListDataModel>
 #include <bb/cascades/StackLayout>
 #include <bb/cascades/StandardListItem>
+#include <bb/cascades/TabbedPane>
 #include <bb/cascades/TextField>
 #include <bb/cascades/TitleBar>
 #include <bb/cascades/WebView>
@@ -65,6 +66,7 @@ enum WidgetType {
 	eAbsoluteLayout,
 	eCheckBox,
 	eImageView,
+	eTabbedPane,
 };
 
 enum WidgetFunction {
@@ -304,16 +306,33 @@ static int nuiCreate(const bps_event_payload_t& payload) {
 	}
 	else
 	if(strcmp(widgetType, MAW_IMAGE_BUTTON) == 0) {
+#if 1
 		u = new ImageButton();
 		t = eImageButton;
+		h = new Handler(sNextWidgetHandle);
+		DEBUG_ASSERT(QObject::connect(u, SIGNAL(clicked()), h, SLOT(buttonClicked())));
+#else
+		u = new ImageView();
+		t = eImageView;
+#endif
 	}
 	else
 	if(strcmp(widgetType, MAW_STACK_SCREEN) == 0) {
 		NavigationPane* np = NavigationPane::create();
 		h = new Handler(sNextWidgetHandle);
-		DEBUG_ASSERT(QObject::connect(np, SIGNAL(popTransitionEnded(bb::cascades::Page*)), h, SLOT(popTransitionEnded(bb::cascades::Page*))));
+		DEBUG_ASSERT(QObject::connect(np, SIGNAL(popTransitionEnded(bb::cascades::Page*)),
+			h, SLOT(popTransitionEnded(bb::cascades::Page*))));
 		u = np;
 		t = eNavigationPane;
+	}
+	else
+	if(strcmp(widgetType, MAW_TAB_SCREEN) == 0) {
+		TabbedPane* tp = TabbedPane::create();
+		h = new Handler(sNextWidgetHandle);
+		DEBUG_ASSERT(QObject::connect(tp, SIGNAL(activePaneChanged(bb::cascades::AbstractPane*)),
+			h, SLOT(activePaneChanged(bb::cascades::AbstractPane*))));
+		u = tp;
+		t = eTabbedPane;
 	}
 	else
 	if(strcmp(widgetType, MAW_LIST_VIEW) == 0) {
@@ -515,7 +534,7 @@ static int nuiAddChild(const bps_event_payload_t& payload) {
 	case ePage:
 		{
 			Page* page = (Page*)p.o;
-			page->setContent((Control*)c.o);	//HACK
+			page->setContent((Control*)c.o);	//HACK; we need to check that the child is a Control.
 			return MAW_RES_OK;
 		}
 	case eLayout:
@@ -545,6 +564,14 @@ static int nuiAddChild(const bps_event_payload_t& payload) {
 			ListView* lv = (ListView*)p.o;
 			MyListDataModel* dm = (MyListDataModel*)lv->dataModel();
 			dm->append((Control*)c.o);
+			return MAW_RES_OK;
+		}
+	case eTabbedPane:
+		{
+			TabbedPane* tp = (TabbedPane*)p.o;
+			Tab* tab = new Tab();
+			tab->setContent((AbstractPane*)c.o);	//HACK; we need to check that the child is a Pane.
+			tp->add(tab);
 			return MAW_RES_OK;
 		}
 	default:
@@ -726,7 +753,7 @@ static int nuiSetProperty(const bps_event_payload_t& payload) {
 			}
 			if(strcmp(key, MAW_LABEL_FONT_SIZE) == 0) {
 				l->textStyle()->setFontSize(FontSize::PointValue);
-				l->textStyle()->setFontSizeValue(floatFromString(value));
+				l->textStyle()->setFontSizeValue(floatFromString(value) / 2);
 				return MAW_RES_OK;
 			}
 			if(strcmp(key, MAW_WIDGET_BACKGROUND_COLOR) == 0) {
@@ -752,6 +779,10 @@ static int nuiSetProperty(const bps_event_payload_t& payload) {
 					return MAW_RES_OK;
 				}
 				return MAW_RES_FEATURE_NOT_AVAILABLE;
+			}
+			if(strcmp(key, MAW_WIDGET_VISIBLE) == 0) {
+				l->setVisible(boolFromString(value));
+				return MAW_RES_OK;
 			}
 		}
 		break;
@@ -813,6 +844,14 @@ static int nuiSetProperty(const bps_event_payload_t& payload) {
 				// TODO: needs a new ScrollView object.
 				return MAW_RES_FEATURE_NOT_AVAILABLE;
 			}
+			if(strcmp(key, MAW_WIDGET_LEFT) == 0) {
+				con->setLeftMargin(intFromString(value));
+				return MAW_RES_OK;
+			}
+			if(strcmp(key, MAW_WIDGET_TOP) == 0) {
+				con->setTopMargin(intFromString(value));
+				return MAW_RES_OK;
+			}
 		}
 		break;
 	case eTextField:
@@ -857,19 +896,68 @@ static int nuiSetProperty(const bps_event_payload_t& payload) {
 			if(strcmp(key, MAW_IMAGE_BUTTON_IMAGE) == 0) {
 				Base::Image* img = SYSCALL_THIS->resources.get_RT_IMAGE(intFromString(value));
 				DEBUG_ASSERT(img->pixelFormat == Base::Image::PIXELFORMAT_ARGB8888);
-				ib->setDefaultImage(bb::ImageData::fromPixels(img->data, bb::PixelFormat::RGBX, img->width, img->height, img->pitch));
+				ib->setDefaultImage(bb::ImageData::fromPixels(img->data, bb::PixelFormat::RGBA_Premultiplied, img->width, img->height, img->pitch));
 				return MAW_RES_OK;
+			}
+			if(strcmp(key, MAW_IMAGE_BUTTON_BACKGROUND_IMAGE) == 0) {
+				// HACK: sets the foreground image.
+				Base::Image* img = SYSCALL_THIS->resources.get_RT_IMAGE(intFromString(value));
+				DEBUG_ASSERT(img->pixelFormat == Base::Image::PIXELFORMAT_ARGB8888);
+				bb::cascades::Image i(bb::ImageData::fromPixels(img->data, bb::PixelFormat::RGBA_Premultiplied, img->width, img->height, img->pitch));
+#if 1
+				ib->setDefaultImage(i);
+				ib->setPressedImage(i);
+				ib->setDisabledImage(i);
+				ib->setPreferredWidth(img->width);
+				ib->setPreferredHeight(img->height);
+#else
+				ib->setDefaultImageSource(QUrl("asset:///image_button_enabled.png"));
+				ib->setPressedImageSource(QUrl("asset:///image_button_selected.png"));
+				ib->setDisabledImageSource(QUrl("asset:///image_button_disabled.png"));
+    ib->setEnabled(false);
+    ib->setTopMargin(40.0f);
+    ib->setHorizontalAlignment(HorizontalAlignment::Center);
+#endif
+				return MAW_RES_OK;
+			}
+			if(strcmp(key, MAW_IMAGE_SCALE_MODE) == 0) {
+				return MAW_RES_FEATURE_NOT_AVAILABLE;
+			}
+			if(strcmp(key, MAW_IMAGE_BUTTON_TEXT_VERTICAL_ALIGNMENT) == 0) {
+				return MAW_RES_FEATURE_NOT_AVAILABLE;
+			}
+			if(strcmp(key, MAW_IMAGE_BUTTON_TEXT_HORIZONTAL_ALIGNMENT) == 0) {
+				return MAW_RES_FEATURE_NOT_AVAILABLE;
+			}
+			if(strcmp(key, MAW_IMAGE_BUTTON_TEXT) == 0) {
+				return MAW_RES_FEATURE_NOT_AVAILABLE;
 			}
 		}
 		break;
 	case eImageView:
 		{
 			ImageView* iv((ImageView*)w.o);
-			if(strcmp(key, MAW_IMAGE_BUTTON_IMAGE) == 0) {
+			if(strcmp(key, MAW_IMAGE_IMAGE) == 0 ||
+				strcmp(key, MAW_IMAGE_BUTTON_BACKGROUND_IMAGE) == 0)
+			{
 				Base::Image* img = SYSCALL_THIS->resources.get_RT_IMAGE(intFromString(value));
 				DEBUG_ASSERT(img->pixelFormat == Base::Image::PIXELFORMAT_ARGB8888);
-				iv->setImage(bb::ImageData::fromPixels(img->data, bb::PixelFormat::RGBX, img->width, img->height, img->pitch));
+				iv->setImage(bb::ImageData::fromPixels(img->data, bb::PixelFormat::RGBA_Premultiplied, img->width, img->height, img->pitch));
+				iv->setPreferredWidth(img->width);
+				iv->setPreferredHeight(img->height);
 				return MAW_RES_OK;
+			}
+			if(strcmp(key, MAW_IMAGE_SCALE_MODE) == 0) {
+				return MAW_RES_FEATURE_NOT_AVAILABLE;
+			}
+			if(strcmp(key, MAW_IMAGE_BUTTON_TEXT_VERTICAL_ALIGNMENT) == 0) {
+				return MAW_RES_FEATURE_NOT_AVAILABLE;
+			}
+			if(strcmp(key, MAW_IMAGE_BUTTON_TEXT_HORIZONTAL_ALIGNMENT) == 0) {
+				return MAW_RES_FEATURE_NOT_AVAILABLE;
+			}
+			if(strcmp(key, MAW_IMAGE_BUTTON_TEXT) == 0) {
+				return MAW_RES_FEATURE_NOT_AVAILABLE;
 			}
 		}
 		break;

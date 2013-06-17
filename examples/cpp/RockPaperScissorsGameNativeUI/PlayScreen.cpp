@@ -26,7 +26,7 @@ MA 02110-1301, USA.
 
 // Include library for string conversions.
 #include <mastdlib.h>
-#include <maxtoa.h>
+#include <mavsprintf.h>
 
 // Include util class for integer to string conversions.
 // Include utility class for integer-to-string conversions.
@@ -403,7 +403,12 @@ int PlayScreen::setWidgetProperty(
 	// Buffer for property values.
 	char buf[10];
 
-	itoa( aValue, buf, base);
+	if(base == 10)
+		sprintf(buf, "%i", aValue);
+	else if(base == 16)
+		sprintf(buf, "%06x", aValue);
+	else
+		maPanic(0, "PlayScreen::setWidgetProperty: Unknown base.");
 	// Apply the property to the widget.
 	return maWidgetSetProperty(aWidget, aProperty, buf);
 }

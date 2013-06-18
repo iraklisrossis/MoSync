@@ -33,7 +33,7 @@ public:
 	void startDownloads()
 	{
 		mFinishedDownloaders = 0;
-		MAUtil::String url = "http://www.mosync.com/sites/all/themes/mosync/css/img/banner-nov12-devices.png";
+		MAUtil::String url = "http://www.mosync.com/files/images/mosync-color-horizontal-dark.png";
 		mBatchNumber++;
 		printf("STARTING DOWNLOAD BATCH %d", mBatchNumber);
 		for(int i = 0; i < NUM_DOWNLOADS; i++)

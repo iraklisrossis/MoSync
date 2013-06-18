@@ -43,6 +43,12 @@ namespace test_mosync
 		public AppServiceProvider Services { get; private set; }
 
 		/// <summary>
+		/// Used to detect if we need to send the screen size changed event (sent only when a transition
+		/// from portrait to landscape or vice versa is detected).
+		/// </summary>
+		private PageOrientation mOldPageOrientation;
+
+		/// <summary>
 		/// Constructor for the Application object.
 		/// </summary>
 		public App()
@@ -82,6 +88,7 @@ namespace test_mosync
 
 		// Code to execute when the application is launching (eg, from Start)
 		// This code will not execute when the application is reactivated
+
 		private MoSync.Machine machine = null;
 
 		public MoSync.Machine GetMachine()
@@ -224,6 +231,58 @@ namespace test_mosync
 
 			// Remove this handler since it is no longer needed
 			RootFrame.Navigated -= CompleteInitializePhoneApplication;
+
+			PhoneApplicationPage currentPage = (((PhoneApplicationFrame)Application.Current.RootVisual).Content as PhoneApplicationPage);
+			mOldPageOrientation = currentPage.Orientation;
+			currentPage.OrientationChanged += App_OrientationChanged;
+		}
+
+		void App_OrientationChanged(object sender, OrientationChangedEventArgs e)
+		{
+			PhoneApplicationPage currentPage = (((PhoneApplicationFrame)Application.Current.RootVisual).Content as PhoneApplicationPage);
+
+			if (((mOldPageOrientation & PageOrientation.Landscape) == PageOrientation.Landscape &&
+				(currentPage.Orientation & PageOrientation.Portrait) == PageOrientation.Portrait) ||
+				((mOldPageOrientation & PageOrientation.Portrait) == PageOrientation.Portrait &&
+				(currentPage.Orientation & PageOrientation.Landscape) == PageOrientation.Landscape))
+			{
+				SendScreenSizeChangedEvent();
+			}
+
+			AdjustPageSize(currentPage, e.Orientation);
+
+			mOldPageOrientation = currentPage.Orientation;
+		}
+
+		/**
+		* Adjusts the current page size according to the new orientation.
+		*/
+		private void AdjustPageSize(PhoneApplicationPage currentPage, PageOrientation newOrientation)
+		{
+			// change the current page in regard to the current orientation.
+			if (newOrientation == PageOrientation.Landscape |
+				newOrientation == PageOrientation.LandscapeLeft |
+				newOrientation == PageOrientation.LandscapeRight)
+			{
+				currentPage.Height = Application.Current.Host.Content.ActualWidth;
+				currentPage.Width = Application.Current.Host.Content.ActualHeight;
+			}
+			else if (newOrientation == PageOrientation.Portrait |
+				newOrientation == PageOrientation.PortraitDown |
+				newOrientation == PageOrientation.PortraitUp)
+			{
+				currentPage.Height = Application.Current.Host.Content.ActualHeight;
+				currentPage.Width = Application.Current.Host.Content.ActualWidth;
+			}
+		}
+
+		private void SendScreenSizeChangedEvent()
+		{
+			Memory eventData = new Memory(4);
+			const int MAWidgetEventData_eventType = 0;
+			eventData.WriteInt32(MAWidgetEventData_eventType, MoSync.Constants.EVENT_TYPE_SCREEN_CHANGED);
+
+			machine.GetRuntime().PostEvent(new Event(eventData));
 		}
 
 		#endregion
@@ -263,12 +322,12 @@ namespace test_mosync
 		#endregion
 
 		/**
-    * The BackKeyPress event handler.
-    * Currently it contains the functionality for the back event when a StackScreen is a child of a TabScreen.
-    * When this handler does not cover the functionality required it should be updated.
-    * @param from Object the object that triggers the event.
-    * @param args System.ComponentModel.CancelEventArgs the event arguments.
-    */
+		* The BackKeyPress event handler.
+		* Currently it contains the functionality for the back event when a StackScreen is a child of a TabScreen.
+		* When this handler does not cover the functionality required it should be updated.
+		* @param from Object the object that triggers the event.
+		* @param args System.ComponentModel.CancelEventArgs the event arguments.
+		*/
 		public void BackKeyPressHandler(object from, System.ComponentModel.CancelEventArgs args)
 		{
 			NativeUIModule nativeUIModule = machine.GetRuntime().GetModule<NativeUIModule>();

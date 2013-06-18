@@ -20,15 +20,16 @@ require '../../../../rules/util.rb'
 
 include FileUtils::Verbose
 
-# usage: buildJNI.rb <ANDROID_NDK_PATH> <ANDROID_SDK_PATH> <CONFIG_PATH> <DEBUG> [gdb | run]
+# usage: buildJNI.rb <ANDROID_NDK_PATH> <ANDROID_SDK_PATH> <CONFIG_PATH> <DEBUG> [gdb | run | javaOnly]
 
 # <ANDROID_NDK_PATH> 	: The path to where the ndk is located i.e. C:/Android/android-ndk-r4
 # <ANDROID_SDK_PATH> 	: The path to where the sdk and the used platform is located i.e. C:/Android/android-sdk-windows/platforms/android-3 for cupcake 1.5
 # <CONFIG_PATH>			: The path to where the config.h is located. If this is set the finished runtime will end up in this folder as well, other wise it will be in the project source root
 # <DEBUG>				: If this is set to anything they will use the configD.h file which is supposed to be at the <CONFIG_PATH>
-# gdb If this is set, the runtime will be built for ndk-gdb and installed.
-# run If this is set, the runtime will be installed and started.
-# Either [gdb] or [run] will not copy config_platform.h.
+# gdb: If this is set, the runtime will be built for ndk-gdb and installed.
+# run: If this is set, the runtime will be installed and started.
+# javaOnly: If this is set, building of the C++ side will be skipped.
+# Either [gdb], [run] or [javaOnly] will not copy config_platform.h.
 
 def exitBuilder(arg, configDir, config)
 	if config != nil
@@ -60,12 +61,15 @@ debugFlag = ARGV[5]
 extra = ARGV[6]
 gdb = false
 run = false
+javaOnly = false
 
 if(extra)
 	if(extra == 'gdb')
 		gdb = true
 	elsif(extra == 'run')
 		run = true
+	elsif(extra == 'javaOnly')
+		javaOnly = true
 	else
 		raise "Invalid extra flag: #{extra}"
 	end
@@ -144,6 +148,7 @@ puts "Building native Library\n\n"
 
 cd "AndroidProject"
 
+if(!javaOnly)
 if ENV['OS'] == "Windows_NT"
 	# convert a copy of cygwin.sh to unix-style line endings, so bash can run it.
 	FileUtils.copy_file("#{cpath}/cygwin.sh", "#{cpath}/cygwin_u.sh")
@@ -170,8 +175,9 @@ if ENV['OS'] == "Windows_NT"
 else
 	success = sh("#{File.join(cpath, "invoke-ndk-build.sh")} #{androidNDKPath} #{androidSDKPath} $MOSYNC_SRC");
 end
+end	#javaOnly
 
-if (!success)
+if (!success && !javaOnly)
 	exitBuilder(1, mosyncppsource, configPath)
 end
 

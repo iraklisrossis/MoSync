@@ -45,21 +45,21 @@ public class TabScreenFactory implements AbstractViewFactory
 	@Override
 	public Widget create(Activity activity, int handle)
 	{
-	     // Construct the tab host that fills the whole screen.
-        TabHost tabHost = new TabHost( activity, null );
-        tabHost.setLayoutParams(
-        		new LinearLayout.LayoutParams(
-                        LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT ) );
+		// Construct the tab host that fills the whole screen.
+		TabHost tabHost = new TabHost( activity, null );
+		tabHost.setLayoutParams(
+			new LinearLayout.LayoutParams(
+				LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT ) );
 
-        // Create the visual structure of the tab host
-        LinearLayout tabRootView = createTabRoot( activity );
-        tabHost.addView( tabRootView );
+		// Create the visual structure of the tab host
+		LinearLayout tabRootView = createTabRoot( activity );
+		tabHost.addView( tabRootView );
 
-        // Must be called when using views instead of activities to fill
-        // a tabs content
-        tabHost.setup( );
+		// Must be called when using views instead of activities to fill
+		// a tabs content
+		tabHost.setup( );
 
-        tabHost.setOnTabChangedListener( new TabChangeListener( handle ) );
+		tabHost.setOnTabChangedListener( new TabChangeListener( handle ) );
 
 		return new TabScreenWidget( handle, tabHost );
 	}
@@ -73,11 +73,11 @@ public class TabScreenFactory implements AbstractViewFactory
 	 */
 	private LinearLayout createTabRoot(Activity activity)
 	{
-        LinearLayout tabRootView = new LinearLayout( activity );
-        tabRootView.setOrientation( LinearLayout.VERTICAL );
-        tabRootView.setLayoutParams(
-        		new ViewGroup.LayoutParams(
-        				LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT ) );
+		LinearLayout tabRootView = new LinearLayout( activity );
+		tabRootView.setOrientation( LinearLayout.VERTICAL );
+		tabRootView.setLayoutParams(
+			new ViewGroup.LayoutParams(
+				LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT ) );
 
 		tabRootView.addView( createTabWidget( activity ) );
 		tabRootView.addView( createTabContent( activity ) );
@@ -96,12 +96,12 @@ public class TabScreenFactory implements AbstractViewFactory
 	private FrameLayout createTabContent(Activity activity)
 	{
 		FrameLayout tabContent = new FrameLayout( activity );
-        tabContent.setId( android.R.id.tabcontent );
-        LinearLayout.LayoutParams tabContentParams = new LinearLayout.LayoutParams( LayoutParams.FILL_PARENT, 0 );
-        tabContentParams.weight = 1;
-        tabContent.setLayoutParams( tabContentParams );
+		tabContent.setId( android.R.id.tabcontent );
+		LinearLayout.LayoutParams tabContentParams = new LinearLayout.LayoutParams( LayoutParams.MATCH_PARENT, 0 );
+		tabContentParams.weight = 1;
+		tabContent.setLayoutParams( tabContentParams );
 
-        return tabContent;
+		return tabContent;
 	}
 
 	/**
@@ -113,15 +113,15 @@ public class TabScreenFactory implements AbstractViewFactory
 	 */
 	private TabWidget createTabWidget(Activity activity)
 	{
-        TabWidget tabWidget = new TabWidget( activity );
-        tabWidget.setId( android.R.id.tabs );
-        LinearLayout.LayoutParams tabWidgetParams =
+		TabWidget tabWidget = new TabWidget( activity );
+		tabWidget.setId( android.R.id.tabs );
+		LinearLayout.LayoutParams tabWidgetParams =
 			new LinearLayout.LayoutParams(
-        				LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT );
-        tabWidgetParams.weight = 0;
-        tabWidget.setLayoutParams( tabWidgetParams );
+				LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT );
+		tabWidgetParams.weight = 0;
+		tabWidget.setLayoutParams( tabWidgetParams );
 
-        return tabWidget;
+		return tabWidget;
 	}
 
 	public class TabChangeListener implements OnTabChangeListener
@@ -139,8 +139,8 @@ public class TabScreenFactory implements AbstractViewFactory
 		{
 			// Assumes that the tag of the tab is the same as it's handle.
 			EventQueue.getDefault( ).postWidgetTabChangedEvent(
-					m_tabScreenHandle,
-					Integer.parseInt( tabTag ) );
+				m_tabScreenHandle,
+				Integer.parseInt( tabTag ) );
 		}
 	}
 }

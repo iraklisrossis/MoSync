@@ -22,8 +22,6 @@ import static com.mosync.internal.generated.MAAPI_consts.EVENT_TYPE_ALERT_DISMIS
 import static com.mosync.internal.generated.MAAPI_consts.EVENT_TYPE_WIDGET;
 import static com.mosync.internal.generated.MAAPI_consts.EVENT_TYPE_ORIENTATION_DID_CHANGE;
 
-import android.util.Log;
-
 import com.mosync.internal.generated.IX_WIDGET;
 
 /**
@@ -99,13 +97,13 @@ public class EventQueue
 	 * @param widgetHandle The list that sends the event.
 	 * @param position The position in the list of the view.
 	 */
-	public void postWidgetItemClickedEvent(int widgetHandle, int position)
+	public void postWidgetItemClickedEvent(int widgetHandle, int section, int index)
 	{
 		postWidgetEvent(
 			IX_WIDGET.MAW_EVENT_ITEM_CLICKED,
 			widgetHandle,
-			position,
-			0);
+			index,
+			section);
 	}
 
 	/**

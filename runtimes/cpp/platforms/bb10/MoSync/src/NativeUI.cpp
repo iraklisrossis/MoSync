@@ -83,6 +83,11 @@ struct Widget {
 	UIObject* o;
 	WidgetType type;
 	Handler* handler;
+
+	// Used to store title property for objects that don't have them on their own.
+	// Usually, such properties would be discarded, but in the following cases they are needed:
+	// SCREENs that can be added to a TabScreen. Their respective Tabs inherit their titles.
+	QString title;
 };
 
 static int nuiFunction(int code, const bps_event_payload_t&);
@@ -148,6 +153,23 @@ static int nuiFunction(int code, const bps_event_payload_t& payload) {
 	default:
 		DEBIG_PHAT_ERROR;
 	}
+}
+
+// w.o can be safely cast to AbstractPane*
+static bool isPane(const Widget& w) {
+	switch(w.type) {
+	case ePage:
+	case eNavigationPane:
+	case eTabbedPane:
+		return true;
+	default:
+		return false;
+	}
+}
+
+// w.o can be safely cast to Control*
+static bool isControl(const Widget& w) {
+	return w.type != eNull && !isPane(w);
 }
 
 // NOT thread safe. Call only from core thread.
@@ -328,9 +350,10 @@ static int nuiCreate(const bps_event_payload_t& payload) {
 	else
 	if(strcmp(widgetType, MAW_TAB_SCREEN) == 0) {
 		TabbedPane* tp = TabbedPane::create();
+		tp->setShowTabsOnActionBar(true);
 		h = new Handler(sNextWidgetHandle);
-		DEBUG_ASSERT(QObject::connect(tp, SIGNAL(activePaneChanged(bb::cascades::AbstractPane*)),
-			h, SLOT(activePaneChanged(bb::cascades::AbstractPane*))));
+		DEBUG_ASSERT(QObject::connect(tp, SIGNAL(activeTabChanged(bb::cascades::Tab*)),
+			h, SLOT(activeTabChanged(bb::cascades::Tab*))));
 		u = tp;
 		t = eTabbedPane;
 	}
@@ -373,7 +396,7 @@ static int nuiCreate(const bps_event_payload_t& payload) {
 	DEBUG_ASSERT(t != eNull);
 	u->setProperty("MoSync_widget_handle", sNextWidgetHandle);
 	LOG("Widget created: %i\n", sNextWidgetHandle);
-	sWidgets[sNextWidgetHandle] = { u, t, h };
+	sWidgets[sNextWidgetHandle] = { u, t, h, QString() };
 	return sNextWidgetHandle++;
 }
 
@@ -516,6 +539,29 @@ void Handler::windowAttached(screen_window_t, const QString&, const QString&) {
 }
 
 
+struct TabEventInfo : Functor {
+	MAWidgetHandle h;
+	int tabIndex;
+};
+static void postTabEvent(const Functor& arg) {
+	const TabEventInfo& ei = (const TabEventInfo&)arg;
+	MAWidgetEventData *ed = new MAWidgetEventData;
+	ed->eventType = MAW_EVENT_TAB_CHANGED;
+	ed->widgetHandle = ei.h;
+	ed->tabIndex = ei.tabIndex;
+	postWidgetEvent(ed);
+}
+void Handler::activeTabChanged(bb::cascades::Tab* tab) {
+	LOG("activePaneChanged\n");
+	TabEventInfo* ei = (TabEventInfo*)malloc(sizeof(TabEventInfo));
+	ei->func = postTabEvent;
+	ei->h = mHandle;
+	TabbedPane* tp((TabbedPane*)getWidget(mHandle).o);
+	ei->tabIndex = tp->indexOf(tab);
+	executeInCoreThread(ei);
+}
+
+
 int maWidgetDestroy(MAWidgetHandle handle) {
 	DEBIG_PHAT_ERROR;
 }
@@ -534,7 +580,8 @@ static int nuiAddChild(const bps_event_payload_t& payload) {
 	case ePage:
 		{
 			Page* page = (Page*)p.o;
-			page->setContent((Control*)c.o);	//HACK; we need to check that the child is a Control.
+			DEBUG_ASSERT(isControl(c));
+			page->setContent((Control*)c.o);
 			return MAW_RES_OK;
 		}
 	case eLayout:
@@ -570,7 +617,17 @@ static int nuiAddChild(const bps_event_payload_t& payload) {
 		{
 			TabbedPane* tp = (TabbedPane*)p.o;
 			Tab* tab = new Tab();
-			tab->setContent((AbstractPane*)c.o);	//HACK; we need to check that the child is a Pane.
+			DEBUG_ASSERT(isPane(c));
+			tab->setContent((AbstractPane*)c.o);
+			if(c.type == ePage) {
+				TitleBar* tb = ((Page*)c.o)->titleBar();
+				if(tb)
+					tab->setTitle(tb->title());
+				else
+					LOG("Warning: Page %i has no titleBar!\n", childHandle);
+			} else {
+				tab->setTitle(c.title);
+			}
 			tp->add(tab);
 			return MAW_RES_OK;
 		}
@@ -611,6 +668,7 @@ static int nuiScreenShow(const bps_event_payload_t& payload) {
 	switch(s.type) {
 	case ePage: p = (Page*)s.o; break;
 	case eNavigationPane: p = (NavigationPane*)s.o; break;
+	case eTabbedPane: p = (TabbedPane*)s.o; break;
 	default: DEBIG_PHAT_ERROR;
 	}
 	APP.setScene(p);
@@ -700,6 +758,26 @@ static bool boolFromString(const char* value) {
 	} else {
 		DEBIG_PHAT_ERROR;
 	}
+}
+
+static bb::cascades::Image imageFromString(const char* value) {
+	Base::Image* img = SYSCALL_THIS->resources.get_RT_IMAGE(intFromString(value));
+	DEBUG_ASSERT(img->pixelFormat == Base::Image::PIXELFORMAT_ARGB8888);
+	// Looks like RGBA_Premultiplied colors are inverted from what we're used to (SCREEN_FORMAT_RGBA8888).
+	// We'll need to convert the data.
+	// TODO: If performance requires, add caching of resulting cascades::Image.
+	DEBUG_ASSERT((img->pitch & 3) == 0);
+	unsigned char* buf = new unsigned char[img->height * img->pitch];
+	for(int i=0; i<img->height * img->pitch; i+=4) {
+		buf[i+0] = img->data[i+2];
+		buf[i+1] = img->data[i+1];
+		buf[i+2] = img->data[i+0];
+		buf[i+3] = img->data[i+3];
+	}
+	bb::cascades::Image ci(bb::ImageData::fromPixels(buf,
+		bb::PixelFormat::RGBA_Premultiplied, img->width, img->height, img->pitch));
+	delete buf;
+	return ci;
 }
 
 static int nuiSetProperty(const bps_event_payload_t& payload) {
@@ -818,6 +896,13 @@ static int nuiSetProperty(const bps_event_payload_t& payload) {
 		break;
 	case eListItemStandard:
 		{
+			Container* con = (Container*)w.o;
+			DEBUG_ASSERT(con->count() == 1);
+			StandardListItem* sli = (StandardListItem*)con->at(0);
+			if(strcmp(key, MAW_LIST_VIEW_ITEM_ICON) == 0) {
+				sli->setImage(imageFromString(value));
+				return MAW_RES_OK;
+			}
 			if(strcmp(key, MAW_LIST_VIEW_ITEM_ACCESSORY_TYPE) == 0) {
 				return MAW_RES_FEATURE_NOT_AVAILABLE;
 			}
@@ -876,6 +961,9 @@ static int nuiSetProperty(const bps_event_payload_t& payload) {
 				tf->setHintText(value);
 				return MAW_RES_OK;
 			}
+			if(strcmp(key, MAW_EDIT_BOX_EDIT_MODE) == 0) {
+				return MAW_RES_FEATURE_NOT_AVAILABLE;
+			}
 		}
 		break;
 	case ePage:
@@ -883,9 +971,20 @@ static int nuiSetProperty(const bps_event_payload_t& payload) {
 			Page* p((Page*)w.o);
 			if(strcmp(key, MAW_SCREEN_TITLE) == 0) {
 				TitleBar* tb(p->titleBar());
-				if(!tb)
+				if(!tb) {
+					LOG("Creating titleBar for Page %i\n", handle);
 					tb = new TitleBar();
+					p->setTitleBar(tb);
+				}
 				tb->setTitle(value);
+				return MAW_RES_OK;
+			}
+		}
+		break;
+	case eNavigationPane:
+		{
+			if(strcmp(key, MAW_STACK_SCREEN_TITLE) == 0) {
+				w.title = QString::fromUtf8(value);
 				return MAW_RES_OK;
 			}
 		}
@@ -894,22 +993,18 @@ static int nuiSetProperty(const bps_event_payload_t& payload) {
 		{
 			ImageButton* ib((ImageButton*)w.o);
 			if(strcmp(key, MAW_IMAGE_BUTTON_IMAGE) == 0) {
-				Base::Image* img = SYSCALL_THIS->resources.get_RT_IMAGE(intFromString(value));
-				DEBUG_ASSERT(img->pixelFormat == Base::Image::PIXELFORMAT_ARGB8888);
-				ib->setDefaultImage(bb::ImageData::fromPixels(img->data, bb::PixelFormat::RGBA_Premultiplied, img->width, img->height, img->pitch));
+				ib->setDefaultImage(imageFromString(value));
 				return MAW_RES_OK;
 			}
 			if(strcmp(key, MAW_IMAGE_BUTTON_BACKGROUND_IMAGE) == 0) {
 				// HACK: sets the foreground image.
-				Base::Image* img = SYSCALL_THIS->resources.get_RT_IMAGE(intFromString(value));
-				DEBUG_ASSERT(img->pixelFormat == Base::Image::PIXELFORMAT_ARGB8888);
-				bb::cascades::Image i(bb::ImageData::fromPixels(img->data, bb::PixelFormat::RGBA_Premultiplied, img->width, img->height, img->pitch));
+				bb::cascades::Image i(imageFromString(value));
 #if 1
 				ib->setDefaultImage(i);
 				ib->setPressedImage(i);
 				ib->setDisabledImage(i);
-				ib->setPreferredWidth(img->width);
-				ib->setPreferredHeight(img->height);
+				//ib->setPreferredWidth(img->width);
+				//ib->setPreferredHeight(img->height);
 #else
 				ib->setDefaultImageSource(QUrl("asset:///image_button_enabled.png"));
 				ib->setPressedImageSource(QUrl("asset:///image_button_selected.png"));
@@ -940,11 +1035,9 @@ static int nuiSetProperty(const bps_event_payload_t& payload) {
 			if(strcmp(key, MAW_IMAGE_IMAGE) == 0 ||
 				strcmp(key, MAW_IMAGE_BUTTON_BACKGROUND_IMAGE) == 0)
 			{
-				Base::Image* img = SYSCALL_THIS->resources.get_RT_IMAGE(intFromString(value));
-				DEBUG_ASSERT(img->pixelFormat == Base::Image::PIXELFORMAT_ARGB8888);
-				iv->setImage(bb::ImageData::fromPixels(img->data, bb::PixelFormat::RGBA_Premultiplied, img->width, img->height, img->pitch));
-				iv->setPreferredWidth(img->width);
-				iv->setPreferredHeight(img->height);
+				iv->setImage(imageFromString(value));
+				//iv->setPreferredWidth(img->width);
+				//iv->setPreferredHeight(img->height);
 				return MAW_RES_OK;
 			}
 			if(strcmp(key, MAW_IMAGE_SCALE_MODE) == 0) {
@@ -973,6 +1066,12 @@ static int nuiSetProperty(const bps_event_payload_t& payload) {
 	case eListView:
 		{
 			if(strcmp(key, MAW_LIST_VIEW_REQUEST_FOCUS) == 0) {
+				return MAW_RES_FEATURE_NOT_AVAILABLE;
+			}
+			if(strcmp(key, MAW_LIST_VIEW_TYPE) == 0) {
+				return MAW_RES_FEATURE_NOT_AVAILABLE;
+			}
+			if(strcmp(key, MAW_LIST_VIEW_STYLE) == 0) {
 				return MAW_RES_FEATURE_NOT_AVAILABLE;
 			}
 		}

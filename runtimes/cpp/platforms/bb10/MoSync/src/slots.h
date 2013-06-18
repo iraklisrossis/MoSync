@@ -10,6 +10,7 @@ public:
 	Handler(MAWidgetHandle h) : mHandle(h) {
 	}
 public slots:
+	void activeTabChanged(bb::cascades::Tab*);
 	void buttonClicked();
 	void listViewTriggered(QVariantList);
 	void popTransitionEnded(bb::cascades::Page*);

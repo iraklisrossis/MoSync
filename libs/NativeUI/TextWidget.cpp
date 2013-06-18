@@ -110,7 +110,7 @@ namespace NativeUI
     int TextWidget::setFontColor(const int color)
     {
         char buffer[BUF_SIZE];
-        sprintf(buffer, "0x%.6X", color);
+        sprintf(buffer, "%.6X", color);
         return this->setProperty(MAW_BUTTON_FONT_COLOR, buffer);
     }
 

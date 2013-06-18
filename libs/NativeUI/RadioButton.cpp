@@ -87,7 +87,7 @@ namespace NativeUI
     void RadioButton::setTextColor(int color)
     {
         char buffer[BUF_SIZE];
-        sprintf(buffer, "0x%.6X", color);
+        sprintf(buffer, "%.6X", color);
         setProperty(MAW_RADIO_BUTTON_TEXT_COLOR, buffer);
     }
 

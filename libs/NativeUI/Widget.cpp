@@ -596,7 +596,7 @@ namespace NativeUI
 
     /**
      * Set the background color of the widget.
-     * @param color A hexadecimal color value, e.g. 0xFF0000.
+     * @param color A hexadecimal color value, e.g. FF0000.
      * @return Any of the following result codes:
      * - #MAW_RES_OK if the value was set.
      * - #MAW_RES_INVALID_HANDLE if the handle was invalid.
@@ -606,7 +606,7 @@ namespace NativeUI
     int Widget::setBackgroundColor(const int color)
     {
         char buffer[BUF_SIZE];
-        sprintf(buffer, "0x%.6X", color);
+        sprintf(buffer, "%.6X", color);
         return setProperty(MAW_WIDGET_BACKGROUND_COLOR, buffer);
     }
 
@@ -646,8 +646,8 @@ namespace NativeUI
     {
         char bufferColor1[BUF_SIZE];
         char bufferColor2[BUF_SIZE];
-        sprintf(bufferColor1, "0x%.6X", firstColor);
-        sprintf(bufferColor2, "0x%.6X", secondColor);
+        sprintf(bufferColor1, "%.6X", firstColor);
+        sprintf(bufferColor2, "%.6X", secondColor);
 
         MAUtil::String gradient ="";
         gradient += bufferColor1;

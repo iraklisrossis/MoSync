@@ -116,7 +116,7 @@ namespace NativeUI
     int NavigationBar::setTitleFontColor(const int color)
     {
         char buffer[BUF_SIZE];
-        sprintf(buffer, "0x%.6X", color);
+        sprintf(buffer, "%.6X", color);
         return this->setProperty(MAW_NAV_BAR_TITLE_FONT_COLOR, buffer);
     }
 

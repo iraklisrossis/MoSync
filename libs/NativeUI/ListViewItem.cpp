@@ -109,7 +109,7 @@ namespace NativeUI
 	int ListViewItem::setFontColor(const int color)
 	{
 		char buffer[BUF_SIZE];
-		sprintf(buffer, "0x%.6X", color);
+		sprintf(buffer, "%.6X", color);
 		return this->setProperty(MAW_LIST_VIEW_ITEM_FONT_COLOR, buffer);
 	}
 

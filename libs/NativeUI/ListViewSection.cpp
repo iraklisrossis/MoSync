@@ -283,7 +283,7 @@ namespace NativeUI
     int ListViewSection::setHeaderBackgroundColor(const int color)
     {
         char buffer[BUF_SIZE];
-        sprintf(buffer, "0x%.6X", color);
+        sprintf(buffer, "%.6X", color);
         return setProperty(MAW_LIST_VIEW_SECTION_HEADER_BACKGROUND, buffer);
     }
 
@@ -300,7 +300,7 @@ namespace NativeUI
     int ListViewSection::setFooterBackgroundColor(const int color)
     {
         char buffer[BUF_SIZE];
-        sprintf(buffer, "0x%.6X", color);
+        sprintf(buffer, "%.6X", color);
         return setProperty(MAW_LIST_VIEW_SECTION_FOOTER_BACKGROUND, buffer);
     }
 
@@ -316,7 +316,7 @@ namespace NativeUI
     int ListViewSection::setHeaderFontColor(const int color)
     {
         char buffer[BUF_SIZE];
-        sprintf(buffer, "0x%.6X", color);
+        sprintf(buffer, "%.6X", color);
         return this->setProperty(MAW_LIST_VIEW_SECTION_HEADER_FONT_COLOR, buffer);
     }
 
@@ -332,7 +332,7 @@ namespace NativeUI
     int ListViewSection::setFooterFontColor(const int color)
     {
         char buffer[BUF_SIZE];
-        sprintf(buffer, "0x%.6X", color);
+        sprintf(buffer, "%.6X", color);
         return this->setProperty(MAW_LIST_VIEW_SECTION_FOOTER_FONT_COLOR, buffer);
     }
 

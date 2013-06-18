@@ -80,7 +80,7 @@ public:
 	/**
 	 * Called when the screen is touched.
 	 */
-	void pointerPressEvent(MAPoint2d point)
+	void pointerPressEvent(MAPoint2d point) GCCATTRIB(noreturn)
 	{
 		close();
 //		DBTest test;

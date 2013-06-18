@@ -13,7 +13,7 @@ using namespace MAUtil;
 
 const String DBUtil::getLocalPath()
 {
-	int bufferSize = 1024;
+	static const int bufferSize = 1024;
 	char buffer[bufferSize];
 
 	int size = maGetSystemProperty(
@@ -33,7 +33,7 @@ const String DBUtil::getLocalPath()
 
 int DBUtil::getColumnString(MAHandle cursor, int column, String& text)
 {
-	int bufferSize = 1024;
+	static const int bufferSize = 1024;
 	char buffer[bufferSize];
 
 	// Get the text value of the field.

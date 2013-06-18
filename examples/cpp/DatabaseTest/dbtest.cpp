@@ -8,6 +8,7 @@
 #include <conprint.h>
 
 #include <MAUtil/String.h>
+#include <mastring.h>
 
 #include "dbtest.h"
 #include "dbutil.h"

@@ -26,10 +26,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef MAHEAP_H
 #define MAHEAP_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "ma.h"
 
 #ifndef MAPIP
@@ -38,6 +34,10 @@ extern "C" {
 #endif
 #include <malloc.h>
 #else
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 //************************************************************************************************
 //									ANSI memory api
@@ -103,7 +103,15 @@ size_t heapTotalMemory(void);
 */
 size_t heapFreeMemory(void);
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif	//MAPIP
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef void (*malloc_handler)(int size);
 typedef void* (*malloc_hook)(int size);

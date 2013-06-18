@@ -202,6 +202,13 @@ def all_configs(target)
 	sh "ruby workfile.rb #{target} USE_NEWLIB= CONFIG=debug"
 end
 
+def bb10_configs(target)
+	sh "ruby workfile.rb #{target} MODE=bb10 BB10_ARCH=arm"
+	sh "ruby workfile.rb #{target} MODE=bb10 BB10_ARCH=x86"
+	sh "ruby workfile.rb #{target} MODE=bb10 BB10_ARCH=arm CONFIG=debug"
+	sh "ruby workfile.rb #{target} MODE=bb10 BB10_ARCH=x86 CONFIG=debug"
+end
+
 target :all_configs do
 	all_configs('')
 end
@@ -215,21 +222,16 @@ target :all_check do
 	all_configs('check')
 end
 
-target :all_libs_arm do
-	all_configs('libs USE_ARM=')
-end
-
-target :all_libs_both do
-	all_configs('libs')
-	all_configs('libs USE_ARM=')
-end
-
-target :arm_ex do
-	all_configs('examples USE_ARM=')
+target :bb10_libs do
+	bb10_configs('libs')
 end
 
 target :all_ex do
 	all_configs('examples')
+end
+
+target :bb10_ex do
+	bb10_configs('examples')
 end
 
 Targets.invoke

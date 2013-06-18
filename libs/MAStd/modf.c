@@ -9,13 +9,13 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 /*
- * modf(double x, double *iptr) 
+ * modf(double x, double *iptr)
  * return fraction part of x, and return x's integral part in *iptr.
  * Method:
  *	Bit twiddling.
@@ -36,7 +36,7 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
@@ -70,20 +70,20 @@ typedef int int32_t;
  */
 
 #if 0
-typedef union 
+typedef union
 {
 	double value;
-	struct 
+	struct
 	{
 		u_int32_t msw;
 		u_int32_t lsw;
 	} parts;
 } ieee_double_shape_type;
 #else
-typedef union 
+typedef union
 {
 	double value;
-	struct 
+	struct
 	{
 		u_int32_t lsw;
 		u_int32_t msw;

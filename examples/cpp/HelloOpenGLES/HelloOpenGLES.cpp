@@ -18,7 +18,7 @@ MA 02110-1301, USA.
 
 /**
  * @file HelloOpenGLES.cpp
- * @author Mattias Frånberg and Chris Hughes
+ * @author Mattias FrÃ¥nberg and Chris Hughes
  *
  * This application provides a very basic example of how to use
  * OpenGL for Embedded Systems (OpenGLES) in your MoSync application.

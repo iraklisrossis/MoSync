@@ -222,10 +222,10 @@ class GccWork < BuildWork
 
 	def setup2
 		define_cflags
-		@CFLAGS_MAP = { ".c" => @CFLAGS + target_flags,
-			".cpp" => @CPPFLAGS + target_flags + target_cppflags,
-			".cc" => @CPPFLAGS + target_flags + target_cppflags,
-			".C" => @CPPFLAGS + target_flags + target_cppflags,
+		@CFLAGS_MAP = { ".c" => @CFLAGS,
+			".cpp" => @CPPFLAGS,
+			".cc" => @CPPFLAGS,
+			".C" => @CPPFLAGS,
 		}
 
 		#find source files
@@ -235,7 +235,7 @@ class GccWork < BuildWork
 		sExt = '.S' if(USE_ARM && @COLLECT_S_FILES)
 		sExt = '.s' if(USE_GNU_BINUTILS && @COLLECT_S_FILES)
 		if(sExt)
-			@CFLAGS_MAP[sExt] = @CFLAGS + target_flags if(USE_ARM)
+			@CFLAGS_MAP[sExt] = @CFLAGS if(USE_ARM)
 			@CFLAGS_MAP[sExt] = ' -Wa,--gstabs' if(USE_GNU_BINUTILS)
 			#@CFLAGS_MAP[sExt] = '' if(USE_GNU_BINUTILS)
 			sfiles = collect_files(sExt)
@@ -243,7 +243,7 @@ class GccWork < BuildWork
 		end
 
 		if(TARGET == :darwin)
-			@CFLAGS_MAP[".mm"] = @CPPFLAGS + target_flags + target_cppflags
+			@CFLAGS_MAP[".mm"] = @CPPFLAGS
 			cppfiles += collect_files(".mm")
 		end
 

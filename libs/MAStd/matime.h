@@ -24,27 +24,22 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef _MATIME_H_
 #define _MATIME_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __BB10__
-#include <time.h>
-#else
-
 #ifdef _MSC_VER
 #include <crtdefs.h>
 #endif
 
 #ifndef _TIME_H
+
 #ifndef MAPIP
 #define _TIME_H	//to avoid conflicting types for time_t
 #endif
 
-#ifndef _MSC_VER
+#ifdef MOSYNC_NATIVE
+# include <time.h>
+#else
+# ifndef _MSC_VER
 typedef long long time_t;
-#endif
-#endif	//_TIME_H
+# endif
 
 /// Components of a calendar date and time.
 struct tm
@@ -68,7 +63,12 @@ struct tm
 	///Daylight Saving Time flag. Ignored by MoSync functions.
 	int tm_isdst;
 };
-#endif	//__BB10__
+#endif	//MOSYNC_NATIVE
+#endif	//_TIME_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
 * Converts a time value to the structure pointed to by \a tim_p.
@@ -91,11 +91,13 @@ char* sprint_tm(const struct tm* tim_p, char* buf);
 */
 char* sprint_time(time_t timer);
 
+#ifndef MOSYNC_NATIVE
 /**
 * Converts the structure pointed to by \a tim_p into a time value.
 * \see maTime, maLocalTime
 */
 time_t mktime(struct tm* tim_p);
+#endif
 
 #ifdef __cplusplus
 }

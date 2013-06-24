@@ -35,7 +35,7 @@ module NativeMoSyncWork
 			@EXTRA_INCLUDES << '/opt/local/include'
 		end
 		@EXTRA_INCLUDES += [bd+"/intlibs", bd+"/libs"]
-		@EXTRA_CFLAGS += " -D_POSIX_SOURCE"	#avoid silly bsd functions
+		@EXTRA_CFLAGS += " -D_POSIX_SOURCE -DMOSYNC_NATIVE"	#avoid silly bsd functions
 		super
 	end
 end

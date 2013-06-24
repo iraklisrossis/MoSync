@@ -82,13 +82,11 @@ using namespace MoSyncError;
 #include <vector>
 #endif
 
-#if defined(USE_ARM_RECOMPILER)
-/*
-#include "disassembler.h"
-#include "recompiler.h"
-#include <MAUtil/Vector.h>
-*/
+#ifdef MOSYNC_NATIVE
+#undef USE_ARM_RECOMPILER
+#endif
 
+#if defined(USE_ARM_RECOMPILER)
 #include "Recompiler/ArmRecompiler.h"
 
 #if 0
@@ -652,14 +650,20 @@ public:
 		if(!mSyscall.loadResources(res, resfile))
 			return false;
 #else
-	bool LoadVMApp(int modFd, int resFd) {
-		InitVM();
+	bool LoadVMApp(int modFd, int resFd, bool isNative) {
+		if (!isNative)
+		{
+			InitVM();
 
-		FileStream mod(modFd);
+			FileStream mod(modFd);
 
-		if(!LoadVM(mod))
-			return false;
-
+			if(!LoadVM(mod))
+				return false;
+		}
+		else
+		{
+			mem_ds = 0;
+		}
 		//-2 means that the mosync application does not need any resources.
 		if(-2 != resFd)
 		{
@@ -1073,7 +1077,6 @@ public:
 			}
 
 			mem_ds = (int*)buffer;
-
 			mJniEnv->DeleteLocalRef(cls);
 			mJniEnv->DeleteLocalRef(byteBuffer);
 
@@ -1243,7 +1246,9 @@ void WRITE_REG(int reg, int value) {
 			if((address & (sizeof(T) - 1)) != 0) {
 				BIG_PHAT_ERROR(ERR_MEMORY_ALIGNMENT);
 			} else if(address >= DATA_SEGMENT_SIZE || (address+sizeof(T)) > DATA_SEGMENT_SIZE) {
+#ifndef MOSYNC_NATIVE
 				BIG_PHAT_ERROR(ERR_MEMORY_OOB);
+#endif
 			} else {
 				BIG_PHAT_ERROR(ERR_MEMORY_NULL);
 			}
@@ -1268,8 +1273,10 @@ void WRITE_REG(int reg, int value) {
 		int initialAddr = address;
 #endif
 		do {
+#ifndef MOSYNC_NATIVE
 			if(address >= DATA_SEGMENT_SIZE)
 				BIG_PHAT_ERROR(ERR_MEMORY_OOB);
+#endif
 		} while(RAW_MEMREF(char, address++) != 0);
 #ifdef MEMORY_PROTECTION
 		checkProtection(initialAddr, address-initialAddr);
@@ -1282,8 +1289,10 @@ void WRITE_REG(int reg, int value) {
 		address -= 2;
 		do {
 			address += 2;
+#ifndef MOSYNC_NATIVE
 			if(address >= DATA_SEGMENT_SIZE)
 				BIG_PHAT_ERROR(ERR_MEMORY_OOB);
+#endif
 		} while(RAW_MEMREF(short, address) != 0);
 #ifdef MEMORY_PROTECTION
 		checkProtection(initialAddr, address-initialAddr);
@@ -1292,8 +1301,10 @@ void WRITE_REG(int reg, int value) {
 	int ValidatedStrLen(const char* ptr) const {
 		unsigned address = PTR2ADDRESS(ptr);
 		do {
+#ifndef MOSYNC_NATIVE
 			if(address >= DATA_SEGMENT_SIZE)
 				BIG_PHAT_ERROR(ERR_MEMORY_OOB);
+#endif
 		} while(RAW_MEMREF(char, address++) != 0);
 
 #ifdef MEMORY_PROTECTION
@@ -1302,15 +1313,18 @@ void WRITE_REG(int reg, int value) {
 		return address - PTR2ADDRESS(ptr) - 1;
 	}
 	void ValidateMemRange(const void* ptr, unsigned int size) const {
+#ifndef MOSYNC_NATIVE
 		unsigned address = PTR2ADDRESS(ptr);
 		if(address >= DATA_SEGMENT_SIZE || (address+size) > DATA_SEGMENT_SIZE ||
 			size > DATA_SEGMENT_SIZE)
 			BIG_PHAT_ERROR(ERR_MEMORY_OOB);
+#endif
 #ifdef MEMORY_PROTECTION
 		checkProtection(address, size);
 #endif
 	}
 	void* GetValidatedMemRange(int address, int size) {
+#ifndef MOSYNC_NATIVE
 		if(address == 0) return NULL;
 		if(uint(address) >= DATA_SEGMENT_SIZE || uint(address+size) > DATA_SEGMENT_SIZE ||
 			uint(size) > DATA_SEGMENT_SIZE)
@@ -1323,8 +1337,12 @@ void WRITE_REG(int reg, int value) {
 		checkProtection(address, size);
 #endif
 		return ((char*)mem_ds) + address;
+#else
+		return (char*) address;
+#endif
 	}
 
+#ifndef MOSYNC_NATIVE
 	int GetValidatedStackValue(int offset) {
 		int address = REG(REG_sp) + offset;
 		if(((address&0x03)!=0) || uint(address)<STACK_BOTTOM || uint(address)>STACK_TOP)
@@ -1332,6 +1350,7 @@ void WRITE_REG(int reg, int value) {
 		address>>=2;
 		return mem_ds[address];
 	}
+#endif
 
 	int TranslateNativePointerToMoSyncPointer(void *nativePointer) {
 	    if(nativePointer == NULL)
@@ -1343,8 +1362,10 @@ void WRITE_REG(int reg, int value) {
 	const char* GetValidatedStr(int a) const {
 		unsigned address = a;
 		do {
+#ifndef MOSYNC_NATIVE
 			if(address >= DATA_SEGMENT_SIZE)
 				BIG_PHAT_ERROR(ERR_MEMORY_OOB);
+#endif
 		} while(RAW_MEMREF(char, address++) != 0);
 #ifdef MEMORY_PROTECTION
 		checkProtection(a, address-a);
@@ -1357,8 +1378,10 @@ void WRITE_REG(int reg, int value) {
 		MYASSERT((address & (sizeof(wchar)-1)) == 0, ERR_MEMORY_ALIGNMENT);
 		do {
 			address += sizeof(wchar);
+#ifndef MOSYNC_NATIVE
 			if(address >= DATA_SEGMENT_SIZE)
 				BIG_PHAT_ERROR(ERR_MEMORY_OOB);
+#endif
 		} while(RAW_MEMREF(wchar, address) != 0);
 #ifdef MEMORY_PROTECTION
 		checkProtection(a, address-a);
@@ -1627,8 +1650,8 @@ bool LoadVMApp(VMCore* core, const char* modfile,const char* resfile) {
 	return CORE->LoadVMApp(modfile, resfile);
 }
 #else
-bool LoadVMApp(VMCore* core, int modFd, int resFd) {
-	return CORE->LoadVMApp(modFd, resFd);
+bool LoadVMApp(VMCore* core, int modFd, int resFd, bool isNative) {
+	return CORE->LoadVMApp(modFd, resFd, isNative);
 }
 #endif
 #endif
@@ -1697,9 +1720,12 @@ int ValidatedStrLen(const VMCore* core, const char* ptr) {
 void* GetValidatedMemRange(VMCore* core, int address, int size) {
   return CORE->GetValidatedMemRange(address, size);
 }
+#ifndef MOSYNC_NATIVE
 int GetValidatedStackValue(VMCore* core, int offset) {
   return CORE->GetValidatedStackValue(offset);
 }
+#endif
+
 int TranslateNativePointerToMoSyncPointer(VMCore* core, void *nativePointer) {
 	return CORE->TranslateNativePointerToMoSyncPointer(nativePointer);
 }
@@ -1709,8 +1735,17 @@ const char* GetValidatedStr(const VMCore* core, int address) {
 const wchar* GetValidatedWStr(const VMCore* core, int address) {
 	return CORE->GetValidatedWStr(address);
 }
+
+#ifdef MOSYNC_NATIVE
+static char* gCustomEventPointer[512];
+#endif
+
 void* GetCustomEventPointer(VMCore* core) {
+#ifndef MOSYNC_NATIVE
 	return CORE->customEventPointer;
+#else
+	return gCustomEventPointer;
+#endif
 }
 
 #ifdef MEMORY_PROTECTION
@@ -1775,9 +1810,11 @@ Core::VMCore* gCore = NULL;
 void* Base::Syscall::GetValidatedMemRange(int address, int size) {
 	return Core::GetValidatedMemRange(gCore, address, size);
 }
+#ifndef MOSYNC_NATIVE
 int Base::Syscall::GetValidatedStackValue(int offset VSV_ARGPTR_DECL) {
 	return Core::GetValidatedStackValue(gCore, offset);
 }
+#endif
 int Base::Syscall::TranslateNativePointerToMoSyncPointer(void *nativePointer) {
 	return Core::TranslateNativePointerToMoSyncPointer(gCore, nativePointer);
 }

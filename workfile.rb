@@ -53,6 +53,7 @@ PIPE_DIRS = ['tools/elfStabSld',
 EXAM_DIRS = ["tests/unitTest", "examples"]
 TOOL_DIRS = [
 	'tools/ReleasePackageBuild',
+	'intlibs/mustache',
 	"tools/FontGenerator", "tools/PanicDoc", "tools/Bundle",
 	"tests/unitTestServer", "tools/iphone-builder", "tools/icon-injector", "tools/e32hack",
 	"tools/winphone-builder",
@@ -60,6 +61,7 @@ TOOL_DIRS = [
 	"tools/mx-config",
 	"tools/profiledb", "tools/rescomp",
 	"tools/mifconv", "tools/rcomp", "tools/package", "tools/uidcrc",
+	"tools/nbuild",
 ]
 
 MAIN_DIRS = BASE_DIRS + TOOL_DIRS + PIPE_DIRS
@@ -195,6 +197,7 @@ target :check => :check_libs do
 	Work.invoke_subdir_ex(true, 'testPrograms/gcc-torture')
 end
 
+# non-native only. don't modify; used by build system.
 def all_configs(target)
 	sh "ruby workfile.rb #{target}"
 	sh "ruby workfile.rb #{target} CONFIG=debug"

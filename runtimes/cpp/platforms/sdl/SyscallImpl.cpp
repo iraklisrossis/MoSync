@@ -95,6 +95,7 @@ extern "C" {
 
 #ifdef SUPPORT_OPENGL_ES
 #define DONT_WANT_IX_OPENGL_ES_TYPEDEFS
+#include <helpers/CPP_IX_OPENGL_ES_MA.h>
 #include <helpers/CPP_IX_OPENGL_ES.h>
 #include <helpers/CPP_IX_GL1.h>
 #include <helpers/CPP_IX_GL2.h>
@@ -2164,6 +2165,7 @@ namespace Base {
 #ifdef SUPPORT_OPENGL_ES
 #define glGetPointerv maGlGetPointerv
 #define GL2_CASE(i) case maIOCtl_##i:
+		maIOCtl_IX_OPENGL_ES_MA_caselist;
 		maIOCtl_IX_OPENGL_ES_caselist;
 		maIOCtl_IX_GL1_caselist;
 		maIOCtl_IX_GL2_m_caselist(GL2_CASE)

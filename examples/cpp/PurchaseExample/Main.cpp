@@ -102,7 +102,7 @@ public:
 	/**
 	 * This method is called when the application is closed.
 	 */
-	void closeEvent() __attribute((noreturn))
+	void closeEvent() GCCATTRIB(noreturn)
 	{
 		// Exit the app.
 		close();

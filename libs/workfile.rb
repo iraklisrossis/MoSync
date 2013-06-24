@@ -34,8 +34,12 @@ end
 SUBDIRS = stdlibs + ["MAUtil", "MTXml", "MAUI", "MAUI-revamp", "MATest", "MAP",
 	"Testify", "MAFS", "yajl", "Ads", "Facebook", "NativeUI", "Notification", "Wormhole", "Purchase"]
 
-if(USE_NEWLIB)
+if(HAVE_LIBC)
 	SUBDIRS << "MoGraph"
+end
+
+if(MOSYNC_NATIVE)
+	CopyDirWork.new(mosyncdir + "/include/glm", 'glm').invoke()
 end
 
 Targets.invoke

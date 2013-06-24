@@ -41,8 +41,12 @@
 #include "ma.h"
 
 #ifndef MAPIP
-#include <wchar.h>
-#else
+# if !(defined(MOSYNC_NATIVE) && defined(__ANDROID__))
+#  include <string.h>
+# else
+#  include <wchar.h>
+# endif
+#else	// ifdef MAPIP
 
 #include "ma.h"
 #include "mactype.h"
@@ -80,6 +84,7 @@ int wcsicmp(const wchar *s1, const wchar *s2);
 
 int wcsnicmp(const wchar *s1, const wchar *s2, size_t count);
 
+#ifndef MOSYNC_NATIVE
 /**
 * Scans a string for the first occurance of a character.
 * \returns A pointer to the character, NULL if not found.
@@ -93,13 +98,12 @@ wchar *wcschr(const wchar *s, int ch);
 */
 
 wchar *wcsrchr(const wchar *s, int ch);
+#endif
 
 /**
 * Scans the substring \a str2 in string \a str1.
 * \returns A pointer to the substring, NULL if not found.
 */
-
-
 wchar *wcsstr(const wchar *str1, const wchar *str2);
 
 /**
@@ -127,12 +131,13 @@ size_t wcscspn(const wchar *string, const wchar *control);
 
 wchar *wcspbrk(const wchar *string, const wchar *control);
 
+#ifndef MOSYNC_NATIVE
 /**
 * Searches \a buf for count bytes for the first occurance of \a ch.
 * \returns Pointer to the \a ch found, #NULL if not found.
 */
-
 void *wmemchr(const void *buf, int ch, size_t count);
+#endif
 
 /**
 * Searches \a buf for count bytes for the last occurance of \a ch.
@@ -218,13 +223,5 @@ size_t wcsnlen(const wchar *s, size_t count);
 #endif
 
 #endif	//MAPIP
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
-}	//extern "C"
-#endif
 
 #endif	//MAWSTRING_H

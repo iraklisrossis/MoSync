@@ -2030,6 +2030,8 @@ interface MAAPI {
 	*/
 	MAExtensionFunction maExtensionFunctionLoad(in MAExtensionModule module, in int function);
 
+	int maExtensionFunctionInvoke2(in MAExtensionFunction fn, in int numargs, in int ptrs);
+
 #if IX_RESOURCE_TYPES
 	constset int RT_ {  //WARNING: must match the resource compiler.
 		PLACEHOLDER = 1;

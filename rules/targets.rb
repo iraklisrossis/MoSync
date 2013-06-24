@@ -126,6 +126,7 @@ class Targets
 		else
 			@@goals += [a.to_sym]
 		end
+		@@args_handled = true
 	end
 
 	def Targets.invoke

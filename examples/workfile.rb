@@ -16,18 +16,18 @@ Targets.setup
 
 # This should be generalized into HAS_LIBC and HAS_STL,
 # for the benefit of native modes.
-if(!USE_NEWLIB)
-	newlibOnlyExamples = [
+if(!HAVE_LIBC)
+	libcOnlyExamples = [
 		'cpp/HelloSTL',
 		'cpp/Graphun',
 		'cpp/MoGraph/MoGraphWave',
 		'cpp/MoGraph/MoGraphWave2',
 		'cpp/MoGraph/MoGraphFinance',
 	]
-	puts "Skipping the following examples, because they require newlib:"
-	p newlibOnlyExamples
+	puts "Skipping the following examples, because they require libc:"
+	p libcOnlyExamples
 	SUBDIRS.reject! do |dir|
-		newlibOnlyExamples.include?(dir)
+		libcOnlyExamples.include?(dir)
 	end
 end
 

@@ -72,7 +72,7 @@ public:
 	/**
 	 * This method is called when the application is closed.
 	 */
-	void closeEvent() __attribute((noreturn))
+	void closeEvent() GCCATTRIB(noreturn)
 	{
 		// Deallocate the main screen.
 		delete mMainScreen;

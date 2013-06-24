@@ -156,7 +156,7 @@ end
 cppflags_base = cpp_flags + no_rtti + flags_base + end_flags
 # -Wno-deprecated
 
-@CFLAGS = cflags_base + @EXTRA_CFLAGS
-@CPPFLAGS = cppflags_base + @EXTRA_CPPFLAGS
+@CFLAGS = cflags_base + target_flags + @EXTRA_CFLAGS
+@CPPFLAGS = cppflags_base + target_flags + target_cppflags + @EXTRA_CPPFLAGS
 end
 end

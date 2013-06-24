@@ -27,6 +27,7 @@ MA 02110-1301, USA.
 #include <mactype.h>
 
 #include "Util.h"
+#include <mactype.h>
 
 #define BUF_MAX 256
 

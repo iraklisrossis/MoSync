@@ -26,9 +26,15 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef MAPIP
 #define __EXT_ANSIC_199012
 #include <stdlib.h>
+#include <stddef.h>
+#ifdef __BB10__
+typedef unsigned int size_t;
+#endif
 #endif
 
 #include "maapi.h"
+
+#if !defined(MOSYNC_NATIVE)
 
 #ifndef SIZE_T_DEFINED
 #ifdef _WIN32
@@ -38,6 +44,8 @@ typedef unsigned long size_t;
 #endif
 #define SIZE_T_DEFINED
 #endif
+
+#endif /* MOSYNC_NATIVE */
 
 #ifdef MAPIP
 #define BOOL int

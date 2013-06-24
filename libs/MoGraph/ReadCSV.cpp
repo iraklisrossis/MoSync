@@ -78,13 +78,16 @@ bool ReadCSV::load( MAHandle resource, char delim, bool trim)
 	for (int i=0;pch != NULL;i++)
 	{
 	    pch = strtok(NULL, "\r\n");
-	    line = pch;
-//	    lprintfln("ReadCSV::Load Line=%s",line.c_str());
-		lineData = Utils::split(line,delim,trim);
-		if (lineData.size() > /*1*/0)
-			m_db.push_back(lineData);
-		else
-		    lprintfln("WARNING ReadCSV::load missing lineData from line %i => %s\n",i,line.c_str());
+		if (pch)
+		{
+			line = pch;
+//			lprintfln("ReadCSV::Load Line=%s",line.c_str());
+			lineData = Utils::split(line,delim,trim);
+			if (lineData.size() > /*1*/0)
+				m_db.push_back(lineData);
+			else
+				lprintfln("WARNING ReadCSV::load missing lineData from line %i => %s\n",i,line.c_str());
+		}
 	}
 
 	delete [] data;						// need to free temp buffer.
@@ -104,8 +107,9 @@ bool ReadCSV::load( MAHandle resource, char delim, bool trim)
 bool ReadCSV_hash::load(MAHandle resource, char delim, bool trim)
 {
 	ReadCSV::load(resource,delim,trim);
-	for(size_t i=0; i<m_db.size(); i++)
-		m_table.insert( CSV_pair(m_db[i][0], m_db[i]) );
-
+	for(size_t i=0; i<m_db.size(); i++) {
+		CSV_pair p(m_db[i][0], m_db[i]);
+		m_table.insert(p);
+	}
 	return true;
 }

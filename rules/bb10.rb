@@ -120,7 +120,7 @@ module BB10Mod
 	end
 
 	def customTargetSetFlags
-		@TARGET_FLAGS = ' -D_FORTIFY_SOURCE=2 -D__BB10__ -Wno-psabi'
+		@TARGET_FLAGS = ' -D_FORTIFY_SOURCE=2 -D__BB10__ -Wno-psabi -DMOSYNC_NATIVE'
 		@TARGET_CPPFLAGS = ''
 	end
 

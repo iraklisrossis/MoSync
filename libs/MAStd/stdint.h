@@ -194,10 +194,20 @@
 #include <limits.h>
 //#include <signal.h>
 
-/* defined in stddef */
+#if defined (MOSYNC_NATIVE) && defined(__ANDROID__)
+// This is because we override the android stdint.h which
+// in its turn includes some types that we really need.
+// TODO: We should not override this, but this requires
+// some restructuring to be done. Let's think it through first.
+#include <machine/_types.h>
+#endif
+
 #ifdef MAPIP
+// include gcc-mapip2's stdint.
 #include "bits/_stdint.h"
 #else
+/* defined in stddef */
+typedef long ptrdiff_t;
 
 #ifndef _PSTDINT_H_INCLUDED
 #define _PSTDINT_H_INCLUDED
@@ -626,9 +636,11 @@ typedef uint_least32_t uint_fast32_t;
   typedef stdint_intptr_glue3(uint,stdint_intptr_bits,_t) uintptr_t;
   typedef stdint_intptr_glue3( int,stdint_intptr_bits,_t)  intptr_t;
 # else
+#ifndef MOSYNC_NATIVE
 /* TODO -- This following is likely wrong for some platforms, and does
    nothing for the definition of uintptr_t. */
   typedef ptrdiff_t intptr_t;
+#endif
 # endif
 # define STDINT_H_UINTPTR_T_DEFINED
 #endif
@@ -671,4 +683,4 @@ typedef uint_least32_t uint_fast32_t;
 
 #endif	/* MAPIP */
 
-#endif	//STDINT_H
+#endif	/* STDINT_H */

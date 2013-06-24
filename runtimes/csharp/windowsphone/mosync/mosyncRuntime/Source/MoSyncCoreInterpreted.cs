@@ -9,6 +9,7 @@ using System.Collections.Generic;
 
 namespace MoSync
 {
+#if !LIB
     public class CoreInterpreted : Core
     {
         protected ProgramHeader mProgramHeader = new ProgramHeader();
@@ -43,7 +44,6 @@ namespace MoSync
         {
             mProgramFile = programFile;
         }
-
 
         public override void Init()
         {
@@ -781,4 +781,5 @@ namespace MoSync
             }
         }
     }
+#endif
 }

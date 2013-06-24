@@ -24,6 +24,10 @@ module MoSyncInclude
 	def mosync_include; "#{mosyncdir}/include" + sub_include; end
 	def mosync_libdir; "#{mosyncdir}/lib"; end
 	def sub_include; USE_NEWLIB ? "/newlib" : ""; end
+	def use_stlport
+		@EXTRA_INCLUDES << "#{mosync_include}/stlport" if(!MOSYNC_NATIVE)
+		@LIBRARIES << "stlport" if(!MOSYNC_NATIVE)
+	end
 end
 
 class PipeTask < MultiFileTask

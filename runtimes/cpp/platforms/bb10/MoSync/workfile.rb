@@ -1,6 +1,15 @@
 #!/usr/bin/ruby
 
-require './config.rb'
+require File.expand_path('../../../../../rules/util.rb')
+
+if(ARGV[0] == 'all')
+	sh "ruby workfile.rb BB10_ARCH=arm"
+	sh "ruby workfile.rb BB10_ARCH=x86"
+	sh "ruby workfile.rb BB10_ARCH=arm CONFIG=debug"
+	sh "ruby workfile.rb BB10_ARCH=x86 CONFIG=debug"
+else
+	require './config.rb'
+end
 
 require File.expand_path('../../../../../rules/bb10.rb')
 
@@ -128,6 +137,7 @@ work.instance_eval do
 		'Core.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',
 		'SyscallImpl-vm.cpp' => ' -DHAVE_IOCTL_ELLIPSIS -Wno-float-equal',
 	}
+	@EXTRA_CPPFLAGS = ' -UMOSYNC_NATIVE'
 	@SPECIFIC_CFLAGS['SyscallImpl-vm.cpp'] << ' -Wno-missing-noreturn'	# temp hack until all syscalls are implemented.
 
 	@LOCAL_LIBS = [
@@ -147,4 +157,12 @@ work.instance_eval do
 	}
 end
 
-work.invoke
+target :default do
+	work.invoke
+end
+
+target :all do
+	# see hack at top of file.
+end
+
+Targets.invoke

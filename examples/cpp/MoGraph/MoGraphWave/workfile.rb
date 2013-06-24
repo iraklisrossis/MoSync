@@ -2,14 +2,15 @@
 
 require File.expand_path(ENV['MOSYNCDIR']+'/rules/mosync_exe.rb')
 
-raise unless(USE_NEWLIB)
+raise unless(HAVE_LIBC)
 
 work = PipeExeWork.new
 work.instance_eval do
 	@SOURCES = ["."]
-	@EXTRA_INCLUDES = ["#{mosync_include}/stlport", "#{mosync_include}/glm", "#{mosync_include}/MoGraph"]
+	@EXTRA_INCLUDES = ["#{mosync_include}/glm", "#{mosync_include}/MoGraph"]
 	@EXTRA_CPPFLAGS = ' -Wno-float-equal -Wno-unreachable-code -Wno-shadow -Wno-missing-noreturn'
-	@LIBRARIES = ["stlport", "mautil", "MoGraph"]
+	@LIBRARIES = ["mautil", "MoGraph"]
+	use_stlport
 	@EXTRA_LINKFLAGS = standardMemorySettings(11)
 	@NAME = "MoGraphWave"
 end

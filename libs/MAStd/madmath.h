@@ -166,7 +166,9 @@ int isinf(double x);
 #endif
 #include <math.h>
 #include <float.h>
+#if !defined(MOSYNC_NATIVE) || defined(__WINDOWS_PHONE_8__)
 #define isnan _isnan
+#endif
 
 #endif //MAPIP
 

@@ -32,7 +32,12 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
+#ifdef __IOS__
+#include <malloc/malloc.h>
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 #else
 
 #ifdef __cplusplus

@@ -6,11 +6,11 @@
 #ifndef WCHAR_H
 #define WHCAR_H
 
+#include "ma.h"
+
 #ifndef MAPIP
 #include_next <wchar.h>
 #endif
-
-#include "ma.h"
 
 #ifdef __cplusplus
 extern "C" {

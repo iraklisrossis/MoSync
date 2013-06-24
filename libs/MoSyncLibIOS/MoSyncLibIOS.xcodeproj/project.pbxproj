@@ -41,7 +41,6 @@
 		0B92C8C51712BB8A002DFDF6 /* Graphics.c in Sources */ = {isa = PBXBuildFile; fileRef = 0B92B7271712BB7E002DFDF6 /* Graphics.c */; };
 		0B92C8C81712BB8A002DFDF6 /* HashMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0B92B72F1712BB7E002DFDF6 /* HashMap.cpp */; };
 		0B92C8C91712BB8A002DFDF6 /* Moblet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0B92B7391712BB7E002DFDF6 /* Moblet.cpp */; };
-		0B92C8CA1712BB8A002DFDF6 /* PlaceholderPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0B92B73B1712BB7E002DFDF6 /* PlaceholderPool.cpp */; };
 		0B92C8CB1712BB8A002DFDF6 /* RefCounted.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0B92B73D1712BB7E002DFDF6 /* RefCounted.cpp */; };
 		0B92C8CC1712BB8A002DFDF6 /* Server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0B92B73F1712BB7E002DFDF6 /* Server.cpp */; };
 		0B92C8CD1712BB8A002DFDF6 /* String.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0B92B7431712BB7E002DFDF6 /* String.cpp */; };
@@ -342,8 +341,6 @@
 		0B92B7381712BB7E002DFDF6 /* mauuid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mauuid.h; sourceTree = "<group>"; };
 		0B92B7391712BB7E002DFDF6 /* Moblet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Moblet.cpp; sourceTree = "<group>"; };
 		0B92B73A1712BB7E002DFDF6 /* Moblet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Moblet.h; sourceTree = "<group>"; };
-		0B92B73B1712BB7E002DFDF6 /* PlaceholderPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlaceholderPool.cpp; sourceTree = "<group>"; };
-		0B92B73C1712BB7E002DFDF6 /* PlaceholderPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlaceholderPool.h; sourceTree = "<group>"; };
 		0B92B73D1712BB7E002DFDF6 /* RefCounted.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RefCounted.cpp; sourceTree = "<group>"; };
 		0B92B73E1712BB7E002DFDF6 /* RefCounted.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RefCounted.h; sourceTree = "<group>"; };
 		0B92B73F1712BB7E002DFDF6 /* Server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Server.cpp; sourceTree = "<group>"; };
@@ -1038,8 +1035,6 @@
 				0B92B7381712BB7E002DFDF6 /* mauuid.h */,
 				0B92B7391712BB7E002DFDF6 /* Moblet.cpp */,
 				0B92B73A1712BB7E002DFDF6 /* Moblet.h */,
-				0B92B73B1712BB7E002DFDF6 /* PlaceholderPool.cpp */,
-				0B92B73C1712BB7E002DFDF6 /* PlaceholderPool.h */,
 				0B92B73D1712BB7E002DFDF6 /* RefCounted.cpp */,
 				0B92B73E1712BB7E002DFDF6 /* RefCounted.h */,
 				0B92B73F1712BB7E002DFDF6 /* Server.cpp */,
@@ -1845,7 +1840,6 @@
 				0B92C8C51712BB8A002DFDF6 /* Graphics.c in Sources */,
 				0B92C8C81712BB8A002DFDF6 /* HashMap.cpp in Sources */,
 				0B92C8C91712BB8A002DFDF6 /* Moblet.cpp in Sources */,
-				0B92C8CA1712BB8A002DFDF6 /* PlaceholderPool.cpp in Sources */,
 				0B92C8CB1712BB8A002DFDF6 /* RefCounted.cpp in Sources */,
 				0B92C8CC1712BB8A002DFDF6 /* Server.cpp in Sources */,
 				0B92C8CD1712BB8A002DFDF6 /* String.cpp in Sources */,
